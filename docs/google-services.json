@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "728607701798",
+    "project_id": "video-marketplace-app-53a6d",
+    "storage_bucket": "video-marketplace-app-53a6d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:728607701798:android:8219e95d28a4f7c9c45fe7",
+        "android_client_info": {
+          "package_name": "com.example.tiktok_tutorial"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDWgbKSwOxA1HcFexq0NE36PzWPDFjulx4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

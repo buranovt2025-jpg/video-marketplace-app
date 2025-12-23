@@ -1,0 +1,52 @@
+// Рекомендуемые правила безопасности Firestore для video-marketplace-app
+// Эти правила можно использовать вместо текущих для улучшения безопасности
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Правила для коллекции пользователей
+    match /users/{userId} {
+      // Разрешить создание профиля только для аутентифицированного пользователя
+      // и только для своего собственного UID
+      allow create: if request.auth != null 
+                    && request.auth.uid == userId
+                    && request.resource.data.keys().hasAll(['email', 'createdAt']);
+      
+      // Разрешить чтение только своего профиля
+      allow read: if request.auth != null && request.auth.uid == userId;
+      
+      // Разрешить обновление только своего профиля
+      // и запретить изменение email и createdAt
+      allow update: if request.auth != null 
+                    && request.auth.uid == userId
+                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['email', 'createdAt']);
+      
+      // Запретить удаление профилей
+      allow delete: if false;
+    }
+    
+    // Правила для коллекции видео (если есть)
+    match /videos/{videoId} {
+      // Разрешить чтение всем аутентифицированным пользователям
+      allow read: if request.auth != null;
+      
+      // Разрешить создание только аутентифицированным пользователям
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid;
+      
+      // Разрешить обновление и удаление только владельцу видео
+      allow update, delete: if request.auth != null 
+                            && resource.data.userId == request.auth.uid;
+    }
+    
+    // Правила для других коллекций
+    match /{document=**} {
+      // По умолчанию разрешить чтение и запись только аутентифицированным пользователям
+      allow read, write: if request.auth != null;
+    }
+  }
+}
+
+// ПРИМЕЧАНИЕ: Текущие правила в Firebase Console работают корректно для регистрации.
+// Эти улучшенные правила можно применить позже для повышения безопасности.
