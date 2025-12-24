@@ -14,7 +14,9 @@ class AuthController extends GetxController {
   late Rx<File?> _pickedImage;
 
   File? get profilePhoto => _pickedImage.value;
-  User get user => _user.value!;
+  User? get user => _user.value;
+  
+  bool get isAuthenticated => _user.value != null;
 
   @override
   void onReady() {

@@ -24,16 +24,54 @@ class VideoController extends GetxController {
   }
 
   likeVideo(String id) async {
-    DocumentSnapshot doc = await firestore.collection('videos').doc(id).get();
-    var uid = authController.user.uid;
-    if ((doc.data()! as dynamic)['likes'].contains(uid)) {
-      await firestore.collection('videos').doc(id).update({
-        'likes': FieldValue.arrayRemove([uid]),
-      });
-    } else {
-      await firestore.collection('videos').doc(id).update({
-        'likes': FieldValue.arrayUnion([uid]),
-      });
+    try {
+      if (authController.user == null) {
+        Get.snackbar(
+          'Error',
+          'Please login to like videos',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
+
+      DocumentSnapshot doc = await firestore.collection('videos').doc(id).get();
+      
+      if (!doc.exists) {
+        Get.snackbar(
+          'Error',
+          'Video not found',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
+
+      var uid = authController.user!.uid;
+      final videoData = doc.data() as Map<String, dynamic>?;
+      
+      if (videoData == null || videoData['likes'] == null) {
+        Get.snackbar(
+          'Error',
+          'Invalid video data',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
+
+      if ((videoData['likes'] as List).contains(uid)) {
+        await firestore.collection('videos').doc(id).update({
+          'likes': FieldValue.arrayRemove([uid]),
+        });
+      } else {
+        await firestore.collection('videos').doc(id).update({
+          'likes': FieldValue.arrayUnion([uid]),
+        });
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to like video: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
   }
 }

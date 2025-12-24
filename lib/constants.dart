@@ -8,12 +8,13 @@ import 'package:tiktok_tutorial/views/screens/profile_screen.dart';
 import 'package:tiktok_tutorial/views/screens/search_screen.dart';
 import 'package:tiktok_tutorial/views/screens/video_screen.dart';
 
-List pages = [
+// ВАЖНО: pages создается динамически после инициализации authController
+List get pages => [
   VideoScreen(),
   SearchScreen(),
   const AddVideoScreen(),
-  Text('Messages Screen'),
-  ProfileScreen(uid: authController.user.uid),
+  const Text('Messages Screen'),
+  ProfileScreen(uid: authController.user?.uid ?? ''),
 ];
 
 // COLORS

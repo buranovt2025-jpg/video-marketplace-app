@@ -35,76 +35,160 @@ class CommentController extends GetxController {
 
   postComment(String commentText) async {
     try {
-      if (commentText.isNotEmpty) {
-        DocumentSnapshot userDoc = await firestore
-            .collection('users')
-            .doc(authController.user.uid)
-            .get();
-        var allDocs = await firestore
-            .collection('videos')
-            .doc(_postId)
-            .collection('comments')
-            .get();
-        int len = allDocs.docs.length;
-
-        Comment comment = Comment(
-          username: (userDoc.data()! as dynamic)['name'],
-          comment: commentText.trim(),
-          datePublished: DateTime.now(),
-          likes: [],
-          profilePhoto: (userDoc.data()! as dynamic)['profilePhoto'],
-          uid: authController.user.uid,
-          id: 'Comment $len',
+      if (authController.user == null) {
+        Get.snackbar(
+          'Error',
+          'Please login to comment',
+          snackPosition: SnackPosition.BOTTOM,
         );
-        await firestore
-            .collection('videos')
-            .doc(_postId)
-            .collection('comments')
-            .doc('Comment $len')
-            .set(
-              comment.toJson(),
-            );
-        DocumentSnapshot doc =
-            await firestore.collection('videos').doc(_postId).get();
+        return;
+      }
+
+      if (commentText.isEmpty) {
+        Get.snackbar(
+          'Error',
+          'Comment cannot be empty',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
+
+      String uid = authController.user!.uid;
+      
+      DocumentSnapshot userDoc = await firestore
+          .collection('users')
+          .doc(uid)
+          .get();
+      
+      if (!userDoc.exists) {
+        Get.snackbar(
+          'Error',
+          'User not found',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
+
+      final userData = userDoc.data() as Map<String, dynamic>?;
+      if (userData == null) {
+        Get.snackbar(
+          'Error',
+          'Invalid user data',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
+
+      var allDocs = await firestore
+          .collection('videos')
+          .doc(_postId)
+          .collection('comments')
+          .get();
+      int len = allDocs.docs.length;
+
+      Comment comment = Comment(
+        username: userData['name'] ?? 'Unknown',
+        comment: commentText.trim(),
+        datePublished: DateTime.now(),
+        likes: [],
+        profilePhoto: userData['profilePhoto'] ?? '',
+        uid: uid,
+        id: 'Comment $len',
+      );
+      
+      await firestore
+          .collection('videos')
+          .doc(_postId)
+          .collection('comments')
+          .doc('Comment $len')
+          .set(
+            comment.toJson(),
+          );
+      
+      DocumentSnapshot doc =
+          await firestore.collection('videos').doc(_postId).get();
+      
+      if (doc.exists) {
+        final videoData = doc.data() as Map<String, dynamic>?;
+        int currentCount = videoData?['commentCount'] ?? 0;
+        
         await firestore.collection('videos').doc(_postId).update({
-          'commentCount': (doc.data()! as dynamic)['commentCount'] + 1,
+          'commentCount': currentCount + 1,
         });
       }
     } catch (e) {
       Get.snackbar(
         'Error While Commenting',
         e.toString(),
+        snackPosition: SnackPosition.BOTTOM,
       );
     }
   }
 
   likeComment(String id) async {
-    var uid = authController.user.uid;
-    DocumentSnapshot doc = await firestore
-        .collection('videos')
-        .doc(_postId)
-        .collection('comments')
-        .doc(id)
-        .get();
+    try {
+      if (authController.user == null) {
+        Get.snackbar(
+          'Error',
+          'Please login to like comments',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
 
-    if ((doc.data()! as dynamic)['likes'].contains(uid)) {
-      await firestore
+      String uid = authController.user!.uid;
+      
+      DocumentSnapshot doc = await firestore
           .collection('videos')
           .doc(_postId)
           .collection('comments')
           .doc(id)
-          .update({
-        'likes': FieldValue.arrayRemove([uid]),
-      });
-    } else {
-      await firestore
-          .collection('videos')
-          .doc(_postId)
-          .collection('comments')
-          .doc(id)
-          .update({
-        'likes': FieldValue.arrayUnion([uid]),
-      });
+          .get();
+
+      if (!doc.exists) {
+        Get.snackbar(
+          'Error',
+          'Comment not found',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
+
+      final commentData = doc.data() as Map<String, dynamic>?;
+      if (commentData == null || commentData['likes'] == null) {
+        Get.snackbar(
+          'Error',
+          'Invalid comment data',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
+
+      if ((commentData['likes'] as List).contains(uid)) {
+        await firestore
+            .collection('videos')
+            .doc(_postId)
+            .collection('comments')
+            .doc(id)
+            .update({
+          'likes': FieldValue.arrayRemove([uid]),
+        });
+      } else {
+        await firestore
+            .collection('videos')
+            .doc(_postId)
+            .collection('comments')
+            .doc(id)
+            .update({
+          'likes': FieldValue.arrayUnion([uid]),
+        });
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to like comment: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
   }
 }
