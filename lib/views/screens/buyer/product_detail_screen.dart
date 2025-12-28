@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/cart_controller.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/utils/responsive_helper.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/cart_screen.dart';
 import 'package:tiktok_tutorial/views/screens/chat/chat_screen.dart';
 
@@ -33,6 +34,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget build(BuildContext context) {
     final product = widget.product;
     final bool inStock = product['in_stock'] ?? true;
+    
+    // Responsive image height
+    final imageHeight = ResponsiveHelper.responsiveValue(
+      context,
+      mobile: 400.0,
+      tablet: 500.0,
+      desktop: 550.0,
+    );
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -40,7 +49,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         slivers: [
           // App bar with image
           SliverAppBar(
-            expandedHeight: 400,
+            expandedHeight: imageHeight,
             pinned: true,
             backgroundColor: backgroundColor,
             leading: IconButton(

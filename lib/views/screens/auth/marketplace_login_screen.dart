@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/utils/responsive_helper.dart';
 import 'package:tiktok_tutorial/views/screens/auth/marketplace_register_screen.dart';
 import 'package:tiktok_tutorial/views/screens/auth/forgot_password_screen.dart';
 import 'package:tiktok_tutorial/views/screens/marketplace_home_screen.dart';
@@ -74,15 +75,33 @@ class _MarketplaceLoginScreenState extends State<MarketplaceLoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Responsive max width for form content
+    final maxFormWidth = ResponsiveHelper.responsiveValue(
+      context,
+      mobile: double.infinity,
+      tablet: 450.0,
+      desktop: 450.0,
+    );
+    
+    final horizontalPadding = ResponsiveHelper.responsiveValue(
+      context,
+      mobile: 24.0,
+      tablet: 48.0,
+      desktop: 64.0,
+    );
+    
     return Scaffold(
       backgroundColor: backgroundColor,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 60),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 24),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: maxFormWidth),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 40),
               
                             // Logo
                             Image.asset(
@@ -294,6 +313,8 @@ class _MarketplaceLoginScreenState extends State<MarketplaceLoginScreen> {
                             ],
                           ),
                         ],
+              ),
+            ),
           ),
         ),
       ),

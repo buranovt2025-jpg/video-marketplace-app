@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/controllers/cart_controller.dart';
+import 'package:tiktok_tutorial/utils/responsive_helper.dart';
 import 'package:tiktok_tutorial/views/screens/seller/create_product_screen.dart';
 import 'package:tiktok_tutorial/views/screens/seller/create_reel_screen.dart';
 import 'package:tiktok_tutorial/views/screens/seller/create_story_screen.dart';
@@ -607,24 +608,34 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
             ),
           ),
           
-          // Video placeholder
-          Container(
-            height: 400,
-            width: double.infinity,
-            color: Colors.grey[800],
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.play_circle_outline, size: 64, color: Colors.grey[600]),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Видео',
-                    style: TextStyle(color: Colors.grey[600]),
+          // Video placeholder - responsive height
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final videoHeight = ResponsiveHelper.responsiveValue(
+                context,
+                mobile: 400.0,
+                tablet: 500.0,
+                desktop: 600.0,
+              );
+              return Container(
+                height: videoHeight,
+                width: double.infinity,
+                color: Colors.grey[800],
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.play_circle_outline, size: 64, color: Colors.grey[600]),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Видео',
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
+                ),
+              );
+            },
           ),
           
           // Actions
@@ -741,9 +752,17 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               );
             }
             
+            // Responsive grid columns based on screen size
+            final gridColumns = ResponsiveHelper.responsiveValue(
+              context,
+              mobile: 3,
+              tablet: 4,
+              desktop: 6,
+            );
+            
             return SliverGrid(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: gridColumns,
                 mainAxisSpacing: 2,
                 crossAxisSpacing: 2,
               ),
