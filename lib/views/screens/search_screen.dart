@@ -7,7 +7,7 @@ import 'package:tiktok_tutorial/views/screens/profile_screen.dart';
 class SearchScreen extends StatelessWidget {
   SearchScreen({Key? key}) : super(key: key);
 
-  final SearchController searchController = Get.put(SearchController());
+  final UserSearchController searchController = Get.put(UserSearchController());
 
   @override
   Widget build(BuildContext context) {

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
+import 'package:tiktok_tutorial/demo_config.dart';
 
 class ProfileController extends GetxController {
   final Rx<Map<String, dynamic>> _user = Rx<Map<String, dynamic>>({});
@@ -15,6 +16,11 @@ class ProfileController extends GetxController {
   }
 
   getUserData() async {
+    if (DEMO_MODE) {
+      _loadDemoUserData();
+      return;
+    }
+    
     try {
       isLoading.value = true;
       List<String> thumbnails = [];
@@ -119,8 +125,55 @@ class ProfileController extends GetxController {
       isLoading.value = false;
     }
   }
+  
+  void _loadDemoUserData() {
+    isLoading.value = true;
+    
+    // Find user in demo data
+    Map<String, dynamic>? userData;
+    for (var user in demoUsers) {
+      if (user['uid'] == _uid.value) {
+        userData = user;
+        break;
+      }
+    }
+    
+    // Get thumbnails from demo videos
+    List<String> thumbnails = [];
+    int likes = 0;
+    for (var video in demoVideos) {
+      if (video['uid'] == _uid.value) {
+        thumbnails.add(video['thumbnail']);
+        likes += (video['likes'] as List).length;
+      }
+    }
+    
+    _user.value = {
+      'followers': '125',
+      'following': '48',
+      'isFollowing': false,
+      'likes': likes.toString(),
+      'profilePhoto': userData?['profilePhoto'] ?? DEMO_USER_PHOTO,
+      'name': userData?['name'] ?? DEMO_USER_NAME,
+      'thumbnails': thumbnails,
+    };
+    
+    isLoading.value = false;
+    update();
+  }
 
   followUser() async {
+    if (DEMO_MODE) {
+      // Demo mode - toggle follow locally
+      bool isFollowing = _user.value['isFollowing'] ?? false;
+      int followers = int.parse(_user.value['followers'] ?? '0');
+      
+      _user.value['isFollowing'] = !isFollowing;
+      _user.value['followers'] = (isFollowing ? followers - 1 : followers + 1).toString();
+      update();
+      return;
+    }
+    
     try {
       // Проверяем авторизацию
       if (firebaseAuth.currentUser == null) {
