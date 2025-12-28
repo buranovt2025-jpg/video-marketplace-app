@@ -1,0 +1,533 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:tiktok_tutorial/constants.dart';
+import 'package:tiktok_tutorial/controllers/cart_controller.dart';
+import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/views/screens/buyer/order_success_screen.dart';
+
+class CheckoutScreen extends StatefulWidget {
+  final String sellerId;
+
+  const CheckoutScreen({Key? key, required this.sellerId}) : super(key: key);
+
+  @override
+  State<CheckoutScreen> createState() => _CheckoutScreenState();
+}
+
+class _CheckoutScreenState extends State<CheckoutScreen> {
+  final MarketplaceController _marketplaceController = Get.find<MarketplaceController>();
+  late CartController _cartController;
+  
+  final _formKey = GlobalKey<FormState>();
+  final _addressController = TextEditingController();
+  final _notesController = TextEditingController();
+  
+  bool _isLoading = false;
+  
+  // Default coordinates for Tashkent
+  double _latitude = 41.2995;
+  double _longitude = 69.2401;
+
+  @override
+  void initState() {
+    super.initState();
+    _cartController = Get.find<CartController>();
+    
+    // Pre-fill address from user profile if available
+    final user = _marketplaceController.currentUser.value;
+    if (user != null && user['address'] != null) {
+      _addressController.text = user['address'];
+      if (user['latitude'] != null) _latitude = user['latitude'];
+      if (user['longitude'] != null) _longitude = user['longitude'];
+    }
+  }
+
+  @override
+  void dispose() {
+    _addressController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final items = _cartController.getItemsBySeller(widget.sellerId);
+    final total = _cartController.getTotalBySeller(widget.sellerId);
+    final sellerName = items.isNotEmpty ? items.first.sellerName : 'Продавец';
+
+    return Scaffold(
+      backgroundColor: backgroundColor,
+      appBar: AppBar(
+        backgroundColor: backgroundColor,
+        title: const Text(
+          'Оформление заказа',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Get.back(),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Seller info
+              _buildSellerCard(sellerName),
+              const SizedBox(height: 24),
+
+              // Order items
+              const Text(
+                'Товары',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildOrderItems(items),
+              const SizedBox(height: 24),
+
+              // Delivery address
+              const Text(
+                'Адрес доставки',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildAddressField(),
+              const SizedBox(height: 16),
+              _buildLocationInfo(),
+              const SizedBox(height: 24),
+
+              // Notes
+              const Text(
+                'Комментарий к заказу',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildNotesField(),
+              const SizedBox(height: 24),
+
+              // Payment method
+              const Text(
+                'Способ оплаты',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildPaymentMethod(),
+              const SizedBox(height: 24),
+
+              // Order summary
+              _buildOrderSummary(items, total),
+              const SizedBox(height: 100),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: _buildBottomBar(total),
+    );
+  }
+
+  Widget _buildSellerCard(String sellerName) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey[900],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: Colors.grey[800],
+            child: const Icon(Icons.store, color: Colors.white),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  sellerName,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Продавец',
+                  style: TextStyle(
+                    color: Colors.grey[500],
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOrderItems(List<CartItem> items) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[900],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: items.map((item) => _buildOrderItem(item)).toList(),
+      ),
+    );
+  }
+
+  Widget _buildOrderItem(CartItem item) {
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: Colors.grey[800],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: item.imageUrl != null
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      item.imageUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Icon(
+                        Icons.inventory_2,
+                        color: Colors.grey[600],
+                        size: 20,
+                      ),
+                    ),
+                  )
+                : Icon(
+                    Icons.inventory_2,
+                    color: Colors.grey[600],
+                    size: 20,
+                  ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.productName,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  '${item.quantity} x ${_formatPrice(item.price)} сум',
+                  style: TextStyle(
+                    color: Colors.grey[500],
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            '${_formatPrice(item.total)} сум',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddressField() {
+    return TextFormField(
+      controller: _addressController,
+      style: const TextStyle(color: Colors.white),
+      maxLines: 2,
+      decoration: InputDecoration(
+        hintText: 'Введите адрес доставки',
+        hintStyle: TextStyle(color: Colors.grey[600]),
+        filled: true,
+        fillColor: Colors.grey[900],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        prefixIcon: Icon(Icons.location_on, color: buttonColor),
+      ),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Введите адрес доставки';
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildLocationInfo() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey[900],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[800]!),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline, color: Colors.grey[500], size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Курьер увидит ваш адрес и сможет открыть навигатор для маршрута',
+              style: TextStyle(
+                color: Colors.grey[500],
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNotesField() {
+    return TextFormField(
+      controller: _notesController,
+      style: const TextStyle(color: Colors.white),
+      maxLines: 3,
+      decoration: InputDecoration(
+        hintText: 'Комментарий для курьера (необязательно)',
+        hintStyle: TextStyle(color: Colors.grey[600]),
+        filled: true,
+        fillColor: Colors.grey[900],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPaymentMethod() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey[900],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: buttonColor!, width: 2),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: buttonColor!.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(Icons.money, color: buttonColor),
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Наличными курьеру',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Оплата при получении',
+                  style: TextStyle(
+                    color: Colors.grey,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(Icons.check_circle, color: buttonColor),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOrderSummary(List<CartItem> items, double total) {
+    final itemsTotal = total;
+    const deliveryFee = 0.0; // Free delivery for MVP
+    final grandTotal = itemsTotal + deliveryFee;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey[900],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          _buildSummaryRow('Товары (${items.length})', '${_formatPrice(itemsTotal)} сум'),
+          const SizedBox(height: 8),
+          _buildSummaryRow('Доставка', 'Бесплатно', valueColor: Colors.green),
+          const Divider(color: Colors.grey, height: 24),
+          _buildSummaryRow(
+            'Итого',
+            '${_formatPrice(grandTotal)} сум',
+            isBold: true,
+            valueColor: buttonColor,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryRow(String label, String value, {bool isBold = false, Color? valueColor}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: isBold ? Colors.white : Colors.grey[400],
+            fontSize: isBold ? 16 : 14,
+            fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            color: valueColor ?? Colors.white,
+            fontSize: isBold ? 18 : 14,
+            fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBottomBar(double total) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey[900],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _isLoading ? null : _placeOrder,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: buttonColor,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              disabledBackgroundColor: Colors.grey[700],
+            ),
+            child: _isLoading
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : Text(
+                    'Заказать за ${_formatPrice(total)} сум',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _placeOrder() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final items = _cartController.getItemsBySeller(widget.sellerId);
+      final orderItems = items.map((item) => item.toOrderItem()).toList();
+
+      final order = await _marketplaceController.createOrder(
+        sellerId: widget.sellerId,
+        items: orderItems,
+        deliveryAddress: _addressController.text,
+        deliveryLatitude: _latitude,
+        deliveryLongitude: _longitude,
+        notes: _notesController.text.isNotEmpty ? _notesController.text : null,
+      );
+
+      if (order != null) {
+        // Clear items from this seller
+        _cartController.clearSellerItems(widget.sellerId);
+        
+        // Navigate to success screen
+        Get.off(() => OrderSuccessScreen(order: order));
+      } else {
+        Get.snackbar(
+          'Ошибка',
+          _marketplaceController.error.value.isNotEmpty 
+              ? _marketplaceController.error.value 
+              : 'Не удалось создать заказ',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  String _formatPrice(double price) {
+    if (price >= 1000000) {
+      return '${(price / 1000000).toStringAsFixed(1)}M';
+    } else if (price >= 1000) {
+      return '${(price / 1000).toStringAsFixed(0)}K';
+    }
+    return price.toStringAsFixed(0);
+  }
+}

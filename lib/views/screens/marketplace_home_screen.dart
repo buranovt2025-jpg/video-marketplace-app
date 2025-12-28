@@ -2,11 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/controllers/cart_controller.dart';
 import 'package:tiktok_tutorial/views/screens/seller/create_product_screen.dart';
 import 'package:tiktok_tutorial/views/screens/seller/create_reel_screen.dart';
 import 'package:tiktok_tutorial/views/screens/seller/create_story_screen.dart';
 import 'package:tiktok_tutorial/views/screens/seller/my_products_screen.dart';
 import 'package:tiktok_tutorial/views/screens/auth/marketplace_login_screen.dart';
+import 'package:tiktok_tutorial/views/screens/buyer/product_detail_screen.dart';
+import 'package:tiktok_tutorial/views/screens/buyer/cart_screen.dart';
+import 'package:tiktok_tutorial/views/screens/buyer/order_tracking_screen.dart';
+import 'package:tiktok_tutorial/views/screens/chat/chat_screen.dart';
 
 class MarketplaceHomeScreen extends StatefulWidget {
   const MarketplaceHomeScreen({Key? key}) : super(key: key);
@@ -481,11 +486,11 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     );
   }
 
-  Widget _buildProductGridItem(Map<String, dynamic> product) {
-    return GestureDetector(
-      onTap: () {
-        // TODO: Open product detail
-      },
+    Widget _buildProductGridItem(Map<String, dynamic> product) {
+      return GestureDetector(
+        onTap: () {
+          Get.to(() => ProductDetailScreen(product: product));
+        },
       child: Container(
         color: Colors.grey[900],
         child: Stack(
@@ -723,95 +728,98 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     );
   }
 
-  Widget _buildOrderCard(Map<String, dynamic> order) {
-    final statusColors = {
-      'created': Colors.blue,
-      'accepted': Colors.orange,
-      'ready': Colors.purple,
-      'picked_up': Colors.indigo,
-      'in_transit': Colors.cyan,
-      'delivered': Colors.green,
-      'completed': Colors.green,
-      'cancelled': Colors.red,
-    };
+    Widget _buildOrderCard(Map<String, dynamic> order) {
+      final statusColors = {
+        'created': Colors.blue,
+        'accepted': Colors.orange,
+        'ready': Colors.purple,
+        'picked_up': Colors.indigo,
+        'in_transit': Colors.cyan,
+        'delivered': Colors.green,
+        'completed': Colors.green,
+        'cancelled': Colors.red,
+      };
     
-    final statusLabels = {
-      'created': 'Создан',
-      'accepted': 'Принят',
-      'ready': 'Готов',
-      'picked_up': 'Забран',
-      'in_transit': 'В пути',
-      'delivered': 'Доставлен',
-      'completed': 'Завершён',
-      'cancelled': 'Отменён',
-    };
+      final statusLabels = {
+        'created': 'Создан',
+        'accepted': 'Принят',
+        'ready': 'Готов',
+        'picked_up': 'Забран',
+        'in_transit': 'В пути',
+        'delivered': 'Доставлен',
+        'completed': 'Завершён',
+        'cancelled': 'Отменён',
+      };
     
-    final status = order['status'] ?? 'created';
+      final status = order['status'] ?? 'created';
     
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[900],
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      return GestureDetector(
+        onTap: () => Get.to(() => OrderTrackingScreen(order: order)),
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.grey[900],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Заказ #${order['id']?.substring(0, 8) ?? ''}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: statusColors[status]?.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      statusLabels[status] ?? status,
+                      style: TextStyle(
+                        color: statusColors[status],
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
               Text(
-                'Заказ #${order['id']?.substring(0, 8) ?? ''}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
+                'Сумма: ${order['total_amount']?.toStringAsFixed(0) ?? '0'} сум',
+                style: TextStyle(color: Colors.grey[400]),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: statusColors[status]?.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  statusLabels[status] ?? status,
-                  style: TextStyle(
-                    color: statusColors[status],
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Сумма: ${order['total_amount']?.toStringAsFixed(0) ?? '0'} сум',
-            style: TextStyle(color: Colors.grey[400]),
-          ),
-          if (order['delivery_address'] != null) ...[
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                Icon(Icons.location_on, size: 14, color: Colors.grey[500]),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    order['delivery_address'],
-                    style: TextStyle(color: Colors.grey[500], fontSize: 12),
-                    overflow: TextOverflow.ellipsis,
-                  ),
+              if (order['delivery_address'] != null) ...[
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(Icons.location_on, size: 14, color: Colors.grey[500]),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        order['delivery_address'],
+                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
               ],
-            ),
-          ],
-        ],
-      ),
-    );
-  }
+            ],
+          ),
+        ),
+      );
+    }
 
-  Widget _buildProfileTab() {
+    Widget _buildProfileTab() {
     return Obx(() {
       return CustomScrollView(
         slivers: [
