@@ -28,6 +28,11 @@ class _MarketplaceLoginScreenState extends State<MarketplaceLoginScreen> {
     super.dispose();
   }
 
+  void _continueAsGuest() {
+    _controller.setGuestMode(true);
+    Get.offAll(() => const MarketplaceHomeScreen());
+  }
+
   Future<void> _login() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
       Get.snackbar(
@@ -79,33 +84,37 @@ class _MarketplaceLoginScreenState extends State<MarketplaceLoginScreen> {
             children: [
               const SizedBox(height: 60),
               
-              // Logo
-              Icon(
-                Icons.storefront,
-                size: 80,
-                color: buttonColor,
-              ),
-              const SizedBox(height: 16),
+                            // Logo
+                            Image.asset(
+                              'assets/images/logo_white.png',
+                              height: 120,
+                              errorBuilder: (context, error, stackTrace) => Icon(
+                                Icons.storefront,
+                                size: 80,
+                                color: buttonColor,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
               
-              // Title
-              const Text(
-                'Video Marketplace',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Оптовые рынки в твоём телефоне',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[400],
-                ),
-              ),
+                            // Title
+                            const Text(
+                              'GoGoMarket',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Оптовые рынки в твоём телефоне',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[400],
+                              ),
+                            ),
               
               const SizedBox(height: 48),
               
@@ -247,27 +256,44 @@ class _MarketplaceLoginScreenState extends State<MarketplaceLoginScreen> {
               
               const SizedBox(height: 24),
               
-              // Register link
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Нет аккаунта? ',
-                    style: TextStyle(color: Colors.grey[400]),
-                  ),
-                  GestureDetector(
-                    onTap: () => Get.to(() => const MarketplaceRegisterScreen()),
-                    child: Text(
-                      'Зарегистрироваться',
-                      style: TextStyle(
-                        color: buttonColor,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+                          // Guest mode button
+                          OutlinedButton.icon(
+                            onPressed: () => _continueAsGuest(),
+                            icon: const Icon(Icons.visibility),
+                            label: Text('continue_as_guest'.tr),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.grey[400],
+                              side: BorderSide(color: Colors.grey[700]!),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+              
+                          const SizedBox(height: 16),
+              
+                          // Register link
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Нет аккаунта? ',
+                                style: TextStyle(color: Colors.grey[400]),
+                              ),
+                              GestureDetector(
+                                onTap: () => Get.to(() => const MarketplaceRegisterScreen()),
+                                child: Text(
+                                  'Зарегистрироваться',
+                                  style: TextStyle(
+                                    color: buttonColor,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
           ),
         ),
       ),

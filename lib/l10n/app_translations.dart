@@ -209,10 +209,11 @@ class AppTranslations extends Translations {
       'buy_now': 'Купить',
       'add_to_cart': 'В корзину',
       
-      // Guest mode
-      'login_required': 'Требуется вход',
-      'welcome': 'Добро пожаловать!',
-      'login_to_continue': 'Войдите, чтобы продолжить',
+            // Guest mode
+            'login_required': 'Требуется вход',
+            'welcome': 'Добро пожаловать!',
+            'login_to_continue': 'Войдите, чтобы продолжить',
+            'continue_as_guest': 'Продолжить как гость',
       
       // Nearby sellers
       'nearby_sellers': 'Продавцы рядом',
@@ -229,11 +230,30 @@ class AppTranslations extends Translations {
       'verify_seller': 'Верифицировать',
       'reject_seller': 'Отклонить',
       
-      // Phone call
-      'call_seller': 'Позвонить продавцу',
-      'call_courier': 'Позвонить курьеру',
-      'phone_number': 'Номер телефона',
-    },
+          // Phone call
+          'call_seller': 'Позвонить продавцу',
+          'call_courier': 'Позвонить курьеру',
+          'phone_number': 'Номер телефона',
+      
+          // Analytics
+          'analytics': 'Аналитика',
+          'detailed_analytics': 'Подробная аналитика',
+          'revenue': 'Выручка',
+          'total_orders': 'Всего заказов',
+          'completed': 'Выполнено',
+          'pending': 'В ожидании',
+          'cancelled': 'Отменено',
+          'top_products': 'Топ товары',
+          'views': 'Просмотры',
+          'likes': 'Лайки',
+          'engagement': 'Вовлечённость',
+          'week': 'Неделя',
+          'month': 'Месяц',
+          'year': 'Год',
+          'all_time': 'Всё время',
+          'daily_sales': 'Продажи по дням',
+          'conversion': 'Конверсия',
+        },
     
     'uz_UZ': {
       // Navigation
@@ -441,10 +461,15 @@ class AppTranslations extends Translations {
       'buy_now': 'Sotib olish',
       'add_to_cart': 'Savatga',
       
-      // Guest mode
-      'login_required': 'Kirish talab qilinadi',
-      'welcome': 'Xush kelibsiz!',
-      'login_to_continue': 'Davom etish uchun kiring',
+            // Guest mode
+            'login_required': 'Kirish talab qilinadi',
+            'welcome': 'Xush kelibsiz!',
+            'login_to_continue': 'Davom etish uchun kiring',
+            'continue_as_guest': 'Mehmon sifatida davom etish',
+      
+            // Analytics
+            'analytics': 'Analitika',
+            'detailed_analytics': 'Batafsil analitika',
       
       // Nearby sellers
       'nearby_sellers': 'Yaqindagi sotuvchilar',
@@ -668,10 +693,15 @@ class AppTranslations extends Translations {
       'buy_now': 'Buy now',
       'add_to_cart': 'Add to cart',
       
-      // Guest mode
-      'login_required': 'Login required',
-      'welcome': 'Welcome!',
-      'login_to_continue': 'Login to continue',
-    },
+          // Guest mode
+          'login_required': 'Login required',
+          'welcome': 'Welcome!',
+          'login_to_continue': 'Login to continue',
+          'continue_as_guest': 'Continue as guest',
+      
+          // Analytics
+          'analytics': 'Analytics',
+          'detailed_analytics': 'Detailed analytics',
+        },
   };
 }

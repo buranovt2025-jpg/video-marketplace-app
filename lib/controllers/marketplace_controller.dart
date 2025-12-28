@@ -4,10 +4,11 @@ import 'package:tiktok_tutorial/services/api_service.dart';
 class MarketplaceController extends GetxController {
   static MarketplaceController get instance => Get.find();
   
-  // User state
-  final Rx<Map<String, dynamic>?> currentUser = Rx<Map<String, dynamic>?>(null);
-  final RxBool isLoading = false.obs;
-  final RxString error = ''.obs;
+    // User state
+    final Rx<Map<String, dynamic>?> currentUser = Rx<Map<String, dynamic>?>(null);
+    final RxBool isLoading = false.obs;
+    final RxString error = ''.obs;
+    final RxBool isGuestMode = false.obs;
   
   // Products state
   final RxList<Map<String, dynamic>> products = <Map<String, dynamic>>[].obs;
@@ -35,6 +36,7 @@ class MarketplaceController extends GetxController {
   bool get isCourier => userRole == 'courier';
   bool get isAdmin => userRole == 'admin';
   bool get isLoggedIn => currentUser.value != null;
+  bool get isGuest => isGuestMode.value;
   
   @override
   void onInit() {
@@ -104,17 +106,27 @@ class MarketplaceController extends GetxController {
     }
   }
   
-  Future<void> logout() async {
-    await ApiService.clearToken();
-    currentUser.value = null;
-    products.clear();
-    myProducts.clear();
-    reels.clear();
-    stories.clear();
-    orders.clear();
-    conversations.clear();
-    unreadCount.value = 0;
-  }
+    Future<void> logout() async {
+      await ApiService.clearToken();
+      currentUser.value = null;
+      isGuestMode.value = false;
+      products.clear();
+      myProducts.clear();
+      reels.clear();
+      stories.clear();
+      orders.clear();
+      conversations.clear();
+      unreadCount.value = 0;
+    }
+  
+    void setGuestMode(bool value) {
+      isGuestMode.value = value;
+      if (value) {
+        // Set a guest user for browsing
+        currentUser.value = null;
+        _loadInitialData();
+      }
+    }
   
   Future<void> fetchCurrentUser() async {
     try {

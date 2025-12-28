@@ -5,6 +5,7 @@ import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/views/screens/seller/my_products_screen.dart';
 import 'package:tiktok_tutorial/views/screens/common/qr_code_screen.dart';
+import 'package:tiktok_tutorial/views/screens/seller/seller_analytics_screen.dart';
 
 class SellerCabinetScreen extends StatefulWidget {
   const SellerCabinetScreen({Key? key}) : super(key: key);
@@ -473,22 +474,42 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
               ],
             ),
             
-            const SizedBox(height: 32),
-            const Text(
-              'Топ товары',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+              const SizedBox(height: 24),
+            
+              // Detailed analytics button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => Get.to(() => const SellerAnalyticsScreen()),
+                  icon: const Icon(Icons.analytics),
+                  label: Text('detailed_analytics'.tr),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            _buildTopProducts(),
-          ],
-        ),
-      );
-    });
-  }
+            
+              const SizedBox(height: 32),
+              const Text(
+                'Топ товары',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildTopProducts(),
+            ],
+          ),
+        );
+      });
+    }
 
   Widget _buildStatCard(String title, String value, IconData icon, Color color) {
     return Container(

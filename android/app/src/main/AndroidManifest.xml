@@ -1,9 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.tiktok_tutorial">
-   <application
-        android:label="tiktok_tutorial"
-        android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+      <application
+           android:label="GoGoMarket"
+           android:name="${applicationName}"
+           android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
             android:exported="true"
