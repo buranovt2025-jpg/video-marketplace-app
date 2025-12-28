@@ -34,7 +34,8 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   final MarketplaceController _controller = Get.find<MarketplaceController>();
   int _currentIndex = 0;
   
-  bool get _isGuestMode => widget.isGuestMode;
+  // Use controller's isGuestMode flag OR widget parameter (for robustness)
+  bool get _isGuestMode => widget.isGuestMode || _controller.isGuest;
   bool get _isSeller => !_isGuestMode && _controller.currentUser.value?['role'] == 'seller';
   bool get _isBuyer => _isGuestMode || _controller.currentUser.value?['role'] == 'buyer';
   
@@ -114,43 +115,51 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor,
-      body: _isGuestMode 
-        ? _buildGuestModeBody()
-        : Obx(() {
-            if (!_controller.isLoggedIn) {
-              return const Center(
-                child: CircularProgressIndicator(color: primaryColor),
-              );
-            }
-            
-            // Different tabs for seller vs buyer
-            if (_isSeller) {
-              return IndexedStack(
-                index: _safeCurrentIndex,
-                children: [
-                  _buildFeedTab(),
-                  _buildExploreTab(),
-                  _buildCreateTab(),
-                  _buildOrdersTab(),
-                  _buildProfileTab(),
-                ],
-              );
-            } else {
-              // Buyer: no Create tab
-              return IndexedStack(
-                index: _safeCurrentIndex,
-                children: [
-                  _buildFeedTab(),
-                  _buildExploreTab(),
-                  _buildOrdersTab(),
-                  _buildProfileTab(),
-                ],
-              );
-            }
-          }),
-      bottomNavigationBar: _isGuestMode 
-        ? _buildGuestBottomNav()
-        : Obx(() => BottomNavigationBar(
+      body: Obx(() {
+        // Check guest mode reactively from controller
+        final isGuest = widget.isGuestMode || _controller.isGuest;
+        
+        if (isGuest) {
+          return _buildGuestModeBody();
+        }
+        
+        if (!_controller.isLoggedIn) {
+          return const Center(
+            child: CircularProgressIndicator(color: primaryColor),
+          );
+        }
+        
+        // Different tabs for seller vs buyer
+        if (_isSeller) {
+          return IndexedStack(
+            index: _safeCurrentIndex,
+            children: [
+              _buildFeedTab(),
+              _buildExploreTab(),
+              _buildCreateTab(),
+              _buildOrdersTab(),
+              _buildProfileTab(),
+            ],
+          );
+        } else {
+          // Buyer: no Create tab
+          return IndexedStack(
+            index: _safeCurrentIndex,
+            children: [
+              _buildFeedTab(),
+              _buildExploreTab(),
+              _buildOrdersTab(),
+              _buildProfileTab(),
+            ],
+          );
+        }
+      }),
+      bottomNavigationBar: Obx(() {
+        final isGuest = widget.isGuestMode || _controller.isGuest;
+        if (isGuest) {
+          return _buildGuestBottomNav();
+        }
+        return BottomNavigationBar(
             currentIndex: _safeCurrentIndex,
             onTap: (index) {
               setState(() {
@@ -200,7 +209,8 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 label: 'profile'.tr,
               ),
             ],
-          )),
+          );
+      }),
     );
   }
   
