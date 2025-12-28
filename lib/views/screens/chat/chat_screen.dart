@@ -28,7 +28,6 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _isLoading = true;
   bool _isSending = false;
   bool _isOnline = false;
-  bool _isTyping = false;
 
   @override
   void initState() {
@@ -46,7 +45,7 @@ class _ChatScreenState extends State<ChatScreen> {
     
     // Connect to WebSocket
     _wsService.connect(
-      userId: _controller.userId ?? 'user',
+      userId: _controller.userId,
       conversationId: widget.userId,
     );
     

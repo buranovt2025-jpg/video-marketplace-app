@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/controllers/cart_controller.dart';
@@ -7,7 +8,6 @@ import 'package:tiktok_tutorial/controllers/favorites_controller.dart';
 import 'package:tiktok_tutorial/services/api_service.dart';
 import 'package:tiktok_tutorial/services/notification_service.dart';
 import 'package:tiktok_tutorial/services/location_service.dart';
-import 'package:tiktok_tutorial/views/screens/auth/marketplace_login_screen.dart';
 import 'package:tiktok_tutorial/views/screens/marketplace_home_screen.dart';
 import 'package:tiktok_tutorial/views/screens/courier/courier_home_screen.dart';
 import 'package:tiktok_tutorial/views/screens/admin/admin_home_screen.dart';
@@ -15,6 +15,9 @@ import 'package:tiktok_tutorial/l10n/app_translations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Firebase
+  await Firebase.initializeApp();
   
   // Initialize API service and check for existing token
   await ApiService.init();
