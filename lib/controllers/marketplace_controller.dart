@@ -26,8 +26,8 @@ class MarketplaceController extends GetxController {
   final RxInt unreadCount = 0.obs;
   
   // Getters
-  String get userId => currentUser.value?['id'] ?? '';
-  String get userRole => currentUser.value?['role'] ?? '';
+  String get userId => currentUser.value?['id']?.toString() ?? '';
+  String get userRole => currentUser.value?['role']?.toString() ?? '';
   String get userName => currentUser.value?['name'] ?? '';
   String get userEmail => currentUser.value?['email'] ?? '';
   String get userAvatar => currentUser.value?['avatar_url'] ?? '';

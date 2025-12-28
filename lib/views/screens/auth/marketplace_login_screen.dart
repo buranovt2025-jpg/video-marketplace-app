@@ -30,8 +30,14 @@ class _MarketplaceLoginScreenState extends State<MarketplaceLoginScreen> {
   }
 
   void _continueAsGuest() {
+    // If already in guest mode, just go back to home
+    if (_controller.isGuest) {
+      Get.offAll(() => const MarketplaceHomeScreen());
+      return;
+    }
+    // Set guest mode and navigate to home
     _controller.setGuestMode(true);
-    Get.offAll(() => const MarketplaceHomeScreen(isGuestMode: true));
+    Get.offAll(() => const MarketplaceHomeScreen());
   }
 
   Future<void> _login() async {

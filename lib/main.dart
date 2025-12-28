@@ -40,10 +40,10 @@ void main() async {
     print('LocationService initialization failed: $e');
   }
   
-  // Initialize controllers
-  Get.put(MarketplaceController());
-  Get.put(CartController());
-  Get.put(FavoritesController());
+  // Initialize controllers (permanent: true to prevent disposal on navigation)
+  Get.put(MarketplaceController(), permanent: true);
+  Get.put(CartController(), permanent: true);
+  Get.put(FavoritesController(), permanent: true);
   
   runApp(const MyApp());
 }
