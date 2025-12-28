@@ -170,6 +170,7 @@ class MarketplaceController extends GetxController {
     String? description,
     String? imageUrl,
     String? category,
+    int? quantity,
   }) async {
     try {
       isLoading.value = true;
@@ -181,6 +182,7 @@ class MarketplaceController extends GetxController {
         description: description,
         imageUrl: imageUrl,
         category: category,
+        quantity: quantity,
       );
       
       myProducts.add(product);

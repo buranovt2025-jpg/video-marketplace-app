@@ -145,6 +145,7 @@ class ApiService {
     String? description,
     String? imageUrl,
     String? category,
+    int? quantity,
     bool inStock = true,
   }) async {
     final response = await http.post(
@@ -156,6 +157,7 @@ class ApiService {
         'description': description,
         'image_url': imageUrl,
         'category': category,
+        'quantity': quantity ?? 1,
         'in_stock': inStock,
       }),
     );

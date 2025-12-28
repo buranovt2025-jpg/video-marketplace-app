@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/controllers/favorites_controller.dart';
+import 'package:tiktok_tutorial/controllers/cart_controller.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/order_tracking_screen.dart';
+import 'package:tiktok_tutorial/views/screens/common/location_picker_screen.dart';
 
 class BuyerCabinetScreen extends StatefulWidget {
   const BuyerCabinetScreen({Key? key}) : super(key: key);
@@ -13,11 +16,12 @@ class BuyerCabinetScreen extends StatefulWidget {
 
 class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTickerProviderStateMixin {
   final MarketplaceController _controller = Get.find<MarketplaceController>();
+  final FavoritesController _favoritesController = Get.find<FavoritesController>();
+  final CartController _cartController = Get.find<CartController>();
   late TabController _tabController;
   
-  // Local state for addresses and favorites
+  // Local state for addresses
   final RxList<Map<String, dynamic>> _addresses = <Map<String, dynamic>>[].obs;
-  final RxList<Map<String, dynamic>> _favorites = <Map<String, dynamic>>[].obs;
 
   @override
   void initState() {
@@ -271,7 +275,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
 
   Widget _buildFavoritesTab() {
     return Obx(() {
-      if (_favorites.isEmpty) {
+      if (_favoritesController.favorites.isEmpty) {
         return Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -279,12 +283,12 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
               Icon(Icons.favorite_border, size: 64, color: Colors.grey[700]),
               const SizedBox(height: 16),
               Text(
-                'Нет избранных товаров',
+                'no_favorites'.tr,
                 style: TextStyle(color: Colors.grey[500], fontSize: 16),
               ),
               const SizedBox(height: 8),
               Text(
-                'Нажмите на сердечко, чтобы\nдобавить товар в избранное',
+                'add_to_favorites'.tr,
                 style: TextStyle(color: Colors.grey[600], fontSize: 14),
                 textAlign: TextAlign.center,
               ),
@@ -301,9 +305,9 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
           crossAxisSpacing: 12,
           childAspectRatio: 0.75,
         ),
-        itemCount: _favorites.length,
+        itemCount: _favoritesController.favorites.length,
         itemBuilder: (context, index) {
-          final product = _favorites[index];
+          final product = _favoritesController.favorites[index];
           return _buildFavoriteCard(product);
         },
       );
@@ -345,12 +349,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
                   right: 8,
                   child: GestureDetector(
                     onTap: () {
-                      _favorites.remove(product);
-                      Get.snackbar(
-                        'Удалено',
-                        'Товар удалён из избранного',
-                        snackPosition: SnackPosition.BOTTOM,
-                      );
+                      _favoritesController.removeFromFavorites(product['id']);
                     },
                     child: Container(
                       padding: const EdgeInsets.all(6),
@@ -359,6 +358,30 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.favorite, color: Colors.red, size: 20),
+                    ),
+                  ),
+                ),
+                // Add to cart button
+                Positioned(
+                  bottom: 8,
+                  right: 8,
+                  child: GestureDetector(
+                    onTap: () {
+                      _cartController.addToCart(product);
+                      Get.snackbar(
+                        'cart'.tr,
+                        '${product['name']} added',
+                        snackPosition: SnackPosition.BOTTOM,
+                        duration: const Duration(seconds: 1),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: primaryColor,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.add_shopping_cart, color: Colors.white, size: 20),
                     ),
                   ),
                 ),

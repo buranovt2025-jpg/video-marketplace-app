@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/controllers/cart_controller.dart';
+import 'package:tiktok_tutorial/controllers/favorites_controller.dart';
 import 'package:tiktok_tutorial/services/api_service.dart';
 import 'package:tiktok_tutorial/services/notification_service.dart';
 import 'package:tiktok_tutorial/services/location_service.dart';
@@ -25,6 +26,7 @@ void main() async {
   // Initialize controllers
   Get.put(MarketplaceController());
   Get.put(CartController());
+  Get.put(FavoritesController());
   
   runApp(const MyApp());
 }
@@ -59,8 +61,11 @@ class AppRouter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Guest mode: allow browsing without login
+    // Users will be prompted to login when trying to buy, add to favorites, etc.
     if (!ApiService.isLoggedIn) {
-      return const MarketplaceLoginScreen();
+      // Show marketplace in guest mode (buyer view without login)
+      return const MarketplaceHomeScreen(isGuestMode: true);
     }
     
     final controller = Get.find<MarketplaceController>();

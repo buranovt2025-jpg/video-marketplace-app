@@ -4,6 +4,7 @@ import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/cart_controller.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/order_success_screen.dart';
+import 'package:tiktok_tutorial/views/screens/common/location_picker_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final String sellerId;
@@ -287,28 +288,67 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Widget _buildAddressField() {
-    return TextFormField(
-      controller: _addressController,
-      style: const TextStyle(color: Colors.white),
-      maxLines: 2,
-      decoration: InputDecoration(
-        hintText: 'Введите адрес доставки',
-        hintStyle: TextStyle(color: Colors.grey[600]),
-        filled: true,
-        fillColor: Colors.grey[900],
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
+    return Column(
+      children: [
+        TextFormField(
+          controller: _addressController,
+          style: const TextStyle(color: Colors.white),
+          maxLines: 2,
+          decoration: InputDecoration(
+            hintText: 'enter_full_address'.tr,
+            hintStyle: TextStyle(color: Colors.grey[600]),
+            filled: true,
+            fillColor: Colors.grey[900],
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            prefixIcon: Icon(Icons.location_on, color: buttonColor),
+          ),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'enter_address'.tr;
+            }
+            return null;
+          },
         ),
-        prefixIcon: Icon(Icons.location_on, color: buttonColor),
-      ),
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Введите адрес доставки';
-        }
-        return null;
-      },
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: _openLocationPicker,
+            icon: Icon(Icons.map, color: primaryColor),
+            label: Text(
+              'select_location'.tr,
+              style: TextStyle(color: primaryColor),
+            ),
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: primaryColor.withOpacity(0.5)),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
+  }
+
+  Future<void> _openLocationPicker() async {
+    final result = await Get.to<Map<String, dynamic>>(() => LocationPickerScreen(
+      initialAddress: _addressController.text,
+      initialLatitude: _latitude,
+      initialLongitude: _longitude,
+    ));
+    
+    if (result != null) {
+      setState(() {
+        _addressController.text = result['address'] ?? '';
+        _latitude = result['latitude'] ?? _latitude;
+        _longitude = result['longitude'] ?? _longitude;
+      });
+    }
   }
 
   Widget _buildLocationInfo() {

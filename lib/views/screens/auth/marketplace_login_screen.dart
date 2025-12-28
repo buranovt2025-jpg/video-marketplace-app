@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/views/screens/auth/marketplace_register_screen.dart';
+import 'package:tiktok_tutorial/views/screens/auth/forgot_password_screen.dart';
 import 'package:tiktok_tutorial/views/screens/marketplace_home_screen.dart';
 import 'package:tiktok_tutorial/views/screens/courier/courier_home_screen.dart';
 import 'package:tiktok_tutorial/views/screens/admin/admin_home_screen.dart';
@@ -164,7 +165,19 @@ class _MarketplaceLoginScreenState extends State<MarketplaceLoginScreen> {
                 ),
               ),
               
-              const SizedBox(height: 24),
+              // Forgot password link
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => Get.to(() => const ForgotPasswordScreen()),
+                  child: Text(
+                    'forgot_password'.tr,
+                    style: TextStyle(color: Colors.grey[400]),
+                  ),
+                ),
+              ),
+              
+              const SizedBox(height: 8),
               
               // Login button
               Obx(() => ElevatedButton(

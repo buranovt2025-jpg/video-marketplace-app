@@ -5,6 +5,8 @@ import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/services/location_service.dart';
 import 'package:tiktok_tutorial/services/notification_service.dart';
 import 'package:tiktok_tutorial/views/screens/chat/chat_screen.dart';
+import 'package:tiktok_tutorial/views/screens/common/qr_code_screen.dart';
+import 'package:tiktok_tutorial/views/screens/common/qr_scanner_screen.dart';
 
 class CourierOrderDetailScreen extends StatefulWidget {
   final Map<String, dynamic> order;
@@ -633,18 +635,19 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
     return Column(
       children: [
         if (status == 'ready') ...[
+          // Scan QR from seller to confirm pickup
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: _isUpdating ? null : () => _updateStatus('picked_up'),
+              onPressed: _isUpdating ? null : _scanPickupQR,
               icon: _isUpdating 
                 ? const SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                   )
-                : const Icon(Icons.check_circle),
-              label: const Text('Забрал заказ'),
+                : const Icon(Icons.qr_code_scanner),
+              label: Text('scan_qr'.tr + ' - ' + 'confirm_pickup'.tr),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.purple,
                 foregroundColor: Colors.white,
@@ -683,18 +686,13 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
         ],
         
         if (status == 'in_transit') ...[
+          // Show QR for buyer to scan
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: _isUpdating ? null : () => _updateStatus('delivered'),
-              icon: _isUpdating 
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                  )
-                : const Icon(Icons.check_circle),
-              label: const Text('Заказ доставлен'),
+              onPressed: _showDeliveryQR,
+              icon: const Icon(Icons.qr_code),
+              label: Text('show_qr'.tr + ' - ' + 'confirm_delivery'.tr),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
                 foregroundColor: Colors.white,
@@ -705,8 +703,60 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
               ),
             ),
           ),
+          const SizedBox(height: 12),
+          // Manual delivery confirmation
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _isUpdating ? null : () => _updateStatus('delivered'),
+              icon: _isUpdating 
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.green),
+                  )
+                : const Icon(Icons.check_circle, color: Colors.green),
+              label: Text(
+                'Подтвердить без QR',
+                style: TextStyle(color: Colors.green[400]),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.green.withOpacity(0.5)),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
         ],
       ],
     );
+  }
+
+  void _scanPickupQR() {
+    Get.to(() => QRScannerScreen(
+      expectedType: 'pickup',
+      expectedOrderId: _order['id'],
+      onScanned: (orderId, type) {
+        _updateStatus('picked_up');
+        Get.snackbar(
+          'item_received'.tr,
+          'Товар получен от продавца',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+      },
+    ));
+  }
+
+  void _showDeliveryQR() {
+    Get.to(() => QRCodeScreen(
+      orderId: _order['id'] ?? '',
+      type: 'delivery',
+      title: 'show_qr'.tr,
+      subtitle: 'Покупатель должен отсканировать этот QR-код',
+    ));
   }
 }

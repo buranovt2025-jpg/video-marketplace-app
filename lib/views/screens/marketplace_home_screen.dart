@@ -18,7 +18,9 @@ import 'package:tiktok_tutorial/views/screens/cabinets/seller_cabinet_screen.dar
 import 'package:tiktok_tutorial/views/screens/cabinets/buyer_cabinet_screen.dart';
 
 class MarketplaceHomeScreen extends StatefulWidget {
-  const MarketplaceHomeScreen({Key? key}) : super(key: key);
+  final bool isGuestMode;
+  
+  const MarketplaceHomeScreen({Key? key, this.isGuestMode = false}) : super(key: key);
 
   @override
   State<MarketplaceHomeScreen> createState() => _MarketplaceHomeScreenState();
@@ -28,14 +30,43 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   final MarketplaceController _controller = Get.find<MarketplaceController>();
   int _currentIndex = 0;
   
-  bool get _isSeller => _controller.currentUser.value?['role'] == 'seller';
-  bool get _isBuyer => _controller.currentUser.value?['role'] == 'buyer';
+  bool get _isGuestMode => widget.isGuestMode;
+  bool get _isSeller => !_isGuestMode && _controller.currentUser.value?['role'] == 'seller';
+  bool get _isBuyer => _isGuestMode || _controller.currentUser.value?['role'] == 'buyer';
   
-  // Get max valid index based on role
-  int get _maxIndex => _isSeller ? 4 : 3; // Seller: 5 tabs (0-4), Buyer: 4 tabs (0-3)
+  // Get max valid index based on role (Guest mode = 3 tabs like buyer)
+  int get _maxIndex => _isSeller ? 4 : 3; // Seller: 5 tabs (0-4), Buyer/Guest: 4 tabs (0-3)
   
   // Ensure currentIndex is within bounds
   int get _safeCurrentIndex => _currentIndex > _maxIndex ? _maxIndex : _currentIndex;
+  
+  // Helper to prompt login for protected actions
+  void _promptLogin(String action) {
+    Get.dialog(
+      AlertDialog(
+        backgroundColor: Colors.grey[900],
+        title: Text('login_required'.tr, style: const TextStyle(color: Colors.white)),
+        content: Text(
+          'Войдите, чтобы $action',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text('cancel'.tr, style: const TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Get.back();
+              Get.to(() => const MarketplaceLoginScreen());
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
+            child: Text('login'.tr),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -52,93 +83,261 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     }
   }
 
+  void _openProductFromReel(Map<String, dynamic> reel) {
+    final productId = reel['product_id'];
+    if (productId == null) return;
+    
+    // Find the product in the products list
+    final product = _controller.products.firstWhere(
+      (p) => p['id'] == productId,
+      orElse: () => <String, dynamic>{},
+    );
+    
+    if (product.isNotEmpty) {
+      Get.to(() => ProductDetailScreen(product: product));
+    } else {
+      Get.snackbar(
+        'error'.tr,
+        'Товар не найден',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor,
-      body: Obx(() {
-        if (!_controller.isLoggedIn) {
-          return const Center(
-            child: CircularProgressIndicator(color: primaryColor),
-          );
-        }
-        
-        // Different tabs for seller vs buyer
-        if (_isSeller) {
-          return IndexedStack(
-            index: _safeCurrentIndex,
-            children: [
-              _buildFeedTab(),
-              _buildExploreTab(),
-              _buildCreateTab(),
-              _buildOrdersTab(),
-              _buildProfileTab(),
+      body: _isGuestMode 
+        ? _buildGuestModeBody()
+        : Obx(() {
+            if (!_controller.isLoggedIn) {
+              return const Center(
+                child: CircularProgressIndicator(color: primaryColor),
+              );
+            }
+            
+            // Different tabs for seller vs buyer
+            if (_isSeller) {
+              return IndexedStack(
+                index: _safeCurrentIndex,
+                children: [
+                  _buildFeedTab(),
+                  _buildExploreTab(),
+                  _buildCreateTab(),
+                  _buildOrdersTab(),
+                  _buildProfileTab(),
+                ],
+              );
+            } else {
+              // Buyer: no Create tab
+              return IndexedStack(
+                index: _safeCurrentIndex,
+                children: [
+                  _buildFeedTab(),
+                  _buildExploreTab(),
+                  _buildOrdersTab(),
+                  _buildProfileTab(),
+                ],
+              );
+            }
+          }),
+      bottomNavigationBar: _isGuestMode 
+        ? _buildGuestBottomNav()
+        : Obx(() => BottomNavigationBar(
+            currentIndex: _safeCurrentIndex,
+            onTap: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+            type: BottomNavigationBarType.fixed,
+            backgroundColor: Colors.black,
+            selectedItemColor: primaryColor,
+            unselectedItemColor: Colors.grey,
+            items: _isSeller ? [
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.home),
+                label: 'feed'.tr,
+              ),
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.search),
+                label: 'search'.tr,
+              ),
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.add_box),
+                label: 'create'.tr,
+              ),
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.shopping_bag),
+                label: 'orders'.tr,
+              ),
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.person),
+                label: 'profile'.tr,
+              ),
+            ] : [
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.home),
+                label: 'feed'.tr,
+              ),
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.search),
+                label: 'search'.tr,
+              ),
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.shopping_bag),
+                label: 'orders'.tr,
+              ),
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.person),
+                label: 'profile'.tr,
+              ),
             ],
-          );
-        } else {
-          // Buyer: no Create tab
-          return IndexedStack(
-            index: _safeCurrentIndex,
-            children: [
-              _buildFeedTab(),
-              _buildExploreTab(),
-              _buildOrdersTab(),
-              _buildProfileTab(),
-            ],
-          );
-        }
-      }),
-      bottomNavigationBar: Obx(() => BottomNavigationBar(
-        currentIndex: _safeCurrentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.black,
-        selectedItemColor: primaryColor,
-        unselectedItemColor: Colors.grey,
-        items: _isSeller ? [
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.home),
-            label: 'feed'.tr,
+          )),
+    );
+  }
+  
+  // Guest mode body - shows feed and explore without login
+  Widget _buildGuestModeBody() {
+    return IndexedStack(
+      index: _safeCurrentIndex,
+      children: [
+        _buildFeedTab(),
+        _buildExploreTab(),
+        _buildGuestOrdersTab(),
+        _buildGuestProfileTab(),
+      ],
+    );
+  }
+  
+  // Guest mode bottom navigation
+  Widget _buildGuestBottomNav() {
+    return BottomNavigationBar(
+      currentIndex: _safeCurrentIndex,
+      onTap: (index) {
+        setState(() {
+          _currentIndex = index;
+        });
+      },
+      type: BottomNavigationBarType.fixed,
+      backgroundColor: Colors.black,
+      selectedItemColor: primaryColor,
+      unselectedItemColor: Colors.grey,
+      items: [
+        BottomNavigationBarItem(
+          icon: const Icon(Icons.home),
+          label: 'feed'.tr,
+        ),
+        BottomNavigationBarItem(
+          icon: const Icon(Icons.search),
+          label: 'search'.tr,
+        ),
+        BottomNavigationBarItem(
+          icon: const Icon(Icons.shopping_bag),
+          label: 'orders'.tr,
+        ),
+        BottomNavigationBarItem(
+          icon: const Icon(Icons.login),
+          label: 'login'.tr,
+        ),
+      ],
+    );
+  }
+  
+  // Guest orders tab - prompts login
+  Widget _buildGuestOrdersTab() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.shopping_bag_outlined, size: 80, color: Colors.grey[600]),
+          const SizedBox(height: 24),
+          Text(
+            'Войдите, чтобы видеть заказы',
+            style: TextStyle(color: Colors.grey[400], fontSize: 18),
           ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.search),
-            label: 'search'.tr,
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.add_box),
-            label: 'create'.tr,
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.shopping_bag),
-            label: 'orders'.tr,
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.person),
-            label: 'profile'.tr,
-          ),
-        ] : [
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.home),
-            label: 'feed'.tr,
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.search),
-            label: 'search'.tr,
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.shopping_bag),
-            label: 'orders'.tr,
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.person),
-            label: 'profile'.tr,
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () => Get.to(() => const MarketplaceLoginScreen()),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryColor,
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text('login'.tr, style: const TextStyle(fontSize: 16)),
           ),
         ],
-      )),
+      ),
+    );
+  }
+  
+  // Guest profile tab - shows login/register options
+  Widget _buildGuestProfileTab() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircleAvatar(
+              radius: 50,
+              backgroundColor: Colors.grey[800],
+              child: Icon(Icons.person_outline, size: 60, color: Colors.grey[600]),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Добро пожаловать!',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Войдите или зарегистрируйтесь,\nчтобы делать покупки',
+              style: TextStyle(color: Colors.grey[400], fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Get.to(() => const MarketplaceLoginScreen()),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text('login'.tr, style: const TextStyle(fontSize: 16)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () => Get.to(() => const MarketplaceLoginScreen()),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: primaryColor,
+                  side: const BorderSide(color: primaryColor),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text('register'.tr, style: const TextStyle(fontSize: 16)),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -448,6 +647,23 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                   onPressed: () {},
                 ),
                 const Spacer(),
+                // Buy button for reels with linked product
+                if (reel['product_id'] != null) ...[
+                  ElevatedButton.icon(
+                    onPressed: () => _openProductFromReel(reel),
+                    icon: const Icon(Icons.shopping_cart, size: 18),
+                    label: Text('buy_now'.tr),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 IconButton(
                   icon: const Icon(Icons.bookmark_border, color: Colors.white),
                   onPressed: () {},

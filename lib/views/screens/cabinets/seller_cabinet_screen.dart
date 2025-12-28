@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/views/screens/seller/my_products_screen.dart';
+import 'package:tiktok_tutorial/views/screens/common/qr_code_screen.dart';
 
 class SellerCabinetScreen extends StatefulWidget {
   const SellerCabinetScreen({Key? key}) : super(key: key);
@@ -285,6 +286,22 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
                 ),
               ),
             ],
+            // Show QR button for ready orders
+            if (status == 'ready') ...[
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => _showPickupQR(orderId),
+                  icon: const Icon(Icons.qr_code),
+                  label: Text('show_qr'.tr + ' - ' + 'pickup_qr'.tr),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.purple,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -368,6 +385,15 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
     } catch (e) {
       Get.snackbar('error'.tr, 'Не удалось обновить статус', snackPosition: SnackPosition.BOTTOM);
     }
+  }
+
+  void _showPickupQR(String orderId) {
+    Get.to(() => QRCodeScreen(
+      orderId: orderId,
+      type: 'pickup',
+      title: 'show_qr'.tr,
+      subtitle: 'Курьер должен отсканировать этот QR-код',
+    ));
   }
 
   Widget _buildStatisticsTab() {
