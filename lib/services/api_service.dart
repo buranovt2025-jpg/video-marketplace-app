@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  static const String baseUrl = 'https://app-owphiuvd.fly.dev';
+  static const String baseUrl = 'https://165.232.81.31';
   static String? _token;
   
   static Future<void> init() async {
