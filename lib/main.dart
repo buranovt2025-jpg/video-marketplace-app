@@ -7,6 +7,7 @@ import 'package:tiktok_tutorial/services/api_service.dart';
 import 'package:tiktok_tutorial/views/screens/auth/marketplace_login_screen.dart';
 import 'package:tiktok_tutorial/views/screens/marketplace_home_screen.dart';
 import 'package:tiktok_tutorial/views/screens/courier/courier_home_screen.dart';
+import 'package:tiktok_tutorial/views/screens/admin/admin_home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -56,6 +57,10 @@ class AppRouter extends StatelessWidget {
       }
       
       // Route based on user role
+      if (controller.isAdmin) {
+        return const AdminHomeScreen();
+      }
+      
       if (controller.isCourier) {
         return const CourierHomeScreen();
       }

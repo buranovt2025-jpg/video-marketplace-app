@@ -419,6 +419,31 @@ class ApiService {
       throw ApiException(response.statusCode, 'Failed to get sellers');
     }
   }
+  
+  // Admin endpoints
+  static Future<List<dynamic>> getUsers() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/api/users'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw ApiException(response.statusCode, 'Failed to get users');
+    }
+  }
+  
+  static Future<void> deleteContent(String contentId) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/api/content/$contentId'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode != 200) {
+      throw ApiException(response.statusCode, 'Failed to delete content');
+    }
+  }
 }
 
 class ApiException implements Exception {

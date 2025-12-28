@@ -5,6 +5,7 @@ import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/views/screens/auth/marketplace_register_screen.dart';
 import 'package:tiktok_tutorial/views/screens/marketplace_home_screen.dart';
 import 'package:tiktok_tutorial/views/screens/courier/courier_home_screen.dart';
+import 'package:tiktok_tutorial/views/screens/admin/admin_home_screen.dart';
 
 class MarketplaceLoginScreen extends StatefulWidget {
   const MarketplaceLoginScreen({Key? key}) : super(key: key);
@@ -45,12 +46,14 @@ class _MarketplaceLoginScreenState extends State<MarketplaceLoginScreen> {
 
     if (success) {
       // Route based on user role
-      if (_controller.isCourier) {
+      if (_controller.isAdmin) {
+        Get.offAll(() => const AdminHomeScreen());
+      } else if (_controller.isCourier) {
         Get.offAll(() => const CourierHomeScreen());
       } else {
         Get.offAll(() => const MarketplaceHomeScreen());
       }
-    } else {
+    }else {
       Get.snackbar(
         'Ошибка',
         _controller.error.value.isNotEmpty 
