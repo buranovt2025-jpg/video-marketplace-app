@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/services/location_service.dart';
+import 'package:tiktok_tutorial/services/notification_service.dart';
 import 'package:tiktok_tutorial/views/screens/chat/chat_screen.dart';
 
 class CourierOrderDetailScreen extends StatefulWidget {
@@ -16,13 +17,52 @@ class CourierOrderDetailScreen extends StatefulWidget {
 
 class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
   final MarketplaceController _controller = Get.find<MarketplaceController>();
+  final LocationService _locationService = Get.find<LocationService>();
   late Map<String, dynamic> _order;
   bool _isUpdating = false;
+  String? _distanceToSeller;
+  String? _distanceToBuyer;
 
   @override
   void initState() {
     super.initState();
     _order = Map<String, dynamic>.from(widget.order);
+    _calculateDistances();
+  }
+  
+  Future<void> _calculateDistances() async {
+    final currentPosition = await _locationService.getCurrentLocation();
+    if (currentPosition == null) return;
+    
+    // Calculate distance to seller
+    final sellerLat = _order['seller_latitude']?.toDouble();
+    final sellerLng = _order['seller_longitude']?.toDouble();
+    if (sellerLat != null && sellerLng != null) {
+      final distance = _locationService.calculateDistance(
+        currentPosition.latitude,
+        currentPosition.longitude,
+        sellerLat,
+        sellerLng,
+      );
+      setState(() {
+        _distanceToSeller = _locationService.formatDistance(distance);
+      });
+    }
+    
+    // Calculate distance to buyer
+    final buyerLat = _order['delivery_latitude']?.toDouble();
+    final buyerLng = _order['delivery_longitude']?.toDouble();
+    if (buyerLat != null && buyerLng != null) {
+      final distance = _locationService.calculateDistance(
+        currentPosition.latitude,
+        currentPosition.longitude,
+        buyerLat,
+        buyerLng,
+      );
+      setState(() {
+        _distanceToBuyer = _locationService.formatDistance(distance);
+      });
+    }
   }
 
   Future<void> _openNavigation(double? lat, double? lng, String address) async {
@@ -37,28 +77,11 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
       return;
     }
 
-    // Try Google Maps first, then Yandex Maps
-    final googleMapsUrl = 'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng';
-    final yandexMapsUrl = 'yandexmaps://maps.yandex.ru/?pt=$lng,$lat&z=17&l=map';
-    
-    try {
-      if (await canLaunchUrl(Uri.parse(yandexMapsUrl))) {
-        await launchUrl(Uri.parse(yandexMapsUrl), mode: LaunchMode.externalApplication);
-      } else if (await canLaunchUrl(Uri.parse(googleMapsUrl))) {
-        await launchUrl(Uri.parse(googleMapsUrl), mode: LaunchMode.externalApplication);
-      } else {
-        // Fallback to web
-        await launchUrl(Uri.parse(googleMapsUrl), mode: LaunchMode.externalApplication);
-      }
-    } catch (e) {
-      Get.snackbar(
-        'Ошибка',
-        'Не удалось открыть навигатор',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-    }
+    await _locationService.openNavigation(
+      destinationLat: lat,
+      destinationLng: lng,
+      destinationName: address,
+    );
   }
 
   Future<void> _updateStatus(String newStatus) async {
@@ -158,6 +181,7 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
               longitude: _order['seller_longitude']?.toDouble(),
               userId: _order['seller_id'],
               showNavigation: status == 'picked_up' || status == 'ready',
+              distance: _distanceToSeller,
             ),
             const SizedBox(height: 12),
 
@@ -173,6 +197,7 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
               longitude: _order['delivery_longitude']?.toDouble(),
               userId: _order['buyer_id'],
               showNavigation: status == 'in_transit',
+              distance: _distanceToBuyer,
             ),
             const SizedBox(height: 16),
 
@@ -308,6 +333,7 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
     double? longitude,
     String? userId,
     bool showNavigation = false,
+    String? distance,
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -333,6 +359,30 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
                   fontSize: 14,
                 ),
               ),
+              if (distance != null) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[800],
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.near_me, color: Colors.grey[400], size: 12),
+                      const SizedBox(width: 4),
+                      Text(
+                        distance,
+                        style: TextStyle(
+                          color: Colors.grey[400],
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               if (showNavigation) ...[
                 const Spacer(),
                 Container(
