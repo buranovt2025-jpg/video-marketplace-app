@@ -1,5 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 
@@ -15,9 +18,11 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
   final TextEditingController _imageUrlController = TextEditingController();
   final TextEditingController _videoUrlController = TextEditingController();
   final MarketplaceController _controller = Get.find<MarketplaceController>();
+  final ImagePicker _picker = ImagePicker();
   
   String? _selectedProductId;
   bool _isVideo = false;
+  XFile? _selectedMedia;
 
   @override
   void initState() {
@@ -33,9 +38,81 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
     super.dispose();
   }
 
+  Future<void> _pickFromGallery() async {
+    try {
+      if (_isVideo) {
+        final XFile? video = await _picker.pickVideo(
+          source: ImageSource.gallery,
+          maxDuration: const Duration(seconds: 30),
+        );
+        if (video != null) {
+          setState(() {
+            _selectedMedia = video;
+            _videoUrlController.text = video.path;
+          });
+        }
+      } else {
+        final XFile? image = await _picker.pickImage(
+          source: ImageSource.gallery,
+          imageQuality: 85,
+        );
+        if (image != null) {
+          setState(() {
+            _selectedMedia = image;
+            _imageUrlController.text = image.path;
+          });
+        }
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Ошибка',
+        'Не удалось выбрать файл: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  Future<void> _captureFromCamera() async {
+    try {
+      if (_isVideo) {
+        final XFile? video = await _picker.pickVideo(
+          source: ImageSource.camera,
+          maxDuration: const Duration(seconds: 15),
+        );
+        if (video != null) {
+          setState(() {
+            _selectedMedia = video;
+            _videoUrlController.text = video.path;
+          });
+        }
+      } else {
+        final XFile? image = await _picker.pickImage(
+          source: ImageSource.camera,
+          imageQuality: 85,
+        );
+        if (image != null) {
+          setState(() {
+            _selectedMedia = image;
+            _imageUrlController.text = image.path;
+          });
+        }
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Ошибка',
+        'Не удалось сделать снимок: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
   Future<void> _createStory() async {
-    final hasImage = _imageUrlController.text.isNotEmpty;
-    final hasVideo = _videoUrlController.text.isNotEmpty;
+    final hasImage = _imageUrlController.text.isNotEmpty || (_selectedMedia != null && !_isVideo);
+    final hasVideo = _videoUrlController.text.isNotEmpty || (_selectedMedia != null && _isVideo);
     
     if (!hasImage && !hasVideo) {
       Get.snackbar(
@@ -195,54 +272,153 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
             const SizedBox(height: 24),
             
             // Media preview area
-            GestureDetector(
-              onTap: () {
-                // TODO: Implement media picker
-              },
-              child: Container(
-                height: 300,
-                decoration: BoxDecoration(
-                  color: Colors.grey[900],
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey[800]!),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      _isVideo ? Icons.video_call : Icons.add_photo_alternate,
-                      size: 64,
-                      color: Colors.grey[600],
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      _isVideo ? 'Добавить видео' : 'Добавить фото',
-                      style: TextStyle(
-                        color: Colors.grey[500],
-                        fontSize: 16,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'История исчезнет через 24 часа',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
+            Container(
+              height: 250,
+              decoration: BoxDecoration(
+                color: Colors.grey[900],
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey[800]!),
               ),
+              child: _selectedMedia != null
+                  ? Stack(
+                      children: [
+                        Center(
+                          child: _isVideo
+                              ? Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.videocam, size: 64, color: Colors.green),
+                                    const SizedBox(height: 16),
+                                    Text('Видео выбрано', style: TextStyle(color: Colors.green, fontSize: 16)),
+                                    const SizedBox(height: 8),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                                      child: Text(
+                                        _selectedMedia!.name,
+                                        style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                                        textAlign: TextAlign.center,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : kIsWeb
+                                  ? Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.photo, size: 64, color: Colors.green),
+                                        const SizedBox(height: 16),
+                                        Text('Фото выбрано', style: TextStyle(color: Colors.green, fontSize: 16)),
+                                      ],
+                                    )
+                                  : ClipRRect(
+                                      borderRadius: BorderRadius.circular(16),
+                                      child: Image.file(
+                                        File(_selectedMedia!.path),
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                        height: 250,
+                                      ),
+                                    ),
+                        ),
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: IconButton(
+                            icon: const Icon(Icons.close, color: Colors.red),
+                            onPressed: () {
+                              setState(() {
+                                _selectedMedia = null;
+                                _imageUrlController.clear();
+                                _videoUrlController.clear();
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    )
+                  : Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          _isVideo ? Icons.video_call : Icons.add_photo_alternate,
+                          size: 64,
+                          color: Colors.grey[600],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          _isVideo ? 'Добавить видео' : 'Добавить фото',
+                          style: TextStyle(color: Colors.grey[500], fontSize: 16),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'История исчезнет через 24 часа',
+                          style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                        ),
+                      ],
+                    ),
             ),
             const SizedBox(height: 16),
             
-            // URL field (temporary until file upload is implemented)
+            // Gallery and Camera buttons
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _pickFromGallery,
+                    icon: const Icon(Icons.photo_library),
+                    label: const Text('Галерея'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: buttonColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _captureFromCamera,
+                    icon: Icon(_isVideo ? Icons.videocam : Icons.camera_alt),
+                    label: const Text('Камера'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.grey[800],
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            
+            // OR divider
+            Row(
+              children: [
+                Expanded(child: Divider(color: Colors.grey[700])),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text('или', style: TextStyle(color: Colors.grey[500])),
+                ),
+                Expanded(child: Divider(color: Colors.grey[700])),
+              ],
+            ),
+            const SizedBox(height: 16),
+            
+            // URL field (alternative option)
             if (_isVideo)
               TextField(
                 controller: _videoUrlController,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
-                  labelText: 'URL видео *',
+                  labelText: 'URL видео',
                   labelStyle: TextStyle(color: Colors.grey[400]),
                   hintText: 'https://example.com/video.mp4',
                   hintStyle: TextStyle(color: Colors.grey[600]),
@@ -264,7 +440,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                 controller: _imageUrlController,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
-                  labelText: 'URL изображения *',
+                  labelText: 'URL изображения',
                   labelStyle: TextStyle(color: Colors.grey[400]),
                   hintText: 'https://example.com/image.jpg',
                   hintStyle: TextStyle(color: Colors.grey[600]),
