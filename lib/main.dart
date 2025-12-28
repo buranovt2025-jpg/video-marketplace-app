@@ -1,26 +1,21 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
-import 'package:tiktok_tutorial/controllers/auth_controller.dart';
-import 'package:tiktok_tutorial/demo_config.dart';
-import 'package:tiktok_tutorial/views/screens/auth/login_screen.dart';
-import 'package:tiktok_tutorial/views/screens/home_screen.dart';
+import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/services/api_service.dart';
+import 'package:tiktok_tutorial/views/screens/auth/marketplace_login_screen.dart';
+import 'package:tiktok_tutorial/views/screens/marketplace_home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  if (DEMO_MODE) {
-    // Demo mode - skip Firebase initialization
-    Get.put(AuthController());
-    runApp(const MyApp());
-  } else {
-    // Production mode - initialize Firebase
-    await Firebase.initializeApp().then((value) {
-      Get.put(AuthController());
-    });
-    runApp(const MyApp());
-  }
+  // Initialize API service and check for existing token
+  await ApiService.init();
+  
+  // Initialize marketplace controller
+  Get.put(MarketplaceController());
+  
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -34,8 +29,10 @@ class MyApp extends StatelessWidget {
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: backgroundColor,
       ),
-      // In demo mode, go directly to HomeScreen
-      home: DEMO_MODE ? const HomeScreen() : LoginScreen(),
+      // Check if user is already logged in
+      home: ApiService.isLoggedIn 
+          ? const MarketplaceHomeScreen() 
+          : const MarketplaceLoginScreen(),
     );
   }
 }
