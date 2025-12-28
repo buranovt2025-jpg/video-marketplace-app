@@ -13,6 +13,7 @@ import 'package:tiktok_tutorial/views/screens/buyer/cart_screen.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/order_tracking_screen.dart';
 import 'package:tiktok_tutorial/views/screens/chat/chat_screen.dart';
 import 'package:tiktok_tutorial/views/screens/profile/edit_profile_screen.dart';
+import 'package:tiktok_tutorial/views/screens/stories/story_viewer_screen.dart';
 
 class MarketplaceHomeScreen extends StatefulWidget {
   const MarketplaceHomeScreen({Key? key}) : super(key: key);
@@ -24,6 +25,9 @@ class MarketplaceHomeScreen extends StatefulWidget {
 class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   final MarketplaceController _controller = Get.find<MarketplaceController>();
   int _currentIndex = 0;
+  
+  bool get _isSeller => _controller.currentUser.value?['role'] == 'seller';
+  bool get _isBuyer => _controller.currentUser.value?['role'] == 'buyer';
 
   @override
   void initState() {
@@ -47,22 +51,36 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
       body: Obx(() {
         if (!_controller.isLoggedIn) {
           return const Center(
-            child: CircularProgressIndicator(),
+            child: CircularProgressIndicator(color: primaryColor),
           );
         }
         
-        return IndexedStack(
-          index: _currentIndex,
-          children: [
-            _buildFeedTab(),
-            _buildExploreTab(),
-            _buildCreateTab(),
-            _buildOrdersTab(),
-            _buildProfileTab(),
-          ],
-        );
+        // Different tabs for seller vs buyer
+        if (_isSeller) {
+          return IndexedStack(
+            index: _currentIndex,
+            children: [
+              _buildFeedTab(),
+              _buildExploreTab(),
+              _buildCreateTab(),
+              _buildOrdersTab(),
+              _buildProfileTab(),
+            ],
+          );
+        } else {
+          // Buyer: no Create tab
+          return IndexedStack(
+            index: _currentIndex,
+            children: [
+              _buildFeedTab(),
+              _buildExploreTab(),
+              _buildOrdersTab(),
+              _buildProfileTab(),
+            ],
+          );
+        }
       }),
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: Obx(() => BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {
           setState(() {
@@ -71,9 +89,9 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         },
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.black,
-        selectedItemColor: buttonColor,
+        selectedItemColor: primaryColor,
         unselectedItemColor: Colors.grey,
-        items: const [
+        items: _isSeller ? const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
             label: 'Лента',
@@ -94,8 +112,25 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
             icon: Icon(Icons.person),
             label: 'Профиль',
           ),
+        ] : const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Лента',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.search),
+            label: 'Поиск',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_bag),
+            label: 'Заказы',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Профиль',
+          ),
         ],
-      ),
+      )),
     );
   }
 
@@ -207,57 +242,69 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   }
 
   Widget _buildStoryCircle(Map<String, dynamic> story) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Column(
-        children: [
-          Container(
-            width: 70,
-            height: 70,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: [
-                  Colors.purple,
-                  Colors.pink,
-                  Colors.orange,
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            padding: const EdgeInsets.all(3),
-            child: Container(
+    return GestureDetector(
+      onTap: () {
+        final stories = _controller.stories;
+        final index = stories.indexWhere((s) => s['id'] == story['id']);
+        Get.to(
+          () => StoryViewerScreen(
+            stories: List<Map<String, dynamic>>.from(stories),
+            initialIndex: index >= 0 ? index : 0,
+          ),
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Column(
+          children: [
+            Container(
+              width: 70,
+              height: 70,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: backgroundColor,
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.purple,
+                    Colors.pink,
+                    Colors.orange,
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
               ),
-              padding: const EdgeInsets.all(2),
-              child: CircleAvatar(
-                backgroundImage: story['image_url'] != null
-                    ? NetworkImage(story['image_url'])
-                    : null,
-                backgroundColor: Colors.grey[800],
-                child: story['image_url'] == null
-                    ? const Icon(Icons.person, color: Colors.white)
-                    : null,
+              padding: const EdgeInsets.all(3),
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: backgroundColor,
+                ),
+                padding: const EdgeInsets.all(2),
+                child: CircleAvatar(
+                  backgroundImage: story['image_url'] != null
+                      ? NetworkImage(story['image_url'])
+                      : null,
+                  backgroundColor: Colors.grey[800],
+                  child: story['image_url'] == null
+                      ? const Icon(Icons.person, color: Colors.white)
+                      : null,
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 4),
-          SizedBox(
-            width: 70,
-            child: Text(
-              story['author_name'] ?? 'User',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 11,
+            const SizedBox(height: 4),
+            SizedBox(
+              width: 70,
+              child: Text(
+                story['author_name'] ?? 'User',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                ),
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
               ),
-              textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
