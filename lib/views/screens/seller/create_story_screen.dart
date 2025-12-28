@@ -1,6 +1,4 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:tiktok_tutorial/constants.dart';
@@ -303,24 +301,25 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                                     ),
                                   ],
                                 )
-                              : kIsWeb
-                                  ? Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(Icons.photo, size: 64, color: Colors.green),
-                                        const SizedBox(height: 16),
-                                        Text('Фото выбрано', style: TextStyle(color: Colors.green, fontSize: 16)),
-                                      ],
-                                    )
-                                  : ClipRRect(
-                                      borderRadius: BorderRadius.circular(16),
-                                      child: Image.file(
-                                        File(_selectedMedia!.path),
-                                        fit: BoxFit.cover,
-                                        width: double.infinity,
-                                        height: 250,
+                              : Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.photo, size: 64, color: Colors.green),
+                                    const SizedBox(height: 16),
+                                    Text('Фото выбрано', style: TextStyle(color: Colors.green, fontSize: 16)),
+                                    const SizedBox(height: 8),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                                      child: Text(
+                                        _selectedMedia!.name,
+                                        style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                                        textAlign: TextAlign.center,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
+                                  ],
+                                ),
                         ),
                         Positioned(
                           top: 8,

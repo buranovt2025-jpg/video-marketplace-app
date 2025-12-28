@@ -16,15 +16,29 @@ import 'package:tiktok_tutorial/l10n/app_translations.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize Firebase
-  await Firebase.initializeApp();
+  // Initialize Firebase (with error handling)
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    print('Firebase initialization failed: $e');
+    // Continue without Firebase - push notifications won't work
+  }
   
   // Initialize API service and check for existing token
   await ApiService.init();
   
-  // Initialize services
-  await Get.putAsync(() => NotificationService().init());
-  await Get.putAsync(() => LocationService().init());
+  // Initialize services (with error handling)
+  try {
+    await Get.putAsync(() => NotificationService().init());
+  } catch (e) {
+    print('NotificationService initialization failed: $e');
+  }
+  
+  try {
+    await Get.putAsync(() => LocationService().init());
+  } catch (e) {
+    print('LocationService initialization failed: $e');
+  }
   
   // Initialize controllers
   Get.put(MarketplaceController());
