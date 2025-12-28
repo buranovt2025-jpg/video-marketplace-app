@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/services/websocket_service.dart';
 
 class ChatScreen extends StatefulWidget {
   final String userId;
@@ -22,18 +23,60 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   
+  late WebSocketService _wsService;
   List<Map<String, dynamic>> _messages = [];
   bool _isLoading = true;
   bool _isSending = false;
+  bool _isOnline = false;
+  bool _isTyping = false;
 
   @override
   void initState() {
     super.initState();
+    _initWebSocket();
     _loadMessages();
+  }
+  
+  void _initWebSocket() {
+    // Initialize WebSocket service
+    if (!Get.isRegistered<WebSocketService>()) {
+      Get.put(WebSocketService());
+    }
+    _wsService = Get.find<WebSocketService>();
+    
+    // Connect to WebSocket
+    _wsService.connect(
+      userId: _controller.userId ?? 'user',
+      conversationId: widget.userId,
+    );
+    
+    // Listen for new messages
+    _wsService.onMessageReceived = (message) {
+      if (mounted) {
+        setState(() {
+          _messages.add(message);
+        });
+        _scrollToBottom();
+      }
+    };
+    
+    // Listen for user status changes
+    _wsService.onUserStatusChanged = (userId, isOnline) {
+      if (userId == widget.userId && mounted) {
+        setState(() {
+          _isOnline = isOnline;
+        });
+      }
+    };
+    
+    // Check initial online status
+    _isOnline = _wsService.isUserOnline(widget.userId);
   }
 
   @override
   void dispose() {
+    _wsService.onMessageReceived = null;
+    _wsService.onUserStatusChanged = null;
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -115,12 +158,25 @@ class _ChatScreenState extends State<ChatScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  Text(
-                    'Онлайн',
-                    style: TextStyle(
-                      color: Colors.green[400],
-                      fontSize: 12,
-                    ),
+                  Row(
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: _isOnline ? Colors.green : Colors.grey,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _isOnline ? 'online'.tr : 'offline'.tr,
+                        style: TextStyle(
+                          color: _isOnline ? Colors.green[400] : Colors.grey[500],
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
