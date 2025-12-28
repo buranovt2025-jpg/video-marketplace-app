@@ -35,8 +35,8 @@ class MarketplaceController extends GetxController {
   bool get isBuyer => userRole == 'buyer';
   bool get isCourier => userRole == 'courier';
   bool get isAdmin => userRole == 'admin';
-  bool get isLoggedIn => currentUser.value != null;
-  bool get isGuest => isGuestMode.value;
+  bool get isGuest => userRole == 'guest';
+  bool get isLoggedIn => currentUser.value != null && !isGuest;
   
   @override
   void onInit() {
@@ -122,8 +122,13 @@ class MarketplaceController extends GetxController {
     void setGuestMode(bool value) {
       isGuestMode.value = value;
       if (value) {
-        // Set a guest user for browsing
-        currentUser.value = null;
+        // Set a guest user with role='guest' for browsing
+        currentUser.value = {
+          'id': 'guest',
+          'name': 'Guest',
+          'email': '',
+          'role': 'guest',
+        };
         _loadInitialData();
       }
     }

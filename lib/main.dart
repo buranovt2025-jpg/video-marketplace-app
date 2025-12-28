@@ -78,31 +78,36 @@ class AppRouter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Guest mode: allow browsing without login
-    // Users will be prompted to login when trying to buy, add to favorites, etc.
-    if (!ApiService.isLoggedIn) {
-      // Show marketplace in guest mode (buyer view without login)
-      return const MarketplaceHomeScreen(isGuestMode: true);
-    }
-    
     final controller = Get.find<MarketplaceController>();
     
+    // If not logged in, automatically set guest mode
+    if (!ApiService.isLoggedIn) {
+      // Set guest mode which creates a guest user with role='guest'
+      controller.setGuestMode(true);
+    }
+    
     return Obx(() {
-      if (controller.currentUser.value == null) {
+      final user = controller.currentUser.value;
+      
+      // Show loading only if we're waiting for a real user (not guest)
+      if (user == null) {
         return const Scaffold(
           body: Center(child: CircularProgressIndicator()),
         );
       }
       
-      // Route based on user role
-      if (controller.isAdmin) {
+      // Route based on user role (including guest)
+      final role = user['role'] ?? '';
+      
+      if (role == 'admin') {
         return const AdminHomeScreen();
       }
       
-      if (controller.isCourier) {
+      if (role == 'courier') {
         return const CourierHomeScreen();
       }
       
+      // Guest, buyer, seller all go to MarketplaceHomeScreen
       return const MarketplaceHomeScreen();
     });
   }
