@@ -213,6 +213,26 @@ class AppTranslations extends Translations {
       'login_required': 'Требуется вход',
       'welcome': 'Добро пожаловать!',
       'login_to_continue': 'Войдите, чтобы продолжить',
+      
+      // Nearby sellers
+      'nearby_sellers': 'Продавцы рядом',
+      'no_nearby_sellers': 'Нет продавцов поблизости',
+      'search_radius': 'Радиус поиска',
+      
+      // Delete account
+      'delete_account': 'Удалить аккаунт',
+      'delete_account_warning': 'Это действие нельзя отменить',
+      'confirm_delete': 'Подтвердить удаление',
+      
+      // Seller verification
+      'seller_verification': 'Верификация продавцов',
+      'verify_seller': 'Верифицировать',
+      'reject_seller': 'Отклонить',
+      
+      // Phone call
+      'call_seller': 'Позвонить продавцу',
+      'call_courier': 'Позвонить курьеру',
+      'phone_number': 'Номер телефона',
     },
     
     'uz_UZ': {
@@ -425,6 +445,21 @@ class AppTranslations extends Translations {
       'login_required': 'Kirish talab qilinadi',
       'welcome': 'Xush kelibsiz!',
       'login_to_continue': 'Davom etish uchun kiring',
+      
+      // Nearby sellers
+      'nearby_sellers': 'Yaqindagi sotuvchilar',
+      'no_nearby_sellers': 'Yaqinda sotuvchilar yo\'q',
+      'search_radius': 'Qidiruv radiusi',
+      
+      // Seller verification
+      'seller_verification': 'Sotuvchilarni tasdiqlash',
+      'verify_seller': 'Tasdiqlash',
+      'reject_seller': 'Rad etish',
+      
+      // Phone call
+      'call_seller': 'Sotuvchiga qo\'ng\'iroq',
+      'call_courier': 'Kuryerga qo\'ng\'iroq',
+      'phone_number': 'Telefon raqami',
     },
     
     'en_US': {

@@ -16,6 +16,9 @@ import 'package:tiktok_tutorial/views/screens/profile/edit_profile_screen.dart';
 import 'package:tiktok_tutorial/views/screens/stories/story_viewer_screen.dart';
 import 'package:tiktok_tutorial/views/screens/cabinets/seller_cabinet_screen.dart';
 import 'package:tiktok_tutorial/views/screens/cabinets/buyer_cabinet_screen.dart';
+import 'package:tiktok_tutorial/views/screens/buyer/nearby_sellers_screen.dart';
+import 'package:tiktok_tutorial/views/screens/common/delete_account_screen.dart';
+import 'package:tiktok_tutorial/views/screens/admin/seller_verification_screen.dart';
 
 class MarketplaceHomeScreen extends StatefulWidget {
   final bool isGuestMode;
@@ -1222,6 +1225,68 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.white,
                         side: BorderSide(color: Colors.grey[700]!),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Nearby Sellers button (for buyers)
+                  if (_isBuyer)
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () => Get.to(() => const NearbySellersScreen()),
+                        icon: const Icon(Icons.location_on),
+                        label: Text('nearby_sellers'.tr),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: BorderSide(color: Colors.grey[700]!),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  
+                  // Seller Verification button (for admin)
+                  if (_controller.userRole == 'admin') ...[
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () => Get.to(() => const SellerVerificationScreen()),
+                        icon: const Icon(Icons.verified_user),
+                        label: Text('seller_verification'.tr),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: BorderSide(color: Colors.grey[700]!),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                  
+                  const SizedBox(height: 32),
+                  
+                  // Delete Account button
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => Get.to(() => const DeleteAccountScreen()),
+                      icon: const Icon(Icons.delete_forever, color: Colors.red),
+                      label: Text('delete_account'.tr, style: const TextStyle(color: Colors.red)),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red,
+                        side: const BorderSide(color: Colors.red),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),

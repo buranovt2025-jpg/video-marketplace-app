@@ -423,55 +423,122 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   }
 
   Widget _buildContactButtons() {
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: () {
-              if (_order['seller_id'] != null) {
-                Get.to(() => ChatScreen(
-                  userId: _order['seller_id'],
-                  userName: _order['seller_name'] ?? 'Продавец',
-                ));
-              }
-            },
-            icon: const Icon(Icons.store),
-            label: const Text('Продавец'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.white,
-              side: BorderSide(color: Colors.grey[700]!),
-              padding: const EdgeInsets.symmetric(vertical: 12),
+        // Chat buttons row
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  if (_order['seller_id'] != null) {
+                    Get.to(() => ChatScreen(
+                      userId: _order['seller_id'],
+                      userName: _order['seller_name'] ?? 'Продавец',
+                    ));
+                  }
+                },
+                icon: const Icon(Icons.chat),
+                label: const Text('Чат с продавцом'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: BorderSide(color: Colors.grey[700]!),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
             ),
-          ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  if (_order['courier_id'] != null) {
+                    Get.to(() => ChatScreen(
+                      userId: _order['courier_id'],
+                      userName: _order['courier_name'] ?? 'Курьер',
+                    ));
+                  } else {
+                    Get.snackbar(
+                      'Курьер не назначен',
+                      'Курьер ещё не принял заказ',
+                      snackPosition: SnackPosition.BOTTOM,
+                    );
+                  }
+                },
+                icon: const Icon(Icons.chat),
+                label: const Text('Чат с курьером'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: BorderSide(color: Colors.grey[700]!),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: () {
-              if (_order['courier_id'] != null) {
-                Get.to(() => ChatScreen(
-                  userId: _order['courier_id'],
-                  userName: _order['courier_name'] ?? 'Курьер',
-                ));
-              } else {
-                Get.snackbar(
-                  'Курьер не назначен',
-                  'Курьер ещё не принял заказ',
-                  snackPosition: SnackPosition.BOTTOM,
-                );
-              }
-            },
-            icon: const Icon(Icons.delivery_dining),
-            label: const Text('Курьер'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.white,
-              side: BorderSide(color: Colors.grey[700]!),
-              padding: const EdgeInsets.symmetric(vertical: 12),
+        const SizedBox(height: 12),
+        // Call buttons row
+        Row(
+          children: [
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: () => _callPhone(_order['seller_phone'] ?? '+998901234567'),
+                icon: const Icon(Icons.phone),
+                label: const Text('Позвонить продавцу'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
             ),
-          ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  if (_order['courier_id'] != null) {
+                    _callPhone(_order['courier_phone'] ?? '+998901234568');
+                  } else {
+                    Get.snackbar(
+                      'Курьер не назначен',
+                      'Курьер ещё не принял заказ',
+                      snackPosition: SnackPosition.BOTTOM,
+                    );
+                  }
+                },
+                icon: const Icon(Icons.phone),
+                label: const Text('Позвонить курьеру'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _order['courier_id'] != null ? Colors.green : Colors.grey,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );
+  }
+
+  Future<void> _callPhone(String phoneNumber) async {
+    final Uri phoneUri = Uri(scheme: 'tel', path: phoneNumber);
+    try {
+      if (await canLaunchUrl(phoneUri)) {
+        await launchUrl(phoneUri);
+      } else {
+        Get.snackbar(
+          'Ошибка',
+          'Не удалось открыть приложение для звонков',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Ошибка',
+        'Не удалось позвонить: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
   }
 
   Future<void> _refreshOrder() async {
