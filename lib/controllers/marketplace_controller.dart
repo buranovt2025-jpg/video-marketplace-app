@@ -59,6 +59,7 @@ class MarketplaceController extends GetxController {
       
       final response = await ApiService.login(email, password);
       currentUser.value = response['user'];
+      isGuestMode.value = false; // Clear guest mode on login
       
       await _loadInitialData();
       return true;
@@ -95,6 +96,7 @@ class MarketplaceController extends GetxController {
         longitude: longitude,
       );
       currentUser.value = response['user'];
+      isGuestMode.value = false; // Clear guest mode on registration
       
       await _loadInitialData();
       return true;

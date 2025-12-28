@@ -4,6 +4,11 @@ import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+// Helper function to decode response body as UTF-8
+dynamic _decodeResponse(http.Response response) {
+  return jsonDecode(utf8.decode(response.bodyBytes));
+}
+
 class ApiService {
   static const String baseUrl = 'https://165.232.81.31';
   static String? _token;
@@ -53,11 +58,11 @@ class ApiService {
         );
     
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
+      final data = _decodeResponse(response);
       await setToken(data['access_token']);
       return data;
     } else {
-      throw ApiException(response.statusCode, jsonDecode(response.body)['detail'] ?? 'Login failed');
+      throw ApiException(response.statusCode, _decodeResponse(response)['detail'] ?? 'Login failed');
     }
   }
   
@@ -87,11 +92,11 @@ class ApiService {
     );
     
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
+      final data = _decodeResponse(response);
       await setToken(data['access_token']);
       return data;
     } else {
-      throw ApiException(response.statusCode, jsonDecode(response.body)['detail'] ?? 'Registration failed');
+      throw ApiException(response.statusCode, _decodeResponse(response)['detail'] ?? 'Registration failed');
     }
   }
   
@@ -102,7 +107,7 @@ class ApiService {
     );
     
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return _decodeResponse(response);
     } else {
       throw ApiException(response.statusCode, 'Failed to get user');
     }
@@ -116,7 +121,7 @@ class ApiService {
     );
     
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return _decodeResponse(response);
     } else {
       throw ApiException(response.statusCode, 'Failed to update user');
     }
@@ -133,7 +138,7 @@ class ApiService {
     final response = await client.get(uri, headers: _headers);
     
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return _decodeResponse(response);
     } else {
       throw ApiException(response.statusCode, 'Failed to get products');
     }
@@ -146,7 +151,7 @@ class ApiService {
     );
     
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return _decodeResponse(response);
     } else {
       throw ApiException(response.statusCode, 'Failed to get product');
     }
@@ -176,7 +181,7 @@ class ApiService {
     );
     
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return _decodeResponse(response);
     } else {
       throw ApiException(response.statusCode, 'Failed to create product');
     }
@@ -190,7 +195,7 @@ class ApiService {
     );
     
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return _decodeResponse(response);
     } else {
       throw ApiException(response.statusCode, 'Failed to update product');
     }
@@ -215,7 +220,7 @@ class ApiService {
     );
     
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return _decodeResponse(response);
     } else {
       throw ApiException(response.statusCode, 'Failed to get reels');
     }
@@ -228,7 +233,7 @@ class ApiService {
     );
     
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return _decodeResponse(response);
     } else {
       throw ApiException(response.statusCode, 'Failed to get stories');
     }
@@ -254,7 +259,7 @@ class ApiService {
     );
     
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return _decodeResponse(response);
     } else {
       throw ApiException(response.statusCode, 'Failed to create content');
     }
@@ -274,7 +279,7 @@ class ApiService {
     );
     
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return _decodeResponse(response);
     } else {
       throw ApiException(response.statusCode, 'Failed to like content');
     }
@@ -288,7 +293,7 @@ class ApiService {
     );
     
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return _decodeResponse(response);
     } else {
       throw ApiException(response.statusCode, 'Failed to get orders');
     }
@@ -316,7 +321,7 @@ class ApiService {
     );
     
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return _decodeResponse(response);
     } else {
       throw ApiException(response.statusCode, 'Failed to create order');
     }
@@ -330,7 +335,7 @@ class ApiService {
     );
     
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return _decodeResponse(response);
     } else {
       throw ApiException(response.statusCode, 'Failed to update order status');
     }
@@ -344,7 +349,7 @@ class ApiService {
     );
     
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return _decodeResponse(response);
     } else {
       throw ApiException(response.statusCode, 'Failed to get conversations');
     }
@@ -357,7 +362,7 @@ class ApiService {
     );
     
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return _decodeResponse(response);
     } else {
       throw ApiException(response.statusCode, 'Failed to get messages');
     }
@@ -375,7 +380,7 @@ class ApiService {
     );
     
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return _decodeResponse(response);
     } else {
       throw ApiException(response.statusCode, 'Failed to send message');
     }
@@ -388,7 +393,7 @@ class ApiService {
     );
     
     if (response.statusCode == 200) {
-      return jsonDecode(response.body)['unread_count'];
+      return _decodeResponse(response)['unread_count'];
     } else {
       throw ApiException(response.statusCode, 'Failed to get unread count');
     }
@@ -403,7 +408,7 @@ class ApiService {
     final response = await client.get(uri, headers: _headers);
     
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return _decodeResponse(response);
     } else {
       throw ApiException(response.statusCode, 'Failed to search');
     }
@@ -416,7 +421,7 @@ class ApiService {
     );
     
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return _decodeResponse(response);
     } else {
       throw ApiException(response.statusCode, 'Failed to get explore');
     }
@@ -429,7 +434,7 @@ class ApiService {
     );
     
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return _decodeResponse(response);
     } else {
       throw ApiException(response.statusCode, 'Failed to get sellers');
     }
@@ -443,7 +448,7 @@ class ApiService {
     );
     
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return _decodeResponse(response);
     } else {
       throw ApiException(response.statusCode, 'Failed to get users');
     }
