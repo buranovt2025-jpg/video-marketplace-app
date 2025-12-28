@@ -101,9 +101,23 @@ class _MarketplaceLoginScreenState extends State<MarketplaceLoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: 40),
+                    const SizedBox(height: 20),
+                
+                  // Language selector
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildLanguageButton('RU', 'ru_RU'),
+                      const SizedBox(width: 12),
+                      _buildLanguageButton('UZ', 'uz_UZ'),
+                      const SizedBox(width: 12),
+                      _buildLanguageButton('EN', 'en_US'),
+                    ],
+                  ),
+                
+                  const SizedBox(height: 24),
               
-                            // Logo
+                  // Logo
                             Image.asset(
                               'assets/images/logo_white.png',
                               height: 120,
@@ -315,6 +329,35 @@ class _MarketplaceLoginScreenState extends State<MarketplaceLoginScreen> {
                         ],
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLanguageButton(String label, String locale) {
+    final parts = locale.split('_');
+    final currentLocale = Get.locale;
+    final isSelected = currentLocale?.languageCode == parts[0];
+    
+    return GestureDetector(
+      onTap: () {
+        Get.updateLocale(Locale(parts[0], parts[1]));
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? buttonColor : Colors.grey[800],
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? buttonColor! : Colors.grey[700]!,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.grey[400],
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           ),
         ),
       ),
