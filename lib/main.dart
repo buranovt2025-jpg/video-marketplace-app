@@ -8,6 +8,7 @@ import 'package:tiktok_tutorial/views/screens/auth/marketplace_login_screen.dart
 import 'package:tiktok_tutorial/views/screens/marketplace_home_screen.dart';
 import 'package:tiktok_tutorial/views/screens/courier/courier_home_screen.dart';
 import 'package:tiktok_tutorial/views/screens/admin/admin_home_screen.dart';
+import 'package:tiktok_tutorial/l10n/app_translations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,7 +33,16 @@ class MyApp extends StatelessWidget {
       title: 'Video Marketplace',
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: backgroundColor,
+        primaryColor: primaryColor,
+        colorScheme: const ColorScheme.dark(
+          primary: primaryColor,
+          secondary: accentColor,
+        ),
       ),
+      // Localization
+      translations: AppTranslations(),
+      locale: const Locale('ru', 'RU'), // Default Russian
+      fallbackLocale: const Locale('en', 'US'),
       home: const AppRouter(),
     );
   }

@@ -28,6 +28,12 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   
   bool get _isSeller => _controller.currentUser.value?['role'] == 'seller';
   bool get _isBuyer => _controller.currentUser.value?['role'] == 'buyer';
+  
+  // Get max valid index based on role
+  int get _maxIndex => _isSeller ? 4 : 3; // Seller: 5 tabs (0-4), Buyer: 4 tabs (0-3)
+  
+  // Ensure currentIndex is within bounds
+  int get _safeCurrentIndex => _currentIndex > _maxIndex ? _maxIndex : _currentIndex;
 
   @override
   void initState() {
@@ -58,7 +64,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         // Different tabs for seller vs buyer
         if (_isSeller) {
           return IndexedStack(
-            index: _currentIndex,
+            index: _safeCurrentIndex,
             children: [
               _buildFeedTab(),
               _buildExploreTab(),
@@ -70,7 +76,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         } else {
           // Buyer: no Create tab
           return IndexedStack(
-            index: _currentIndex,
+            index: _safeCurrentIndex,
             children: [
               _buildFeedTab(),
               _buildExploreTab(),
@@ -81,7 +87,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         }
       }),
       bottomNavigationBar: Obx(() => BottomNavigationBar(
-        currentIndex: _currentIndex,
+        currentIndex: _safeCurrentIndex,
         onTap: (index) {
           setState(() {
             _currentIndex = index;
@@ -91,43 +97,43 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         backgroundColor: Colors.black,
         selectedItemColor: primaryColor,
         unselectedItemColor: Colors.grey,
-        items: _isSeller ? const [
+        items: _isSeller ? [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Лента',
+            icon: const Icon(Icons.home),
+            label: 'feed'.tr,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'Поиск',
+            icon: const Icon(Icons.search),
+            label: 'search'.tr,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.add_box),
-            label: 'Создать',
+            icon: const Icon(Icons.add_box),
+            label: 'create'.tr,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_bag),
-            label: 'Заказы',
+            icon: const Icon(Icons.shopping_bag),
+            label: 'orders'.tr,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Профиль',
+            icon: const Icon(Icons.person),
+            label: 'profile'.tr,
           ),
-        ] : const [
+        ] : [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Лента',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'Поиск',
+            icon: const Icon(Icons.home),
+            label: 'feed'.tr,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_bag),
-            label: 'Заказы',
+            icon: const Icon(Icons.search),
+            label: 'search'.tr,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Профиль',
+            icon: const Icon(Icons.shopping_bag),
+            label: 'orders'.tr,
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.person),
+            label: 'profile'.tr,
           ),
         ],
       )),
