@@ -14,6 +14,8 @@ import 'package:tiktok_tutorial/views/screens/buyer/order_tracking_screen.dart';
 import 'package:tiktok_tutorial/views/screens/chat/chat_screen.dart';
 import 'package:tiktok_tutorial/views/screens/profile/edit_profile_screen.dart';
 import 'package:tiktok_tutorial/views/screens/stories/story_viewer_screen.dart';
+import 'package:tiktok_tutorial/views/screens/cabinets/seller_cabinet_screen.dart';
+import 'package:tiktok_tutorial/views/screens/cabinets/buyer_cabinet_screen.dart';
 
 class MarketplaceHomeScreen extends StatefulWidget {
   const MarketplaceHomeScreen({Key? key}) : super(key: key);
@@ -963,6 +965,54 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                       _buildStatItem('Рилсы', _controller.reels.where((r) => r['author_id'] == _controller.userId).length.toString()),
                     ],
                   ),
+                  
+                  const SizedBox(height: 32),
+                  
+                  // My Cabinet button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        if (_isSeller) {
+                          Get.to(() => const SellerCabinetScreen());
+                        } else {
+                          Get.to(() => const BuyerCabinetScreen());
+                        }
+                      },
+                      icon: const Icon(Icons.dashboard),
+                      label: Text('my_cabinet'.tr),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Settings button
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        _showLanguageDialog();
+                      },
+                      icon: const Icon(Icons.language),
+                      label: Text('language'.tr),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: BorderSide(color: Colors.grey[700]!),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -970,6 +1020,44 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         ],
       );
     });
+  }
+  
+  void _showLanguageDialog() {
+    Get.dialog(
+      AlertDialog(
+        backgroundColor: cardColor,
+        title: Text('language'.tr, style: const TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Text('🇷🇺', style: TextStyle(fontSize: 24)),
+              title: const Text('Русский', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Get.updateLocale(const Locale('ru', 'RU'));
+                Get.back();
+              },
+            ),
+            ListTile(
+              leading: const Text('🇺🇿', style: TextStyle(fontSize: 24)),
+              title: const Text('O\'zbekcha', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Get.updateLocale(const Locale('uz', 'UZ'));
+                Get.back();
+              },
+            ),
+            ListTile(
+              leading: const Text('🇬🇧', style: TextStyle(fontSize: 24)),
+              title: const Text('English', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Get.updateLocale(const Locale('en', 'US'));
+                Get.back();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildStatItem(String label, String value) {
