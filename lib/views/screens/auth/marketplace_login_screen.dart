@@ -4,6 +4,7 @@ import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/views/screens/auth/marketplace_register_screen.dart';
 import 'package:tiktok_tutorial/views/screens/marketplace_home_screen.dart';
+import 'package:tiktok_tutorial/views/screens/courier/courier_home_screen.dart';
 
 class MarketplaceLoginScreen extends StatefulWidget {
   const MarketplaceLoginScreen({Key? key}) : super(key: key);
@@ -43,7 +44,12 @@ class _MarketplaceLoginScreenState extends State<MarketplaceLoginScreen> {
     );
 
     if (success) {
-      Get.offAll(() => const MarketplaceHomeScreen());
+      // Route based on user role
+      if (_controller.isCourier) {
+        Get.offAll(() => const CourierHomeScreen());
+      } else {
+        Get.offAll(() => const MarketplaceHomeScreen());
+      }
     } else {
       Get.snackbar(
         'Ошибка',
