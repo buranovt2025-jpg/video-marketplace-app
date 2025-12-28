@@ -12,6 +12,7 @@ import 'package:tiktok_tutorial/views/screens/buyer/product_detail_screen.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/cart_screen.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/order_tracking_screen.dart';
 import 'package:tiktok_tutorial/views/screens/chat/chat_screen.dart';
+import 'package:tiktok_tutorial/views/screens/profile/edit_profile_screen.dart';
 
 class MarketplaceHomeScreen extends StatefulWidget {
   const MarketplaceHomeScreen({Key? key}) : super(key: key);
@@ -831,6 +832,10 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
             ),
             actions: [
+              IconButton(
+                icon: const Icon(Icons.edit, color: Colors.white),
+                onPressed: () => Get.to(() => const EditProfileScreen()),
+              ),
               IconButton(
                 icon: const Icon(Icons.logout, color: Colors.white),
                 onPressed: () async {
