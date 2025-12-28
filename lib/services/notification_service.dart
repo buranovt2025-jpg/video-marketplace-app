@@ -1,10 +1,20 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get/get.dart';
+
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  print('Handling background message: ${message.messageId}');
+}
 
 class NotificationService extends GetxService {
   static NotificationService get to => Get.find<NotificationService>();
   
   final FlutterLocalNotificationsPlugin _notifications = FlutterLocalNotificationsPlugin();
+  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+  
+  String? _fcmToken;
+  String? get fcmToken => _fcmToken;
   
   Future<NotificationService> init() async {
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -27,7 +37,94 @@ class NotificationService extends GetxService {
     // Request permissions on Android 13+
     await _requestPermissions();
     
+    // Initialize Firebase Cloud Messaging
+    await _initFirebaseMessaging();
+    
     return this;
+  }
+  
+  Future<void> _initFirebaseMessaging() async {
+    // Request permission for iOS
+    NotificationSettings settings = await _firebaseMessaging.requestPermission(
+      alert: true,
+      announcement: false,
+      badge: true,
+      carPlay: false,
+      criticalAlert: false,
+      provisional: false,
+      sound: true,
+    );
+    
+    print('FCM permission status: ${settings.authorizationStatus}');
+    
+    if (settings.authorizationStatus == AuthorizationStatus.authorized ||
+        settings.authorizationStatus == AuthorizationStatus.provisional) {
+      // Get FCM token
+      _fcmToken = await _firebaseMessaging.getToken();
+      print('FCM Token: $_fcmToken');
+      
+      // Listen for token refresh
+      _firebaseMessaging.onTokenRefresh.listen((newToken) {
+        _fcmToken = newToken;
+        print('FCM Token refreshed: $newToken');
+      });
+      
+      // Set up background message handler
+      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+      
+      // Handle foreground messages
+      FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+      
+      // Handle notification tap when app is in background/terminated
+      FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationTap);
+      
+      // Check if app was opened from a notification
+      RemoteMessage? initialMessage = await _firebaseMessaging.getInitialMessage();
+      if (initialMessage != null) {
+        _handleNotificationTap(initialMessage);
+      }
+    }
+  }
+  
+  void _handleForegroundMessage(RemoteMessage message) {
+    print('Received foreground message: ${message.messageId}');
+    
+    RemoteNotification? notification = message.notification;
+    if (notification != null) {
+      _notifications.show(
+        notification.hashCode,
+        notification.title ?? 'GoGoMarket',
+        notification.body ?? '',
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            'fcm_channel',
+            'Push уведомления',
+            channelDescription: 'Уведомления от сервера',
+            importance: Importance.high,
+            priority: Priority.high,
+            playSound: true,
+            icon: '@mipmap/ic_launcher',
+          ),
+          iOS: const DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
+        ),
+        payload: message.data['type'] ?? '',
+      );
+    }
+  }
+  
+  void _handleNotificationTap(RemoteMessage message) {
+    final data = message.data;
+    final type = data['type'];
+    
+    if (type == 'order') {
+      Get.toNamed('/orders');
+    } else if (type == 'chat') {
+      Get.toNamed('/chat');
+    }
   }
   
   Future<void> _requestPermissions() async {
