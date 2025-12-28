@@ -1,10 +1,23 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:http/io_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   static const String baseUrl = 'https://165.232.81.31';
   static String? _token;
+  static http.Client? _client;
+  
+  // Create HTTP client that accepts self-signed certificates
+  static http.Client get client {
+    if (_client == null) {
+      final httpClient = HttpClient()
+        ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+      _client = IOClient(httpClient);
+    }
+    return _client!;
+  }
   
   static Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
@@ -33,11 +46,11 @@ class ApiService {
   
   // Auth endpoints
   static Future<Map<String, dynamic>> login(String email, String password) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/auth/login'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email, 'password': password}),
-    );
+        final response = await client.post(
+          Uri.parse('$baseUrl/api/auth/login'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'email': email, 'password': password}),
+        );
     
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -58,7 +71,7 @@ class ApiService {
     double? latitude,
     double? longitude,
   }) async {
-    final response = await http.post(
+    final response = await client.post(
       Uri.parse('$baseUrl/api/auth/register'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
@@ -83,7 +96,7 @@ class ApiService {
   }
   
   static Future<Map<String, dynamic>> getMe() async {
-    final response = await http.get(
+    final response = await client.get(
       Uri.parse('$baseUrl/api/auth/me'),
       headers: _headers,
     );
@@ -96,7 +109,7 @@ class ApiService {
   }
   
   static Future<Map<String, dynamic>> updateMe(Map<String, dynamic> updates) async {
-    final response = await http.put(
+    final response = await client.put(
       Uri.parse('$baseUrl/api/auth/me'),
       headers: _headers,
       body: jsonEncode(updates),
@@ -117,7 +130,7 @@ class ApiService {
     if (search != null) queryParams['search'] = search;
     
     final uri = Uri.parse('$baseUrl/api/products').replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
-    final response = await http.get(uri, headers: _headers);
+    final response = await client.get(uri, headers: _headers);
     
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -127,7 +140,7 @@ class ApiService {
   }
   
   static Future<Map<String, dynamic>> getProduct(String productId) async {
-    final response = await http.get(
+    final response = await client.get(
       Uri.parse('$baseUrl/api/products/$productId'),
       headers: _headers,
     );
@@ -148,7 +161,7 @@ class ApiService {
     int? quantity,
     bool inStock = true,
   }) async {
-    final response = await http.post(
+    final response = await client.post(
       Uri.parse('$baseUrl/api/products'),
       headers: _headers,
       body: jsonEncode({
@@ -170,7 +183,7 @@ class ApiService {
   }
   
   static Future<Map<String, dynamic>> updateProduct(String productId, Map<String, dynamic> updates) async {
-    final response = await http.put(
+    final response = await client.put(
       Uri.parse('$baseUrl/api/products/$productId'),
       headers: _headers,
       body: jsonEncode(updates),
@@ -184,7 +197,7 @@ class ApiService {
   }
   
   static Future<void> deleteProduct(String productId) async {
-    final response = await http.delete(
+    final response = await client.delete(
       Uri.parse('$baseUrl/api/products/$productId'),
       headers: _headers,
     );
@@ -196,7 +209,7 @@ class ApiService {
   
   // Content endpoints (Reels & Stories)
   static Future<List<dynamic>> getReels({int page = 1, int perPage = 10}) async {
-    final response = await http.get(
+    final response = await client.get(
       Uri.parse('$baseUrl/api/content/reels?page=$page&per_page=$perPage'),
       headers: _headers,
     );
@@ -209,7 +222,7 @@ class ApiService {
   }
   
   static Future<List<dynamic>> getStories() async {
-    final response = await http.get(
+    final response = await client.get(
       Uri.parse('$baseUrl/api/content/stories'),
       headers: _headers,
     );
@@ -228,7 +241,7 @@ class ApiService {
     String? caption,
     String? productId,
   }) async {
-    final response = await http.post(
+    final response = await client.post(
       Uri.parse('$baseUrl/api/content'),
       headers: _headers,
       body: jsonEncode({
@@ -248,14 +261,14 @@ class ApiService {
   }
   
   static Future<void> viewContent(String contentId) async {
-    await http.post(
+    await client.post(
       Uri.parse('$baseUrl/api/content/$contentId/view'),
       headers: _headers,
     );
   }
   
   static Future<Map<String, dynamic>> likeContent(String contentId) async {
-    final response = await http.post(
+    final response = await client.post(
       Uri.parse('$baseUrl/api/content/$contentId/like'),
       headers: _headers,
     );
@@ -269,7 +282,7 @@ class ApiService {
   
   // Orders endpoints
   static Future<List<dynamic>> getOrders() async {
-    final response = await http.get(
+    final response = await client.get(
       Uri.parse('$baseUrl/api/orders'),
       headers: _headers,
     );
@@ -289,7 +302,7 @@ class ApiService {
     required double deliveryLongitude,
     String? notes,
   }) async {
-    final response = await http.post(
+    final response = await client.post(
       Uri.parse('$baseUrl/api/orders'),
       headers: _headers,
       body: jsonEncode({
@@ -310,7 +323,7 @@ class ApiService {
   }
   
   static Future<Map<String, dynamic>> updateOrderStatus(String orderId, String status) async {
-    final response = await http.put(
+    final response = await client.put(
       Uri.parse('$baseUrl/api/orders/$orderId/status'),
       headers: _headers,
       body: jsonEncode({'status': status}),
@@ -325,7 +338,7 @@ class ApiService {
   
   // Chat endpoints
   static Future<List<dynamic>> getConversations() async {
-    final response = await http.get(
+    final response = await client.get(
       Uri.parse('$baseUrl/api/chat/conversations'),
       headers: _headers,
     );
@@ -338,7 +351,7 @@ class ApiService {
   }
   
   static Future<List<dynamic>> getChatMessages(String userId) async {
-    final response = await http.get(
+    final response = await client.get(
       Uri.parse('$baseUrl/api/chat/$userId'),
       headers: _headers,
     );
@@ -351,7 +364,7 @@ class ApiService {
   }
   
   static Future<Map<String, dynamic>> sendMessage(String receiverId, String content, {String? imageUrl}) async {
-    final response = await http.post(
+    final response = await client.post(
       Uri.parse('$baseUrl/api/chat'),
       headers: _headers,
       body: jsonEncode({
@@ -369,7 +382,7 @@ class ApiService {
   }
   
   static Future<int> getUnreadCount() async {
-    final response = await http.get(
+    final response = await client.get(
       Uri.parse('$baseUrl/api/chat/unread/count'),
       headers: _headers,
     );
@@ -387,7 +400,7 @@ class ApiService {
     if (type != null) queryParams['type'] = type;
     
     final uri = Uri.parse('$baseUrl/api/search').replace(queryParameters: queryParams);
-    final response = await http.get(uri, headers: _headers);
+    final response = await client.get(uri, headers: _headers);
     
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -397,7 +410,7 @@ class ApiService {
   }
   
   static Future<Map<String, dynamic>> getExplore({int page = 1, int perPage = 20}) async {
-    final response = await http.get(
+    final response = await client.get(
       Uri.parse('$baseUrl/api/explore?page=$page&per_page=$perPage'),
       headers: _headers,
     );
@@ -410,7 +423,7 @@ class ApiService {
   }
   
   static Future<List<dynamic>> getSellers() async {
-    final response = await http.get(
+    final response = await client.get(
       Uri.parse('$baseUrl/api/sellers'),
       headers: _headers,
     );
@@ -424,7 +437,7 @@ class ApiService {
   
   // Admin endpoints
   static Future<List<dynamic>> getUsers() async {
-    final response = await http.get(
+    final response = await client.get(
       Uri.parse('$baseUrl/api/users'),
       headers: _headers,
     );
@@ -437,7 +450,7 @@ class ApiService {
   }
   
   static Future<void> deleteContent(String contentId) async {
-    final response = await http.delete(
+    final response = await client.delete(
       Uri.parse('$baseUrl/api/content/$contentId'),
       headers: _headers,
     );
