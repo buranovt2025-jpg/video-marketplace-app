@@ -95,6 +95,20 @@
 3. Добавлен EditProfileScreen с загрузкой аватара
 4. Добавлен StoryViewerScreen для полноэкранного просмотра историй
 5. Обновлено ТЗ с новыми требованиями
+6. Добавлены кабинеты по ролям (SellerCabinet, BuyerCabinet)
+7. Добавлена локализация (узб/рус/англ)
+8. Добавлен тариф доставки (стандарт/экспресс)
+9. Добавлен таймер на принятие заказа (5 минут)
+10. Добавлены push-уведомления (NotificationService)
+11. Добавлена геолокация с расчётом расстояния (LocationService)
+12. Курьер видит расстояние до продавца/покупателя
+13. Кнопка навигации открывает Google Maps/Яндекс Карты
+
+### Коммиты
+
+- `00a099d` - Add push notifications and geolocation with distance calculation and navigation
+- `308c240` - Add delivery tariff and order acceptance timer
+- `3e9953e` - Add role-specific cabinet screens with localization
 
 ---
 
