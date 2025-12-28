@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
@@ -14,18 +15,72 @@ class SellerCabinetScreen extends StatefulWidget {
 class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTickerProviderStateMixin {
   final MarketplaceController _controller = Get.find<MarketplaceController>();
   late TabController _tabController;
+  
+  // Order acceptance timer - 5 minutes to accept
+  static const int _orderAcceptanceTimeSeconds = 300; // 5 minutes
+  final Map<String, int> _orderTimers = {}; // orderId -> remaining seconds
+  Timer? _countdownTimer;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _loadData();
+    _startCountdownTimer();
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _countdownTimer?.cancel();
     super.dispose();
+  }
+  
+  void _startCountdownTimer() {
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        final keysToRemove = <String>[];
+        _orderTimers.forEach((orderId, seconds) {
+          if (seconds > 0) {
+            _orderTimers[orderId] = seconds - 1;
+          } else {
+            keysToRemove.add(orderId);
+            // Auto-reject order when timer expires
+            _autoRejectOrder(orderId);
+          }
+        });
+        for (var key in keysToRemove) {
+          _orderTimers.remove(key);
+        }
+      });
+    });
+  }
+  
+  void _initializeOrderTimer(String orderId) {
+    if (!_orderTimers.containsKey(orderId)) {
+      _orderTimers[orderId] = _orderAcceptanceTimeSeconds;
+    }
+  }
+  
+  Future<void> _autoRejectOrder(String orderId) async {
+    try {
+      await _controller.updateOrderStatus(orderId, 'rejected');
+      Get.snackbar(
+        'Время истекло',
+        'Заказ автоматически отклонён',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      // Ignore errors
+    }
+  }
+  
+  String _formatTime(int seconds) {
+    final minutes = seconds ~/ 60;
+    final secs = seconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
   }
 
   Future<void> _loadData() async {
@@ -104,6 +159,12 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
   Widget _buildOrderCard(Map<String, dynamic> order) {
     final status = order['status'] ?? 'pending';
     final isPending = status == 'pending';
+    final orderId = order['id']?.toString() ?? '';
+    
+    // Initialize timer for pending orders
+    if (isPending && orderId.isNotEmpty) {
+      _initializeOrderTimer(orderId);
+    }
     
     Color statusColor;
     String statusText;
@@ -145,7 +206,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Заказ #${order['id']?.toString().substring(0, 8) ?? ''}',
+                  'Заказ #${orderId.length >= 8 ? orderId.substring(0, 8) : orderId}',
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -165,6 +226,13 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
                 ),
               ],
             ),
+            
+            // Timer for pending orders
+            if (isPending && _orderTimers.containsKey(orderId)) ...[
+              const SizedBox(height: 12),
+              _buildTimerWidget(orderId),
+            ],
+            
             const SizedBox(height: 12),
             Text(
               'Сумма: ${order['total_amount']?.toStringAsFixed(0) ?? '0'} сум',
@@ -181,7 +249,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
                 children: [
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () => _acceptOrder(order['id']),
+                      onPressed: () => _acceptOrder(orderId),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
                         foregroundColor: Colors.white,
@@ -192,7 +260,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
                   const SizedBox(width: 12),
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () => _rejectOrder(order['id']),
+                      onPressed: () => _rejectOrder(orderId),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.red,
                         side: const BorderSide(color: Colors.red),
@@ -208,7 +276,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => _markReady(order['id']),
+                  onPressed: () => _markReady(orderId),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryColor,
                     foregroundColor: Colors.white,
@@ -222,11 +290,59 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
       ),
     );
   }
+  
+  Widget _buildTimerWidget(String orderId) {
+    final remainingSeconds = _orderTimers[orderId] ?? 0;
+    final isUrgent = remainingSeconds < 60; // Less than 1 minute
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: isUrgent ? Colors.red.withOpacity(0.2) : primaryColor.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isUrgent ? Colors.red : primaryColor,
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.timer,
+            color: isUrgent ? Colors.red : primaryColor,
+            size: 20,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            'Осталось: ${_formatTime(remainingSeconds)}',
+            style: TextStyle(
+              color: isUrgent ? Colors.red : primaryColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
+          ),
+          if (isUrgent) ...[
+            const SizedBox(width: 8),
+            const Text(
+              'Срочно!',
+              style: TextStyle(
+                color: Colors.red,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 
   Future<void> _acceptOrder(String? orderId) async {
-    if (orderId == null) return;
+    if (orderId == null || orderId.isEmpty) return;
     try {
       await _controller.updateOrderStatus(orderId, 'accepted');
+      _orderTimers.remove(orderId); // Remove timer when accepted
       Get.snackbar('success'.tr, 'Заказ принят', snackPosition: SnackPosition.BOTTOM);
     } catch (e) {
       Get.snackbar('error'.tr, 'Не удалось принять заказ', snackPosition: SnackPosition.BOTTOM);
@@ -234,9 +350,10 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
   }
 
   Future<void> _rejectOrder(String? orderId) async {
-    if (orderId == null) return;
+    if (orderId == null || orderId.isEmpty) return;
     try {
       await _controller.updateOrderStatus(orderId, 'rejected');
+      _orderTimers.remove(orderId); // Remove timer when rejected
       Get.snackbar('success'.tr, 'Заказ отклонён', snackPosition: SnackPosition.BOTTOM);
     } catch (e) {
       Get.snackbar('error'.tr, 'Не удалось отклонить заказ', snackPosition: SnackPosition.BOTTOM);

@@ -27,6 +27,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   // Default coordinates for Tashkent
   double _latitude = 41.2995;
   double _longitude = 69.2401;
+  
+  // Delivery tariff options
+  String _selectedTariff = 'standard'; // standard, express
+  static const double _standardDeliveryFee = 15000; // 15,000 сум
+  static const double _expressDeliveryFee = 30000; // 30,000 сум
+  static const double _freeDeliveryThreshold = 500000; // Free delivery over 500K сум
 
   @override
   void initState() {
@@ -118,6 +124,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
               const SizedBox(height: 12),
               _buildNotesField(),
+              const SizedBox(height: 24),
+
+              // Delivery tariff
+              const Text(
+                'Тариф доставки',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildDeliveryTariff(total),
               const SizedBox(height: 24),
 
               // Payment method
@@ -385,9 +404,175 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
+  Widget _buildDeliveryTariff(double itemsTotal) {
+    final isFreeDelivery = itemsTotal >= _freeDeliveryThreshold;
+    
+    return Column(
+      children: [
+        // Standard delivery
+        GestureDetector(
+          onTap: () => setState(() => _selectedTariff = 'standard'),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.grey[900],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: _selectedTariff == 'standard' ? primaryColor : Colors.grey[800]!,
+                width: _selectedTariff == 'standard' ? 2 : 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.local_shipping, color: Colors.blue),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Стандартная доставка',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '60-90 минут',
+                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                Text(
+                  isFreeDelivery ? 'Бесплатно' : '${_formatPrice(_standardDeliveryFee)} сум',
+                  style: TextStyle(
+                    color: isFreeDelivery ? Colors.green : Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (_selectedTariff == 'standard')
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: Icon(Icons.check_circle, color: primaryColor),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        
+        // Express delivery
+        GestureDetector(
+          onTap: () => setState(() => _selectedTariff = 'express'),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.grey[900],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: _selectedTariff == 'express' ? primaryColor : Colors.grey[800]!,
+                width: _selectedTariff == 'express' ? 2 : 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: primaryColor.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.flash_on, color: primaryColor),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Экспресс доставка',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '30-45 минут',
+                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                Text(
+                  '${_formatPrice(_expressDeliveryFee)} сум',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (_selectedTariff == 'express')
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: Icon(Icons.check_circle, color: primaryColor),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        
+        // Free delivery info
+        if (!isFreeDelivery)
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.green.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline, color: Colors.green, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Бесплатная доставка от ${_formatPrice(_freeDeliveryThreshold)} сум',
+                      style: const TextStyle(color: Colors.green, fontSize: 12),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  double _getDeliveryFee(double itemsTotal) {
+    if (itemsTotal >= _freeDeliveryThreshold && _selectedTariff == 'standard') {
+      return 0;
+    }
+    return _selectedTariff == 'express' ? _expressDeliveryFee : _standardDeliveryFee;
+  }
+
   Widget _buildOrderSummary(List<CartItem> items, double total) {
     final itemsTotal = total;
-    const deliveryFee = 0.0; // Free delivery for MVP
+    final deliveryFee = _getDeliveryFee(itemsTotal);
     final grandTotal = itemsTotal + deliveryFee;
 
     return Container(
@@ -400,13 +585,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         children: [
           _buildSummaryRow('Товары (${items.length})', '${_formatPrice(itemsTotal)} сум'),
           const SizedBox(height: 8),
-          _buildSummaryRow('Доставка', 'Бесплатно', valueColor: Colors.green),
+          _buildSummaryRow(
+            'Доставка (${_selectedTariff == 'express' ? 'экспресс' : 'стандарт'})',
+            deliveryFee == 0 ? 'Бесплатно' : '${_formatPrice(deliveryFee)} сум',
+            valueColor: deliveryFee == 0 ? Colors.green : null,
+          ),
           const Divider(color: Colors.grey, height: 24),
           _buildSummaryRow(
             'Итого',
             '${_formatPrice(grandTotal)} сум',
             isBold: true,
-            valueColor: buttonColor,
+            valueColor: primaryColor,
           ),
         ],
       ),
@@ -438,6 +627,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Widget _buildBottomBar(double total) {
+    final deliveryFee = _getDeliveryFee(total);
+    final grandTotal = total + deliveryFee;
+    
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -470,7 +662,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     ),
                   )
                 : Text(
-                    'Заказать за ${_formatPrice(total)} сум',
+                    'Заказать за ${_formatPrice(grandTotal)} сум',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
