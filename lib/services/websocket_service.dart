@@ -37,33 +37,33 @@ class WebSocketService extends GetxService {
     _currentUserId = userId;
     _currentConversationId = conversationId;
     
-    // For demo mode, simulate connection
-    if (kDebugMode || true) {
-      // Demo mode - simulate WebSocket connection
-      await Future.delayed(const Duration(milliseconds: 500));
+    // Try real WebSocket connection first
+    try {
+      // Connect to real backend WebSocket
+      final wsUrl = 'wss://165.232.81.31/ws/chat/$userId';
+      _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
+      
+      _subscription = _channel!.stream.listen(
+        _onMessage,
+        onError: _onError,
+        onDone: _onDone,
+      );
+      
       isConnected.value = true;
       _startPingTimer();
-      _loadDemoMessages();
+      debugPrint('WebSocket connected to real backend');
       return;
+    } catch (e) {
+      debugPrint('WebSocket connection error: $e');
+      // Fall back to demo mode if real connection fails
     }
     
-    // Real WebSocket connection (when backend supports it)
-    // try {
-    //   final wsUrl = 'wss://your-backend.com/ws/chat/$conversationId?user_id=$userId';
-    //   _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
-    //   
-    //   _subscription = _channel!.stream.listen(
-    //     _onMessage,
-    //     onError: _onError,
-    //     onDone: _onDone,
-    //   );
-    //   
-    //   isConnected.value = true;
-    //   _startPingTimer();
-    // } catch (e) {
-    //   print('WebSocket connection error: $e');
-    //   _scheduleReconnect();
-    // }
+    // Fallback: Demo mode - simulate WebSocket connection
+    await Future.delayed(const Duration(milliseconds: 500));
+    isConnected.value = true;
+    _startPingTimer();
+    _loadDemoMessages();
+    debugPrint('WebSocket using demo mode');
   }
   
   /// Load demo messages for testing

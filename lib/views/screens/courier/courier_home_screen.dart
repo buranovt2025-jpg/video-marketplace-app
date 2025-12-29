@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/services/api_service.dart';
 import 'package:tiktok_tutorial/views/screens/courier/courier_order_detail_screen.dart';
 import 'package:tiktok_tutorial/views/screens/auth/marketplace_login_screen.dart';
 import 'package:tiktok_tutorial/views/screens/my_stats_screen.dart';
@@ -16,18 +19,104 @@ class CourierHomeScreen extends StatefulWidget {
 class _CourierHomeScreenState extends State<CourierHomeScreen> with SingleTickerProviderStateMixin {
   final MarketplaceController _controller = Get.find<MarketplaceController>();
   late TabController _tabController;
+  
+  // Location tracking
+  bool _isOnline = false;
+  Timer? _locationTimer;
+  Position? _currentPosition;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _loadOrders();
+    _checkLocationPermission();
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _locationTimer?.cancel();
     super.dispose();
+  }
+
+  Future<void> _checkLocationPermission() async {
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+    } catch (e) {
+      debugPrint('Location permission error: $e');
+    }
+  }
+
+  Future<void> _toggleOnlineStatus() async {
+    setState(() => _isOnline = !_isOnline);
+    
+    try {
+      await ApiService.setCourierOnline(_isOnline);
+      
+      if (_isOnline) {
+        // Start location updates
+        _startLocationUpdates();
+        Get.snackbar(
+          'Вы онлайн',
+          'Теперь вы получаете заказы',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+      } else {
+        // Stop location updates
+        _locationTimer?.cancel();
+        Get.snackbar(
+          'Вы оффлайн',
+          'Вы больше не получаете заказы',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      setState(() => _isOnline = !_isOnline); // Revert on error
+      Get.snackbar(
+        'Ошибка',
+        'Не удалось изменить статус',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  void _startLocationUpdates() {
+    // Update location every 10 seconds
+    _locationTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
+      await _updateLocation();
+    });
+    // Also update immediately
+    _updateLocation();
+  }
+
+  Future<void> _updateLocation() async {
+    if (!_isOnline) return;
+    
+    try {
+      _currentPosition = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      
+      if (_currentPosition != null) {
+        await ApiService.updateCourierLocation(
+          _currentPosition!.latitude,
+          _currentPosition!.longitude,
+        );
+        debugPrint('Location updated: ${_currentPosition!.latitude}, ${_currentPosition!.longitude}');
+      }
+    } catch (e) {
+      debugPrint('Location update error: $e');
+    }
   }
 
   Future<void> _loadOrders() async {
@@ -45,6 +134,35 @@ class _CourierHomeScreenState extends State<CourierHomeScreen> with SingleTicker
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         actions: [
+          // Online/Offline toggle
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 8),
+            child: Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: _isOnline ? Colors.green : Colors.grey,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  _isOnline ? 'Online' : 'Offline',
+                  style: TextStyle(
+                    color: _isOnline ? Colors.green : Colors.grey,
+                    fontSize: 12,
+                  ),
+                ),
+                Switch(
+                  value: _isOnline,
+                  onChanged: (_) => _toggleOnlineStatus(),
+                  activeColor: Colors.green,
+                ),
+              ],
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.bar_chart, color: Colors.white),
             onPressed: () => Get.to(() => const MyStatsScreen()),
@@ -57,6 +175,7 @@ class _CourierHomeScreenState extends State<CourierHomeScreen> with SingleTicker
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.white),
             onPressed: () async {
+              _locationTimer?.cancel();
               await _controller.logout();
               Get.offAll(() => const MarketplaceLoginScreen());
             },

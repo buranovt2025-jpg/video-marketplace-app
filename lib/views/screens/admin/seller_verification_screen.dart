@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/services/api_service.dart';
 
 class SellerVerificationScreen extends StatefulWidget {
   const SellerVerificationScreen({Key? key}) : super(key: key);
@@ -15,9 +16,30 @@ class _SellerVerificationScreenState extends State<SellerVerificationScreen> {
   
   String _filter = 'pending'; // pending, verified, rejected
   bool _isLoading = false;
+  List<Map<String, dynamic>> _verificationRequests = [];
   
-  // Demo data for verification requests
-  final List<Map<String, dynamic>> _verificationRequests = [
+  @override
+  void initState() {
+    super.initState();
+    _loadVerifications();
+  }
+  
+  Future<void> _loadVerifications() async {
+    setState(() => _isLoading = true);
+    try {
+      final verifications = await ApiService.getPendingVerifications();
+      setState(() {
+        _verificationRequests = verifications.map((v) => Map<String, dynamic>.from(v)).toList();
+      });
+    } catch (e) {
+      // Fall back to demo data if API fails
+      _loadDemoData();
+    }
+    setState(() => _isLoading = false);
+  }
+  
+  void _loadDemoData() {
+    _verificationRequests = [
     {
       'id': '1',
       'seller_id': 'seller1',
@@ -78,6 +100,7 @@ class _SellerVerificationScreenState extends State<SellerVerificationScreen> {
       'total_sales': 0,
     },
   ];
+  }
 
   List<Map<String, dynamic>> get _filteredRequests {
     return _verificationRequests.where((r) => r['status'] == _filter).toList();
@@ -86,26 +109,35 @@ class _SellerVerificationScreenState extends State<SellerVerificationScreen> {
   Future<void> _verifyeSeller(String requestId) async {
     setState(() => _isLoading = true);
     
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 1));
-    
-    final index = _verificationRequests.indexWhere((r) => r['id'] == requestId);
-    if (index != -1) {
-      setState(() {
-        _verificationRequests[index]['status'] = 'verified';
-        _verificationRequests[index]['verified_at'] = DateTime.now().toIso8601String();
-      });
+    try {
+      await ApiService.reviewVerification(int.parse(requestId), 'approved');
+      
+      final index = _verificationRequests.indexWhere((r) => r['id'].toString() == requestId);
+      if (index != -1) {
+        setState(() {
+          _verificationRequests[index]['status'] = 'approved';
+          _verificationRequests[index]['reviewed_at'] = DateTime.now().toIso8601String();
+        });
+      }
+      
+      Get.snackbar(
+        'success'.tr,
+        'Продавец верифицирован',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'error'.tr,
+        'Ошибка верификации: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
     
     setState(() => _isLoading = false);
-    
-    Get.snackbar(
-      'success'.tr,
-      'Продавец верифицирован',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
-    );
   }
 
   Future<void> _rejectSeller(String requestId) async {
@@ -151,27 +183,36 @@ class _SellerVerificationScreenState extends State<SellerVerificationScreen> {
 
     setState(() => _isLoading = true);
     
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 1));
-    
-    final index = _verificationRequests.indexWhere((r) => r['id'] == requestId);
-    if (index != -1) {
-      setState(() {
-        _verificationRequests[index]['status'] = 'rejected';
-        _verificationRequests[index]['rejected_at'] = DateTime.now().toIso8601String();
-        _verificationRequests[index]['rejection_reason'] = reason;
-      });
+    try {
+      await ApiService.reviewVerification(int.parse(requestId), 'rejected', notes: reason);
+      
+      final index = _verificationRequests.indexWhere((r) => r['id'].toString() == requestId);
+      if (index != -1) {
+        setState(() {
+          _verificationRequests[index]['status'] = 'rejected';
+          _verificationRequests[index]['reviewed_at'] = DateTime.now().toIso8601String();
+          _verificationRequests[index]['admin_notes'] = reason;
+        });
+      }
+      
+      Get.snackbar(
+        'info'.tr,
+        'Заявка отклонена',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'error'.tr,
+        'Ошибка: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
     
     setState(() => _isLoading = false);
-    
-    Get.snackbar(
-      'info'.tr,
-      'Заявка отклонена',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.orange,
-      colorText: Colors.white,
-    );
   }
 
   @override

@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
+import 'package:tiktok_tutorial/services/api_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class DeliveryMapScreen extends StatefulWidget {
@@ -68,22 +69,56 @@ class _DeliveryMapScreenState extends State<DeliveryMapScreen> with TickerProvid
 
   void _startLocationUpdates() {
     // Update courier location every 3 seconds
-    _locationTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+    _locationTimer = Timer.periodic(const Duration(seconds: 3), (timer) async {
+      // Try to get real courier location from backend
+      final courierId = widget.order['courier_id'];
+      if (courierId != null) {
+        try {
+          final location = await ApiService.getCourierLocation(courierId);
+          if (mounted) {
+            setState(() {
+              _courierLat = location['latitude'] ?? _courierLat;
+              _courierLng = location['longitude'] ?? _courierLng;
+              _updateCount++;
+              
+              // Calculate estimated time based on distance
+              final distance = _calculateDistance();
+              _estimatedMinutes = (distance / 0.5 * 60).clamp(1, 60); // ~30 km/h average
+              
+              // Check if delivered (within 50 meters)
+              if (distance < 0.05) {
+                _isDelivered = true;
+                timer.cancel();
+              }
+            });
+          }
+          return; // Successfully got real location
+        } catch (e) {
+          // Fall back to simulation if API fails
+          print('Failed to get courier location: $e');
+        }
+      }
+      
+      // Fallback: simulate movement if no real location available
       if (_currentRouteIndex < _routePoints.length - 1) {
-        setState(() {
-          _currentRouteIndex++;
-          _courierLat = _routePoints[_currentRouteIndex]['lat']!;
-          _courierLng = _routePoints[_currentRouteIndex]['lng']!;
-          _updateCount++;
-          
-          // Calculate estimated time
-          final remaining = _routePoints.length - _currentRouteIndex - 1;
-          _estimatedMinutes = (remaining * 3 / 60 * 5).clamp(1, 60);
-        });
+        if (mounted) {
+          setState(() {
+            _currentRouteIndex++;
+            _courierLat = _routePoints[_currentRouteIndex]['lat']!;
+            _courierLng = _routePoints[_currentRouteIndex]['lng']!;
+            _updateCount++;
+            
+            // Calculate estimated time
+            final remaining = _routePoints.length - _currentRouteIndex - 1;
+            _estimatedMinutes = (remaining * 3 / 60 * 5).clamp(1, 60);
+          });
+        }
       } else {
-        setState(() {
-          _isDelivered = true;
-        });
+        if (mounted) {
+          setState(() {
+            _isDelivered = true;
+          });
+        }
         timer.cancel();
       }
     });

@@ -171,6 +171,42 @@ async def init_db():
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
+        # FCM tokens for push notifications
+        await conn.execute('''
+            CREATE TABLE IF NOT EXISTS fcm_tokens (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                token TEXT NOT NULL,
+                device_type VARCHAR(50),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(user_id, token)
+            )
+        ''')
+        # Courier locations for real-time tracking
+        await conn.execute('''
+            CREATE TABLE IF NOT EXISTS courier_locations (
+                id SERIAL PRIMARY KEY,
+                courier_id INTEGER REFERENCES users(id) ON DELETE CASCADE UNIQUE,
+                latitude DOUBLE PRECISION NOT NULL,
+                longitude DOUBLE PRECISION NOT NULL,
+                is_online BOOLEAN DEFAULT FALSE,
+                last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        # User verification documents
+        await conn.execute('''
+            CREATE TABLE IF NOT EXISTS user_verifications (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                document_type VARCHAR(100) NOT NULL,
+                document_url TEXT NOT NULL,
+                status VARCHAR(50) DEFAULT 'pending',
+                admin_notes TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                reviewed_at TIMESTAMP
+            )
+        ''')
         # Insert default platform settings
         default_settings = [
             ('platform_commission', '10', 'Platform commission percentage from each sale'),
@@ -1209,6 +1245,465 @@ async def export_admin_stats(user: dict = Depends(get_current_user)):
                 "Content-Disposition": "attachment; filename=all_transactions.csv"
             }
         )
+
+# ==================== FCM PUSH NOTIFICATIONS ====================
+
+class FCMTokenRegister(BaseModel):
+    token: str
+    device_type: Optional[str] = 'android'
+
+@app.post("/api/fcm/register")
+async def register_fcm_token(data: FCMTokenRegister, user: dict = Depends(get_current_user)):
+    """Register or update FCM token for push notifications"""
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        # Upsert FCM token
+        await conn.execute('''
+            INSERT INTO fcm_tokens (user_id, token, device_type, updated_at)
+            VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+            ON CONFLICT (user_id, token) DO UPDATE SET updated_at = CURRENT_TIMESTAMP
+        ''', user['id'], data.token, data.device_type)
+        return {"status": "registered"}
+
+@app.delete("/api/fcm/unregister")
+async def unregister_fcm_token(token: str, user: dict = Depends(get_current_user)):
+    """Remove FCM token when user logs out"""
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        await conn.execute('DELETE FROM fcm_tokens WHERE user_id = $1 AND token = $2', user['id'], token)
+        return {"status": "unregistered"}
+
+async def send_push_notification(user_id: int, title: str, body: str, data: dict = None):
+    """Send push notification to user (placeholder - requires Firebase Admin SDK)"""
+    # Note: This is a placeholder. In production, you would use Firebase Admin SDK
+    # to send actual push notifications. For now, we just log the notification.
+    logger.info(f"Push notification to user {user_id}: {title} - {body}")
+    # Store notification in database for in-app display
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        # Get user's FCM tokens
+        tokens = await conn.fetch('SELECT token FROM fcm_tokens WHERE user_id = $1', user_id)
+        # In production, send to each token using Firebase Admin SDK
+        return len(tokens)
+
+# ==================== COURIER LOCATION TRACKING ====================
+
+class CourierLocationUpdate(BaseModel):
+    latitude: float
+    longitude: float
+
+@app.post("/api/courier/location")
+async def update_courier_location(location: CourierLocationUpdate, user: dict = Depends(get_current_user)):
+    """Update courier's current location"""
+    if user['role'] != 'courier':
+        raise HTTPException(status_code=403, detail="Only couriers can update location")
+    
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        await conn.execute('''
+            INSERT INTO courier_locations (courier_id, latitude, longitude, is_online, last_updated)
+            VALUES ($1, $2, $3, TRUE, CURRENT_TIMESTAMP)
+            ON CONFLICT (courier_id) DO UPDATE SET 
+                latitude = $2, longitude = $3, is_online = TRUE, last_updated = CURRENT_TIMESTAMP
+        ''', user['id'], location.latitude, location.longitude)
+        return {"status": "updated"}
+
+@app.post("/api/courier/online")
+async def set_courier_online(is_online: bool, user: dict = Depends(get_current_user)):
+    """Set courier online/offline status"""
+    if user['role'] != 'courier':
+        raise HTTPException(status_code=403, detail="Only couriers can update status")
+    
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        await conn.execute('''
+            UPDATE courier_locations SET is_online = $1, last_updated = CURRENT_TIMESTAMP
+            WHERE courier_id = $2
+        ''', is_online, user['id'])
+        return {"status": "updated", "is_online": is_online}
+
+@app.get("/api/courier/{courier_id}/location")
+async def get_courier_location(courier_id: int, user: dict = Depends(get_current_user)):
+    """Get courier's current location (for buyers tracking their delivery)"""
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        # Verify user has an active order with this courier
+        has_order = await conn.fetchval('''
+            SELECT id FROM orders WHERE courier_id = $1 AND buyer_id = $2 
+            AND status IN ('picked_up', 'in_transit')
+        ''', courier_id, user['id'])
+        
+        if not has_order and user['role'] not in ['admin', 'seller']:
+            raise HTTPException(status_code=403, detail="Not authorized to track this courier")
+        
+        location = await conn.fetchrow('''
+            SELECT latitude, longitude, is_online, last_updated 
+            FROM courier_locations WHERE courier_id = $1
+        ''', courier_id)
+        
+        if not location:
+            raise HTTPException(status_code=404, detail="Courier location not found")
+        
+        return dict(location)
+
+@app.get("/api/couriers/online")
+async def get_online_couriers(user: dict = Depends(get_current_user)):
+    """Get all online couriers (for admin/auto-assignment)"""
+    if user['role'] not in ['admin', 'seller']:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        couriers = await conn.fetch('''
+            SELECT cl.*, u.name, u.phone 
+            FROM courier_locations cl
+            JOIN users u ON cl.courier_id = u.id
+            WHERE cl.is_online = TRUE 
+            AND cl.last_updated > NOW() - INTERVAL '10 minutes'
+        ''')
+        return [dict(c) for c in couriers]
+
+# ==================== USER VERIFICATION ====================
+
+class VerificationSubmit(BaseModel):
+    document_type: str  # 'passport', 'driver_license', 'business_license'
+    document_url: str
+
+@app.post("/api/verification/submit")
+async def submit_verification(data: VerificationSubmit, user: dict = Depends(get_current_user)):
+    """Submit verification document"""
+    if user['role'] not in ['seller', 'courier']:
+        raise HTTPException(status_code=403, detail="Only sellers and couriers need verification")
+    
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        # Check if already has pending verification
+        existing = await conn.fetchval('''
+            SELECT id FROM user_verifications 
+            WHERE user_id = $1 AND document_type = $2 AND status = 'pending'
+        ''', user['id'], data.document_type)
+        
+        if existing:
+            raise HTTPException(status_code=400, detail="Already have pending verification for this document type")
+        
+        verification_id = await conn.fetchval('''
+            INSERT INTO user_verifications (user_id, document_type, document_url, status)
+            VALUES ($1, $2, $3, 'pending') RETURNING id
+        ''', user['id'], data.document_type, data.document_url)
+        
+        return {"id": verification_id, "status": "pending"}
+
+@app.get("/api/verification/status")
+async def get_verification_status(user: dict = Depends(get_current_user)):
+    """Get user's verification status"""
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        verifications = await conn.fetch('''
+            SELECT id, document_type, status, admin_notes, created_at, reviewed_at
+            FROM user_verifications WHERE user_id = $1
+            ORDER BY created_at DESC
+        ''', user['id'])
+        return [dict(v) for v in verifications]
+
+@app.get("/api/admin/verifications")
+async def get_pending_verifications(user: dict = Depends(get_current_user)):
+    """Get all pending verifications (admin only)"""
+    if user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        verifications = await conn.fetch('''
+            SELECT v.*, u.name, u.email, u.role, u.phone
+            FROM user_verifications v
+            JOIN users u ON v.user_id = u.id
+            WHERE v.status = 'pending'
+            ORDER BY v.created_at ASC
+        ''')
+        return [dict(v) for v in verifications]
+
+@app.put("/api/admin/verifications/{verification_id}")
+async def review_verification(verification_id: int, status: str, notes: Optional[str] = None, user: dict = Depends(get_current_user)):
+    """Approve or reject verification (admin only)"""
+    if user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    if status not in ['approved', 'rejected']:
+        raise HTTPException(status_code=400, detail="Status must be 'approved' or 'rejected'")
+    
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        verification = await conn.fetchrow('SELECT * FROM user_verifications WHERE id = $1', verification_id)
+        if not verification:
+            raise HTTPException(status_code=404, detail="Verification not found")
+        
+        await conn.execute('''
+            UPDATE user_verifications 
+            SET status = $1, admin_notes = $2, reviewed_at = CURRENT_TIMESTAMP
+            WHERE id = $3
+        ''', status, notes, verification_id)
+        
+        # If approved, update user's is_verified status
+        if status == 'approved':
+            await conn.execute('UPDATE users SET is_verified = TRUE WHERE id = $1', verification['user_id'])
+            # Send push notification
+            await send_push_notification(
+                verification['user_id'],
+                'Верификация одобрена!',
+                'Ваши документы проверены и одобрены.'
+            )
+        else:
+            await send_push_notification(
+                verification['user_id'],
+                'Верификация отклонена',
+                notes or 'Пожалуйста, загрузите документы повторно.'
+            )
+        
+        return {"status": status}
+
+# ==================== DELIVERY FEE CALCULATION ====================
+
+import math
+
+def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Calculate distance between two points using Haversine formula (in km)"""
+    R = 6371  # Earth's radius in km
+    
+    lat1_rad = math.radians(lat1)
+    lat2_rad = math.radians(lat2)
+    delta_lat = math.radians(lat2 - lat1)
+    delta_lon = math.radians(lon2 - lon1)
+    
+    a = math.sin(delta_lat/2)**2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(delta_lon/2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+    
+    return R * c
+
+@app.get("/api/delivery/calculate")
+async def calculate_delivery_fee(
+    seller_lat: float, seller_lon: float,
+    buyer_lat: float, buyer_lon: float
+):
+    """Calculate delivery fee based on distance"""
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        # Get base fee and per-km rate from settings
+        base_fee_row = await conn.fetchrow("SELECT setting_value FROM platform_settings WHERE setting_key = 'courier_fee'")
+        base_fee = float(base_fee_row['setting_value']) if base_fee_row else 15000
+        
+        # Calculate distance
+        distance = calculate_distance(seller_lat, seller_lon, buyer_lat, buyer_lon)
+        
+        # Fee calculation: base fee + 2000 sum per km after first 3km
+        if distance <= 3:
+            delivery_fee = base_fee
+        else:
+            extra_km = distance - 3
+            delivery_fee = base_fee + (extra_km * 2000)
+        
+        # Round to nearest 500
+        delivery_fee = round(delivery_fee / 500) * 500
+        
+        return {
+            "distance_km": round(distance, 2),
+            "delivery_fee": delivery_fee,
+            "base_fee": base_fee,
+            "extra_km_rate": 2000
+        }
+
+# ==================== AUTO-ASSIGNMENT OF COURIERS ====================
+
+@app.post("/api/orders/{order_id}/auto-assign")
+async def auto_assign_courier(order_id: int, user: dict = Depends(get_current_user)):
+    """Auto-assign nearest available courier to order"""
+    if user['role'] not in ['admin', 'seller']:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        # Get order details
+        order = await conn.fetchrow('SELECT * FROM orders WHERE id = $1', order_id)
+        if not order:
+            raise HTTPException(status_code=404, detail="Order not found")
+        
+        if order['status'] != 'ready':
+            raise HTTPException(status_code=400, detail="Order must be in 'ready' status for courier assignment")
+        
+        if order['courier_id']:
+            raise HTTPException(status_code=400, detail="Order already has a courier assigned")
+        
+        # Get seller location
+        seller = await conn.fetchrow('SELECT latitude, longitude FROM users WHERE id = $1', order['seller_id'])
+        if not seller or not seller['latitude']:
+            raise HTTPException(status_code=400, detail="Seller location not set")
+        
+        # Find nearest online courier
+        couriers = await conn.fetch('''
+            SELECT cl.courier_id, cl.latitude, cl.longitude, u.name
+            FROM courier_locations cl
+            JOIN users u ON cl.courier_id = u.id
+            WHERE cl.is_online = TRUE 
+            AND cl.last_updated > NOW() - INTERVAL '10 minutes'
+            AND u.is_verified = TRUE
+        ''')
+        
+        if not couriers:
+            return {"status": "no_couriers", "message": "No available couriers online"}
+        
+        # Calculate distances and find nearest
+        nearest_courier = None
+        min_distance = float('inf')
+        
+        for courier in couriers:
+            distance = calculate_distance(
+                seller['latitude'], seller['longitude'],
+                courier['latitude'], courier['longitude']
+            )
+            if distance < min_distance:
+                min_distance = distance
+                nearest_courier = courier
+        
+        if nearest_courier:
+            # Assign courier to order
+            await conn.execute('''
+                UPDATE orders SET courier_id = $1, status = 'assigned'
+                WHERE id = $2
+            ''', nearest_courier['courier_id'], order_id)
+            
+            # Send push notification to courier
+            await send_push_notification(
+                nearest_courier['courier_id'],
+                'Новая доставка!',
+                f'Вам назначен заказ #{order_id}. Расстояние: {min_distance:.1f} км'
+            )
+            
+            return {
+                "status": "assigned",
+                "courier_id": nearest_courier['courier_id'],
+                "courier_name": nearest_courier['name'],
+                "distance_km": round(min_distance, 2)
+            }
+        
+        return {"status": "no_couriers", "message": "No suitable couriers found"}
+
+# ==================== REAL WEBSOCKET CHAT ====================
+
+from fastapi import WebSocket, WebSocketDisconnect
+from typing import Dict
+import json
+
+# Store active WebSocket connections
+active_connections: Dict[int, WebSocket] = {}
+
+@app.websocket("/ws/chat/{user_id}")
+async def websocket_chat(websocket: WebSocket, user_id: int):
+    """WebSocket endpoint for real-time chat"""
+    await websocket.accept()
+    active_connections[user_id] = websocket
+    logger.info(f"WebSocket connected: user {user_id}")
+    
+    try:
+        while True:
+            data = await websocket.receive_text()
+            message_data = json.loads(data)
+            
+            # Save message to database
+            pool = await get_db()
+            async with pool.acquire() as conn:
+                message_id = await conn.fetchval('''
+                    INSERT INTO messages (sender_id, receiver_id, content, image_url)
+                    VALUES ($1, $2, $3, $4) RETURNING id
+                ''', user_id, message_data.get('receiver_id'), 
+                    message_data.get('content'), message_data.get('image_url'))
+                
+                # Get full message with sender info
+                message = await conn.fetchrow('''
+                    SELECT m.*, u.name as sender_name 
+                    FROM messages m JOIN users u ON m.sender_id = u.id
+                    WHERE m.id = $1
+                ''', message_id)
+                
+                response = {
+                    "type": "message",
+                    "data": {
+                        "id": message['id'],
+                        "sender_id": message['sender_id'],
+                        "sender_name": message['sender_name'],
+                        "receiver_id": message['receiver_id'],
+                        "content": message['content'],
+                        "image_url": message['image_url'],
+                        "created_at": str(message['created_at'])
+                    }
+                }
+                
+                # Send to receiver if online
+                receiver_id = message_data.get('receiver_id')
+                if receiver_id in active_connections:
+                    await active_connections[receiver_id].send_text(json.dumps(response))
+                
+                # Send confirmation to sender
+                await websocket.send_text(json.dumps(response))
+                
+    except WebSocketDisconnect:
+        logger.info(f"WebSocket disconnected: user {user_id}")
+        if user_id in active_connections:
+            del active_connections[user_id]
+    except Exception as e:
+        logger.error(f"WebSocket error for user {user_id}: {e}")
+        if user_id in active_connections:
+            del active_connections[user_id]
+
+@app.get("/api/chat/online")
+async def get_online_users(user: dict = Depends(get_current_user)):
+    """Get list of online users for chat"""
+    return {"online_users": list(active_connections.keys())}
+
+# ==================== ENHANCED ORDER STATUS WITH NOTIFICATIONS ====================
+
+@app.put("/api/orders/{order_id}/status")
+async def update_order_status_with_notification(order_id: int, status: str, user: dict = Depends(get_current_user)):
+    """Update order status and send push notifications"""
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        order = await conn.fetchrow('SELECT * FROM orders WHERE id = $1', order_id)
+        if not order:
+            raise HTTPException(status_code=404, detail="Order not found")
+        
+        # Verify authorization
+        if user['role'] == 'seller' and order['seller_id'] != user['id']:
+            raise HTTPException(status_code=403, detail="Not authorized")
+        if user['role'] == 'courier' and order['courier_id'] != user['id']:
+            raise HTTPException(status_code=403, detail="Not authorized")
+        
+        # Update status
+        if user['role'] == 'courier':
+            await conn.execute('UPDATE orders SET status = $1, courier_id = $2 WHERE id = $3', status, user['id'], order_id)
+        else:
+            await conn.execute('UPDATE orders SET status = $1 WHERE id = $2', status, order_id)
+        
+        # Send push notifications based on status
+        notification_map = {
+            'accepted': ('Заказ принят!', 'Продавец принял ваш заказ', order['buyer_id']),
+            'ready': ('Заказ готов!', 'Ваш заказ готов к выдаче', order['buyer_id']),
+            'picked_up': ('Курьер забрал заказ', 'Ваш заказ в пути', order['buyer_id']),
+            'in_transit': ('Заказ в пути', 'Курьер везёт ваш заказ', order['buyer_id']),
+            'delivered': ('Заказ доставлен!', 'Спасибо за покупку!', order['buyer_id']),
+            'rejected': ('Заказ отклонён', 'К сожалению, продавец отклонил заказ', order['buyer_id']),
+        }
+        
+        if status in notification_map:
+            title, body, recipient_id = notification_map[status]
+            await send_push_notification(recipient_id, title, body)
+        
+        # Notify seller when courier picks up
+        if status == 'picked_up':
+            await send_push_notification(
+                order['seller_id'],
+                'Курьер забрал заказ',
+                f'Заказ #{order_id} передан курьеру'
+            )
+        
+        return {"status": status}
 
 if __name__ == "__main__":
     import uvicorn

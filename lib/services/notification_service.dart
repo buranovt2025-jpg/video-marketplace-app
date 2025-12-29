@@ -1,6 +1,7 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get/get.dart';
+import 'package:tiktok_tutorial/services/api_service.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -63,10 +64,16 @@ class NotificationService extends GetxService {
       _fcmToken = await _firebaseMessaging.getToken();
       print('FCM Token: $_fcmToken');
       
+      // Register token with backend if user is logged in
+      if (_fcmToken != null) {
+        _registerTokenWithBackend(_fcmToken!);
+      }
+      
       // Listen for token refresh
       _firebaseMessaging.onTokenRefresh.listen((newToken) {
         _fcmToken = newToken;
         print('FCM Token refreshed: $newToken');
+        _registerTokenWithBackend(newToken);
       });
       
       // Set up background message handler
@@ -303,5 +310,35 @@ class NotificationService extends GetxService {
   // Cancel all notifications
   Future<void> cancelAllNotifications() async {
     await _notifications.cancelAll();
+  }
+  
+  // Register FCM token with backend
+  Future<void> _registerTokenWithBackend(String token) async {
+    try {
+      await ApiService.registerFcmToken(token);
+      print('FCM token registered with backend');
+    } catch (e) {
+      print('Failed to register FCM token with backend: $e');
+      // Token registration failed, but don't block the app
+    }
+  }
+  
+  // Public method to register token (call after login)
+  Future<void> registerTokenAfterLogin() async {
+    if (_fcmToken != null) {
+      await _registerTokenWithBackend(_fcmToken!);
+    }
+  }
+  
+  // Unregister token on logout
+  Future<void> unregisterTokenOnLogout() async {
+    if (_fcmToken != null) {
+      try {
+        await ApiService.unregisterFcmToken(_fcmToken!);
+        print('FCM token unregistered from backend');
+      } catch (e) {
+        print('Failed to unregister FCM token: $e');
+      }
+    }
   }
 }

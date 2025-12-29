@@ -721,6 +721,214 @@ class ApiService {
       throw ApiException(response.statusCode, 'Failed to export admin stats');
     }
   }
+
+  // ==================== FCM PUSH NOTIFICATIONS ====================
+  
+  // Register FCM token for push notifications
+  static Future<void> registerFcmToken(String token, {String deviceType = 'android'}) async {
+    final response = await client.post(
+      Uri.parse('$baseUrl/api/fcm/register'),
+      headers: _headers,
+      body: jsonEncode({'token': token, 'device_type': deviceType}),
+    );
+    
+    if (response.statusCode != 200) {
+      throw ApiException(response.statusCode, 'Failed to register FCM token');
+    }
+  }
+
+  // Unregister FCM token on logout
+  static Future<void> unregisterFcmToken(String token) async {
+    final response = await client.delete(
+      Uri.parse('$baseUrl/api/fcm/unregister?token=$token'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode != 200) {
+      throw ApiException(response.statusCode, 'Failed to unregister FCM token');
+    }
+  }
+
+  // ==================== COURIER LOCATION TRACKING ====================
+  
+  // Update courier's current location
+  static Future<void> updateCourierLocation(double latitude, double longitude) async {
+    final response = await client.post(
+      Uri.parse('$baseUrl/api/courier/location'),
+      headers: _headers,
+      body: jsonEncode({'latitude': latitude, 'longitude': longitude}),
+    );
+    
+    if (response.statusCode != 200) {
+      throw ApiException(response.statusCode, 'Failed to update location');
+    }
+  }
+
+  // Set courier online/offline status
+  static Future<void> setCourierOnline(bool isOnline) async {
+    final response = await client.post(
+      Uri.parse('$baseUrl/api/courier/online?is_online=$isOnline'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode != 200) {
+      throw ApiException(response.statusCode, 'Failed to update status');
+    }
+  }
+
+  // Get courier's current location (for tracking)
+  static Future<Map<String, dynamic>> getCourierLocation(int courierId) async {
+    final response = await client.get(
+      Uri.parse('$baseUrl/api/courier/$courierId/location'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return _decodeResponse(response);
+    } else {
+      throw ApiException(response.statusCode, 'Failed to get courier location');
+    }
+  }
+
+  // Get all online couriers (for admin/seller)
+  static Future<List<dynamic>> getOnlineCouriers() async {
+    final response = await client.get(
+      Uri.parse('$baseUrl/api/couriers/online'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as List;
+    } else {
+      throw ApiException(response.statusCode, 'Failed to get online couriers');
+    }
+  }
+
+  // ==================== USER VERIFICATION ====================
+  
+  // Submit verification document
+  static Future<Map<String, dynamic>> submitVerification(String documentType, String documentUrl) async {
+    final response = await client.post(
+      Uri.parse('$baseUrl/api/verification/submit'),
+      headers: _headers,
+      body: jsonEncode({'document_type': documentType, 'document_url': documentUrl}),
+    );
+    
+    if (response.statusCode == 200) {
+      return _decodeResponse(response);
+    } else {
+      throw ApiException(response.statusCode, 'Failed to submit verification');
+    }
+  }
+
+  // Get user's verification status
+  static Future<List<dynamic>> getVerificationStatus() async {
+    final response = await client.get(
+      Uri.parse('$baseUrl/api/verification/status'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as List;
+    } else {
+      throw ApiException(response.statusCode, 'Failed to get verification status');
+    }
+  }
+
+  // Get pending verifications (admin only)
+  static Future<List<dynamic>> getPendingVerifications() async {
+    final response = await client.get(
+      Uri.parse('$baseUrl/api/admin/verifications'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as List;
+    } else {
+      throw ApiException(response.statusCode, 'Failed to get pending verifications');
+    }
+  }
+
+  // Review verification (admin only)
+  static Future<void> reviewVerification(int verificationId, String status, {String? notes}) async {
+    String url = '$baseUrl/api/admin/verifications/$verificationId?status=$status';
+    if (notes != null) url += '&notes=${Uri.encodeComponent(notes)}';
+    
+    final response = await client.put(
+      Uri.parse(url),
+      headers: _headers,
+    );
+    
+    if (response.statusCode != 200) {
+      throw ApiException(response.statusCode, 'Failed to review verification');
+    }
+  }
+
+  // ==================== DELIVERY FEE CALCULATION ====================
+  
+  // Calculate delivery fee based on distance
+  static Future<Map<String, dynamic>> calculateDeliveryFee({
+    required double sellerLat,
+    required double sellerLon,
+    required double buyerLat,
+    required double buyerLon,
+  }) async {
+    final response = await client.get(
+      Uri.parse('$baseUrl/api/delivery/calculate?seller_lat=$sellerLat&seller_lon=$sellerLon&buyer_lat=$buyerLat&buyer_lon=$buyerLon'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return _decodeResponse(response);
+    } else {
+      throw ApiException(response.statusCode, 'Failed to calculate delivery fee');
+    }
+  }
+
+  // ==================== AUTO-ASSIGNMENT OF COURIERS ====================
+  
+  // Auto-assign nearest courier to order
+  static Future<Map<String, dynamic>> autoAssignCourier(int orderId) async {
+    final response = await client.post(
+      Uri.parse('$baseUrl/api/orders/$orderId/auto-assign'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return _decodeResponse(response);
+    } else {
+      throw ApiException(response.statusCode, 'Failed to auto-assign courier');
+    }
+  }
+
+  // ==================== ENHANCED ORDER STATUS ====================
+  
+  // Update order status with push notifications
+  static Future<void> updateOrderStatusWithNotification(int orderId, String status) async {
+    final response = await client.put(
+      Uri.parse('$baseUrl/api/orders/$orderId/status?status=$status'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode != 200) {
+      throw ApiException(response.statusCode, 'Failed to update order status');
+    }
+  }
+
+  // Get online chat users
+  static Future<List<int>> getOnlineChatUsers() async {
+    final response = await client.get(
+      Uri.parse('$baseUrl/api/chat/online'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      final data = _decodeResponse(response);
+      return List<int>.from(data['online_users'] ?? []);
+    } else {
+      throw ApiException(response.statusCode, 'Failed to get online users');
+    }
+  }
 }
 
 class ApiException implements Exception {
