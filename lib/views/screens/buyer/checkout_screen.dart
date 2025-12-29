@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:tiktok_tutorial/constants.dart';
-import 'package:tiktok_tutorial/controllers/cart_controller.dart';
-import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
-import 'package:tiktok_tutorial/views/screens/buyer/order_success_screen.dart';
-import 'package:tiktok_tutorial/views/screens/buyer/payment_screen.dart';
-import 'package:tiktok_tutorial/views/screens/common/location_picker_screen.dart';
+import 'package:gogomarket/constants.dart';
+import 'package:gogomarket/controllers/cart_controller.dart';
+import 'package:gogomarket/controllers/marketplace_controller.dart';
+import 'package:gogomarket/views/screens/buyer/order_success_screen.dart';
+import 'package:gogomarket/views/screens/buyer/payment_screen.dart';
+import 'package:gogomarket/views/screens/common/location_picker_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final String sellerId;

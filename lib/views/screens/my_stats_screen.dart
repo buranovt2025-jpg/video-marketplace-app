@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:tiktok_tutorial/constants.dart';
-import 'package:tiktok_tutorial/services/api_service.dart';
-import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:gogomarket/constants.dart';
+import 'package:gogomarket/services/api_service.dart';
+import 'package:gogomarket/controllers/marketplace_controller.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';

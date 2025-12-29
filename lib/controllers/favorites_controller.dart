@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import 'package:tiktok_tutorial/services/api_service.dart';
+import 'package:gogomarket/services/api_service.dart';
 
 class FavoritesController extends GetxController {
   static FavoritesController get to => Get.find<FavoritesController>();

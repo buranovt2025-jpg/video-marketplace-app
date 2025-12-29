@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:tiktok_tutorial/constants.dart';
-import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
-import 'package:tiktok_tutorial/views/screens/admin/admin_users_screen.dart';
-import 'package:tiktok_tutorial/views/screens/admin/admin_orders_screen.dart';
-import 'package:tiktok_tutorial/views/screens/admin/admin_content_screen.dart';
-import 'package:tiktok_tutorial/views/screens/admin/admin_settings_screen.dart';
-import 'package:tiktok_tutorial/views/screens/auth/marketplace_login_screen.dart';
+import 'package:gogomarket/constants.dart';
+import 'package:gogomarket/controllers/marketplace_controller.dart';
+import 'package:gogomarket/views/screens/admin/admin_users_screen.dart';
+import 'package:gogomarket/views/screens/admin/admin_orders_screen.dart';
+import 'package:gogomarket/views/screens/admin/admin_content_screen.dart';
+import 'package:gogomarket/views/screens/admin/admin_settings_screen.dart';
+import 'package:gogomarket/views/screens/auth/marketplace_login_screen.dart';
 
 class AdminHomeScreen extends StatefulWidget {
   const AdminHomeScreen({Key? key}) : super(key: key);

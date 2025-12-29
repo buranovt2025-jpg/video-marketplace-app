@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:tiktok_tutorial/constants.dart';
+import 'package:gogomarket/constants.dart';
 
 enum PaymentMethod { cash, card, click, payme }
 

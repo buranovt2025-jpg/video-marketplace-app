@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:tiktok_tutorial/constants.dart';
-import 'package:tiktok_tutorial/controllers/cart_controller.dart';
-import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
-import 'package:tiktok_tutorial/services/api_service.dart';
-import 'package:tiktok_tutorial/utils/responsive_helper.dart';
-import 'package:tiktok_tutorial/views/screens/buyer/cart_screen.dart';
-import 'package:tiktok_tutorial/views/screens/chat/chat_screen.dart';
+import 'package:gogomarket/constants.dart';
+import 'package:gogomarket/controllers/cart_controller.dart';
+import 'package:gogomarket/controllers/marketplace_controller.dart';
+import 'package:gogomarket/services/api_service.dart';
+import 'package:gogomarket/utils/responsive_helper.dart';
+import 'package:gogomarket/views/screens/buyer/cart_screen.dart';
+import 'package:gogomarket/views/screens/chat/chat_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final Map<String, dynamic> product;

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:tiktok_tutorial/constants.dart';
-import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
-import 'package:tiktok_tutorial/utils/responsive_helper.dart';
-import 'package:tiktok_tutorial/views/screens/auth/marketplace_register_screen.dart';
-import 'package:tiktok_tutorial/views/screens/auth/forgot_password_screen.dart';
-import 'package:tiktok_tutorial/views/screens/marketplace_home_screen.dart';
-import 'package:tiktok_tutorial/views/screens/courier/courier_home_screen.dart';
-import 'package:tiktok_tutorial/views/screens/admin/admin_home_screen.dart';
+import 'package:gogomarket/constants.dart';
+import 'package:gogomarket/controllers/marketplace_controller.dart';
+import 'package:gogomarket/utils/responsive_helper.dart';
+import 'package:gogomarket/views/screens/auth/marketplace_register_screen.dart';
+import 'package:gogomarket/views/screens/auth/forgot_password_screen.dart';
+import 'package:gogomarket/views/screens/marketplace_home_screen.dart';
+import 'package:gogomarket/views/screens/courier/courier_home_screen.dart';
+import 'package:gogomarket/views/screens/admin/admin_home_screen.dart';
 
 class MarketplaceLoginScreen extends StatefulWidget {
   const MarketplaceLoginScreen({Key? key}) : super(key: key);

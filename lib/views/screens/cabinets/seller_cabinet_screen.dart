@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:tiktok_tutorial/constants.dart';
-import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
-import 'package:tiktok_tutorial/views/screens/seller/my_products_screen.dart';
-import 'package:tiktok_tutorial/views/screens/common/qr_code_screen.dart';
-import 'package:tiktok_tutorial/views/screens/seller/seller_analytics_screen.dart';
-import 'package:tiktok_tutorial/views/screens/my_stats_screen.dart';
-import 'package:tiktok_tutorial/services/api_service.dart';
+import 'package:gogomarket/constants.dart';
+import 'package:gogomarket/controllers/marketplace_controller.dart';
+import 'package:gogomarket/views/screens/seller/my_products_screen.dart';
+import 'package:gogomarket/views/screens/common/qr_code_screen.dart';
+import 'package:gogomarket/views/screens/seller/seller_analytics_screen.dart';
+import 'package:gogomarket/views/screens/my_stats_screen.dart';
+import 'package:gogomarket/services/api_service.dart';
 
 class SellerCabinetScreen extends StatefulWidget {
   const SellerCabinetScreen({Key? key}) : super(key: key);

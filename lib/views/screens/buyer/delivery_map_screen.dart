@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:tiktok_tutorial/constants.dart';
-import 'package:tiktok_tutorial/services/api_service.dart';
+import 'package:gogomarket/constants.dart';
+import 'package:gogomarket/services/api_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class DeliveryMapScreen extends StatefulWidget {

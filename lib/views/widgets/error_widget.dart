@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tiktok_tutorial/constants.dart';
+import 'package:gogomarket/constants.dart';
 
 class AppErrorWidget extends StatelessWidget {
   final String message;

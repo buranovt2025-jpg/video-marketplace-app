@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:tiktok_tutorial/constants.dart';
+import 'package:gogomarket/constants.dart';
 
 class QRCodeScreen extends StatelessWidget {
   final String orderId;

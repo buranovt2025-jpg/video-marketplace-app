@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:tiktok_tutorial/constants.dart';
-import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
-import 'package:tiktok_tutorial/views/screens/buyer/product_detail_screen.dart';
+import 'package:gogomarket/constants.dart';
+import 'package:gogomarket/controllers/marketplace_controller.dart';
+import 'package:gogomarket/views/screens/buyer/product_detail_screen.dart';
 
 class SmartSearchScreen extends StatefulWidget {
   const SmartSearchScreen({Key? key}) : super(key: key);

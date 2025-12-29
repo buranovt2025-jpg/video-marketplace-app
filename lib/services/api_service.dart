@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tiktok_tutorial/services/http_client_factory.dart';
+import 'package:gogomarket/services/http_client_factory.dart';
 
 // Helper function to decode response body as UTF-8
 dynamic _decodeResponse(http.Response response) {

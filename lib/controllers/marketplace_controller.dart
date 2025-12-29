@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import 'package:tiktok_tutorial/services/api_service.dart';
+import 'package:gogomarket/services/api_service.dart';
 
 class MarketplaceController extends GetxController {
   static MarketplaceController get instance => Get.find();

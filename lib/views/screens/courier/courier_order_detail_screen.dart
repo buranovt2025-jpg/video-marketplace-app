@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:tiktok_tutorial/constants.dart';
-import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
-import 'package:tiktok_tutorial/services/location_service.dart';
-import 'package:tiktok_tutorial/services/notification_service.dart';
-import 'package:tiktok_tutorial/views/screens/chat/chat_screen.dart';
-import 'package:tiktok_tutorial/views/screens/common/qr_code_screen.dart';
-import 'package:tiktok_tutorial/views/screens/common/qr_scanner_screen.dart';
+import 'package:gogomarket/constants.dart';
+import 'package:gogomarket/controllers/marketplace_controller.dart';
+import 'package:gogomarket/services/location_service.dart';
+import 'package:gogomarket/services/notification_service.dart';
+import 'package:gogomarket/views/screens/chat/chat_screen.dart';
+import 'package:gogomarket/views/screens/common/qr_code_screen.dart';
+import 'package:gogomarket/views/screens/common/qr_scanner_screen.dart';
 
 class CourierOrderDetailScreen extends StatefulWidget {
   final Map<String, dynamic> order;

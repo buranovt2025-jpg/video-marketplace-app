@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:tiktok_tutorial/constants.dart';
-import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
-import 'package:tiktok_tutorial/controllers/cart_controller.dart';
-import 'package:tiktok_tutorial/controllers/favorites_controller.dart';
-import 'package:tiktok_tutorial/services/api_service.dart';
-import 'package:tiktok_tutorial/services/notification_service.dart';
-import 'package:tiktok_tutorial/services/location_service.dart';
-import 'package:tiktok_tutorial/views/screens/marketplace_home_screen.dart';
-import 'package:tiktok_tutorial/views/screens/courier/courier_home_screen.dart';
-import 'package:tiktok_tutorial/views/screens/admin/admin_home_screen.dart';
-import 'package:tiktok_tutorial/l10n/app_translations.dart';
+import 'package:gogomarket/constants.dart';
+import 'package:gogomarket/controllers/marketplace_controller.dart';
+import 'package:gogomarket/controllers/cart_controller.dart';
+import 'package:gogomarket/controllers/favorites_controller.dart';
+import 'package:gogomarket/services/api_service.dart';
+import 'package:gogomarket/services/notification_service.dart';
+import 'package:gogomarket/services/location_service.dart';
+import 'package:gogomarket/views/screens/marketplace_home_screen.dart';
+import 'package:gogomarket/views/screens/courier/courier_home_screen.dart';
+import 'package:gogomarket/views/screens/admin/admin_home_screen.dart';
+import 'package:gogomarket/l10n/app_translations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
