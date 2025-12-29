@@ -36,6 +36,30 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   final MarketplaceController _controller = Get.find<MarketplaceController>();
   int _currentIndex = 0;
   
+  // Search and filter state
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  String _selectedCategory = 'all';
+  String _sortBy = 'default'; // default, price_low, price_high, newest
+  
+  final List<Map<String, String>> _categories = [
+    {'value': 'all', 'label': 'Все'},
+    {'value': 'electronics', 'label': 'Электроника'},
+    {'value': 'clothing', 'label': 'Одежда'},
+    {'value': 'food', 'label': 'Продукты'},
+    {'value': 'home', 'label': 'Дом и сад'},
+    {'value': 'beauty', 'label': 'Красота'},
+    {'value': 'sports', 'label': 'Спорт'},
+    {'value': 'other', 'label': 'Другое'},
+  ];
+  
+  final List<Map<String, String>> _sortOptions = [
+    {'value': 'default', 'label': 'По умолчанию'},
+    {'value': 'price_low', 'label': 'Сначала дешевые'},
+    {'value': 'price_high', 'label': 'Сначала дорогие'},
+    {'value': 'newest', 'label': 'Сначала новые'},
+  ];
+  
   // Use controller's isGuestMode flag OR widget parameter (for robustness)
   bool get _isGuestMode => widget.isGuestMode || _controller.isGuest;
   bool get _isSeller => !_isGuestMode && _controller.currentUser.value?['role'] == 'seller';
@@ -717,85 +741,387 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     );
   }
 
-  Widget _buildExploreTab() {
-    return CustomScrollView(
-      slivers: [
-        SliverAppBar(
-          floating: true,
-          backgroundColor: backgroundColor,
-          title: Container(
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.grey[900],
-              borderRadius: BorderRadius.circular(10),
+    Widget _buildExploreTab() {
+      return CustomScrollView(
+        slivers: [
+          // Search bar
+          SliverAppBar(
+            floating: true,
+            backgroundColor: backgroundColor,
+            title: Container(
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.grey[900],
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: TextField(
+                controller: _searchController,
+                style: const TextStyle(color: Colors.white),
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value.toLowerCase();
+                  });
+                },
+                decoration: InputDecoration(
+                  hintText: 'Поиск товаров и продавцов',
+                  hintStyle: TextStyle(color: Colors.grey[500]),
+                  prefixIcon: Icon(Icons.search, color: Colors.grey[500]),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: Icon(Icons.clear, color: Colors.grey[500]),
+                          onPressed: () {
+                            setState(() {
+                              _searchController.clear();
+                              _searchQuery = '';
+                            });
+                          },
+                        )
+                      : null,
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                ),
+              ),
             ),
-            child: TextField(
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: 'Поиск товаров и продавцов',
-                hintStyle: TextStyle(color: Colors.grey[500]),
-                prefixIcon: Icon(Icons.search, color: Colors.grey[500]),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.filter_list, color: Colors.white),
+                onPressed: _showFilterBottomSheet,
+              ),
+            ],
+          ),
+        
+          // Category chips
+          SliverToBoxAdapter(
+            child: Container(
+              height: 50,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                itemCount: _categories.length,
+                itemBuilder: (context, index) {
+                  final category = _categories[index];
+                  final isSelected = _selectedCategory == category['value'];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: FilterChip(
+                      label: Text(category['label']!),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        setState(() {
+                          _selectedCategory = category['value']!;
+                        });
+                      },
+                      backgroundColor: Colors.grey[900],
+                      selectedColor: buttonColor!.withOpacity(0.3),
+                      labelStyle: TextStyle(
+                        color: isSelected ? buttonColor : Colors.grey[400],
+                        fontSize: 12,
+                      ),
+                      checkmarkColor: buttonColor,
+                      side: BorderSide(
+                        color: isSelected ? buttonColor! : Colors.grey[700]!,
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ),
-        ),
         
-        // Products grid (Instagram Explore style)
-        SliverPadding(
-          padding: const EdgeInsets.all(2),
-          sliver: Obx(() {
-            final products = _controller.products;
+          // Sort indicator
+          if (_sortBy != 'default')
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                child: Row(
+                  children: [
+                    Icon(Icons.sort, size: 16, color: Colors.grey[500]),
+                    const SizedBox(width: 4),
+                    Text(
+                      _sortOptions.firstWhere((s) => s['value'] == _sortBy)['label']!,
+                      style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                    ),
+                    const Spacer(),
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _sortBy = 'default';
+                        });
+                      },
+                      child: Icon(Icons.close, size: 16, color: Colors.grey[500]),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        
+          // Products grid (Instagram Explore style)
+          SliverPadding(
+            padding: const EdgeInsets.all(2),
+            sliver: Obx(() {
+              var products = _controller.products.toList();
             
-            if (products.isEmpty) {
-              return SliverToBoxAdapter(
-                child: Container(
-                  height: 300,
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+              // Apply search filter
+              if (_searchQuery.isNotEmpty) {
+                products = products.where((p) {
+                  final name = (p['name'] ?? '').toString().toLowerCase();
+                  final description = (p['description'] ?? '').toString().toLowerCase();
+                  final sellerName = (p['seller_name'] ?? '').toString().toLowerCase();
+                  return name.contains(_searchQuery) ||
+                      description.contains(_searchQuery) ||
+                      sellerName.contains(_searchQuery);
+                }).toList();
+              }
+            
+              // Apply category filter
+              if (_selectedCategory != 'all') {
+                products = products.where((p) {
+                  final category = (p['category'] ?? '').toString().toLowerCase();
+                  return category == _selectedCategory;
+                }).toList();
+              }
+            
+              // Apply sorting
+              switch (_sortBy) {
+                case 'price_low':
+                  products.sort((a, b) {
+                    final priceA = (a['price'] ?? 0) as num;
+                    final priceB = (b['price'] ?? 0) as num;
+                    return priceA.compareTo(priceB);
+                  });
+                  break;
+                case 'price_high':
+                  products.sort((a, b) {
+                    final priceA = (a['price'] ?? 0) as num;
+                    final priceB = (b['price'] ?? 0) as num;
+                    return priceB.compareTo(priceA);
+                  });
+                  break;
+                case 'newest':
+                  products.sort((a, b) {
+                    final dateA = a['created_at'] ?? '';
+                    final dateB = b['created_at'] ?? '';
+                    return dateB.toString().compareTo(dateA.toString());
+                  });
+                  break;
+              }
+            
+              if (products.isEmpty) {
+                return SliverToBoxAdapter(
+                  child: Container(
+                    height: 300,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.search_off, size: 64, color: Colors.grey[700]),
+                          const SizedBox(height: 16),
+                          Text(
+                            _searchQuery.isNotEmpty || _selectedCategory != 'all'
+                                ? 'Ничего не найдено'
+                                : 'Пока нет товаров',
+                            style: TextStyle(color: Colors.grey[500], fontSize: 16),
+                          ),
+                          if (_searchQuery.isNotEmpty || _selectedCategory != 'all') ...[
+                            const SizedBox(height: 8),
+                            TextButton(
+                              onPressed: () {
+                                setState(() {
+                                  _searchController.clear();
+                                  _searchQuery = '';
+                                  _selectedCategory = 'all';
+                                  _sortBy = 'default';
+                                });
+                              },
+                              child: Text(
+                                'Сбросить фильтры',
+                                style: TextStyle(color: buttonColor),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }
+            
+              // Responsive grid columns based on screen size
+              final gridColumns = ResponsiveHelper.responsiveValue(
+                context,
+                mobile: 3,
+                tablet: 4,
+                desktop: 6,
+              );
+            
+              return SliverGrid(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: gridColumns,
+                  mainAxisSpacing: 2,
+                  crossAxisSpacing: 2,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final product = products[index];
+                    return _buildProductGridItem(product);
+                  },
+                  childCount: products.length,
+                ),
+              );
+            }),
+          ),
+        ],
+      );
+    }
+  
+    void _showFilterBottomSheet() {
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.grey[900],
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        builder: (context) {
+          return StatefulBuilder(
+            builder: (context, setModalState) {
+              return Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Icon(Icons.inventory_2, size: 64, color: Colors.grey[700]),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Пока нет товаров',
-                          style: TextStyle(color: Colors.grey[500], fontSize: 16),
+                        const Text(
+                          'Фильтры',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            setState(() {
+                              _selectedCategory = 'all';
+                              _sortBy = 'default';
+                            });
+                            setModalState(() {});
+                          },
+                          child: Text(
+                            'Сбросить',
+                            style: TextStyle(color: Colors.grey[400]),
+                          ),
                         ),
                       ],
                     ),
-                  ),
+                    const SizedBox(height: 20),
+                  
+                    // Sort options
+                    Text(
+                      'Сортировка',
+                      style: TextStyle(
+                        color: Colors.grey[400],
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _sortOptions.map((option) {
+                        final isSelected = _sortBy == option['value'];
+                        return ChoiceChip(
+                          label: Text(option['label']!),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            setState(() {
+                              _sortBy = option['value']!;
+                            });
+                            setModalState(() {});
+                          },
+                          backgroundColor: Colors.grey[800],
+                          selectedColor: buttonColor!.withOpacity(0.3),
+                          labelStyle: TextStyle(
+                            color: isSelected ? buttonColor : Colors.grey[400],
+                            fontSize: 13,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  
+                    const SizedBox(height: 24),
+                  
+                    // Category options
+                    Text(
+                      'Категория',
+                      style: TextStyle(
+                        color: Colors.grey[400],
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _categories.map((category) {
+                        final isSelected = _selectedCategory == category['value'];
+                        return ChoiceChip(
+                          label: Text(category['label']!),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            setState(() {
+                              _selectedCategory = category['value']!;
+                            });
+                            setModalState(() {});
+                          },
+                          backgroundColor: Colors.grey[800],
+                          selectedColor: buttonColor!.withOpacity(0.3),
+                          labelStyle: TextStyle(
+                            color: isSelected ? buttonColor : Colors.grey[400],
+                            fontSize: 13,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  
+                    const SizedBox(height: 24),
+                  
+                    // Apply button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: buttonColor,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Применить',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                 ),
               );
-            }
-            
-            // Responsive grid columns based on screen size
-            final gridColumns = ResponsiveHelper.responsiveValue(
-              context,
-              mobile: 3,
-              tablet: 4,
-              desktop: 6,
-            );
-            
-            return SliverGrid(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: gridColumns,
-                mainAxisSpacing: 2,
-                crossAxisSpacing: 2,
-              ),
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final product = products[index];
-                  return _buildProductGridItem(product);
-                },
-                childCount: products.length,
-              ),
-            );
-          }),
-        ),
-      ],
-    );
-  }
+            },
+          );
+        },
+      );
+    }
 
     Widget _buildProductGridItem(Map<String, dynamic> product) {
       return GestureDetector(
