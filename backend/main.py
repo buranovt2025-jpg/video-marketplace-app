@@ -67,9 +67,29 @@ async def init_db():
                 description TEXT,
                 price DOUBLE PRECISION NOT NULL,
                 image_url TEXT,
+                video_url TEXT,
                 category VARCHAR(100),
                 quantity INTEGER DEFAULT 1,
                 in_stock BOOLEAN DEFAULT TRUE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        # Add video_url column if it doesn't exist (for existing databases)
+        await conn.execute('''
+            DO $$ 
+            BEGIN 
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='products' AND column_name='video_url') THEN
+                    ALTER TABLE products ADD COLUMN video_url TEXT;
+                END IF;
+            END $$;
+        ''')
+        # Product images table for multiple images per product
+        await conn.execute('''
+            CREATE TABLE IF NOT EXISTS product_images (
+                id SERIAL PRIMARY KEY,
+                product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
+                image_url TEXT NOT NULL,
+                sort_order INTEGER DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
@@ -376,6 +396,8 @@ class ProductCreate(BaseModel):
     price: float
     description: Optional[str] = None
     image_url: Optional[str] = None
+    image_urls: Optional[List[str]] = None  # Multiple images support
+    video_url: Optional[str] = None  # Video support for product
     category: Optional[str] = None
     quantity: int = 1
 
@@ -604,12 +626,32 @@ async def create_product(product: ProductCreate, user: dict = Depends(get_curren
         raise HTTPException(status_code=403, detail="Only sellers can create products")
     pool = await get_db()
     async with pool.acquire() as conn:
+        # Use first image from image_urls as main image_url if not provided
+        main_image_url = product.image_url
+        if not main_image_url and product.image_urls and len(product.image_urls) > 0:
+            main_image_url = product.image_urls[0]
+        
         product_id = await conn.fetchval(
-            'INSERT INTO products (seller_id, name, description, price, image_url, category, quantity) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
-            user['id'], product.name, product.description, product.price, product.image_url, product.category, product.quantity
+            'INSERT INTO products (seller_id, name, description, price, image_url, video_url, category, quantity) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id',
+            user['id'], product.name, product.description, product.price, main_image_url, product.video_url, product.category, product.quantity
         )
+        
+        # Insert additional images into product_images table
+        if product.image_urls:
+            for idx, img_url in enumerate(product.image_urls):
+                await conn.execute(
+                    'INSERT INTO product_images (product_id, image_url, sort_order) VALUES ($1, $2, $3)',
+                    product_id, img_url, idx
+                )
+        
         row = await conn.fetchrow('SELECT * FROM products WHERE id = $1', product_id)
-        return dict(row)
+        result = dict(row)
+        
+        # Fetch all images for this product
+        images = await conn.fetch('SELECT image_url FROM product_images WHERE product_id = $1 ORDER BY sort_order', product_id)
+        result['image_urls'] = [img['image_url'] for img in images]
+        
+        return result
 
 @app.get("/api/products/{product_id}")
 async def get_product(product_id: int):
@@ -618,7 +660,13 @@ async def get_product(product_id: int):
         row = await conn.fetchrow('SELECT p.*, u.name as seller_name FROM products p JOIN users u ON p.seller_id = u.id WHERE p.id = $1', product_id)
         if not row:
             raise HTTPException(status_code=404, detail="Product not found")
-        return dict(row)
+        result = dict(row)
+        
+        # Fetch all images for this product
+        images = await conn.fetch('SELECT image_url FROM product_images WHERE product_id = $1 ORDER BY sort_order', product_id)
+        result['image_urls'] = [img['image_url'] for img in images]
+        
+        return result
 
 @app.delete("/api/products/{product_id}")
 async def delete_product(product_id: int, user: dict = Depends(get_current_user)):

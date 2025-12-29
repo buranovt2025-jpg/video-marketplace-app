@@ -19,11 +19,13 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
   final TextEditingController _priceController = TextEditingController();
   final TextEditingController _quantityController = TextEditingController(text: '1');
   final TextEditingController _imageUrlController = TextEditingController();
+  final TextEditingController _videoUrlController = TextEditingController();
   final MarketplaceController _controller = Get.find<MarketplaceController>();
   final ImagePicker _imagePicker = ImagePicker();
   
   String _selectedCategory = 'other';
-  File? _selectedImage;
+  List<String> _imageUrls = []; // Multiple image URLs
+  File? _selectedImage; // Single selected image file
   bool _isPickingImage = false;
   
   final List<Map<String, String>> _categories = [

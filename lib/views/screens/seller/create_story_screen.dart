@@ -37,12 +37,15 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
     super.dispose();
   }
 
+  // Maximum video duration for stories: 60 seconds
+  static const int maxVideoDurationSeconds = 60;
+
   Future<void> _pickFromGallery() async {
     try {
       if (_isVideo) {
         final XFile? video = await _picker.pickVideo(
           source: ImageSource.gallery,
-          maxDuration: const Duration(seconds: 30),
+          maxDuration: const Duration(seconds: maxVideoDurationSeconds),
         );
         if (video != null) {
           setState(() {
@@ -78,7 +81,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
       if (_isVideo) {
         final XFile? video = await _picker.pickVideo(
           source: ImageSource.camera,
-          maxDuration: const Duration(seconds: 15),
+          maxDuration: const Duration(seconds: maxVideoDurationSeconds),
         );
         if (video != null) {
           setState(() {

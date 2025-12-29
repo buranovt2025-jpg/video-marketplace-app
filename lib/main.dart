@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -13,8 +15,24 @@ import 'package:gogomarket/views/screens/courier/courier_home_screen.dart';
 import 'package:gogomarket/views/screens/admin/admin_home_screen.dart';
 import 'package:gogomarket/l10n/app_translations.dart';
 
+// Custom HttpOverrides to accept self-signed certificates for Image.network and other HTTP calls
+// This is needed because our backend uses a self-signed SSL certificate
+class MyHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+  }
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Set global HttpOverrides to accept self-signed certificates (mobile only)
+  // This fixes Image.network not loading images from our self-signed HTTPS server
+  if (!kIsWeb) {
+    HttpOverrides.global = MyHttpOverrides();
+  }
   
   // Initialize Firebase (with error handling)
   try {

@@ -1483,13 +1483,28 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            if (product['image_url'] != null)
+            if (product['image_url'] != null && product['image_url'].toString().isNotEmpty)
               Image.network(
                 product['image_url'],
                 fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    color: Colors.grey[800],
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                            : null,
+                        strokeWidth: 2,
+                        color: primaryColor,
+                      ),
+                    ),
+                  );
+                },
                 errorBuilder: (_, __, ___) => Container(
                   color: Colors.grey[800],
-                  child: Icon(Icons.image, color: Colors.grey[600]),
+                  child: Icon(Icons.broken_image, color: Colors.grey[600]),
                 ),
               )
             else
@@ -1666,52 +1681,89 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   }
 
   Widget _buildOrdersTab() {
-    return CustomScrollView(
-      slivers: [
-        const SliverAppBar(
-          floating: true,
-          backgroundColor: backgroundColor,
-          title: Text(
-            'Заказы',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+    // Trigger orders fetch when tab is displayed
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_controller.isLoggedIn && _controller.orders.isEmpty) {
+        _controller.fetchOrders();
+      }
+    });
+    
+    return RefreshIndicator(
+      onRefresh: () => _controller.fetchOrders(),
+      child: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            floating: true,
+            backgroundColor: backgroundColor,
+            title: const Text(
+              'Заказы',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.refresh, color: Colors.white),
+                onPressed: () => _controller.fetchOrders(),
+              ),
+            ],
           ),
-        ),
-        
-        Obx(() {
-          final orders = _controller.orders;
           
-          if (orders.isEmpty) {
-            return SliverToBoxAdapter(
-              child: Container(
-                height: 400,
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.shopping_bag_outlined, size: 64, color: Colors.grey[700]),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Пока нет заказов',
-                        style: TextStyle(color: Colors.grey[500], fontSize: 16),
-                      ),
-                    ],
+          Obx(() {
+            final orders = _controller.orders;
+            final isLoading = _controller.isLoadingOrders.value;
+            
+            if (isLoading && orders.isEmpty) {
+              return const SliverToBoxAdapter(
+                child: SizedBox(
+                  height: 400,
+                  child: Center(
+                    child: CircularProgressIndicator(color: primaryColor),
                   ),
                 ),
+              );
+            }
+            
+            if (orders.isEmpty) {
+              return SliverToBoxAdapter(
+                child: SizedBox(
+                  height: 400,
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.shopping_bag_outlined, size: 64, color: Colors.grey[700]),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Пока нет заказов',
+                          style: TextStyle(color: Colors.grey[500], fontSize: 16),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: () => _controller.fetchOrders(),
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Обновить'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }
+            
+            return SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final order = orders[index];
+                  return _buildOrderCard(order);
+                },
+                childCount: orders.length,
               ),
             );
-          }
-          
-          return SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final order = orders[index];
-                return _buildOrderCard(order);
-              },
-              childCount: orders.length,
-            ),
-          );
-        }),
-      ],
+          }),
+        ],
+      ),
     );
   }
 

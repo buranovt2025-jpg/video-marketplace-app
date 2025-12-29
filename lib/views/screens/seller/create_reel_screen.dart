@@ -34,11 +34,14 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
     super.dispose();
   }
 
+  // Maximum video duration for reels: 60 seconds
+  static const int maxVideoDurationSeconds = 60;
+
   Future<void> _pickVideo() async {
     try {
       final XFile? video = await _picker.pickVideo(
         source: ImageSource.gallery,
-        maxDuration: const Duration(minutes: 3),
+        maxDuration: const Duration(seconds: maxVideoDurationSeconds),
       );
       if (video != null) {
         setState(() {
@@ -61,7 +64,7 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
     try {
       final XFile? video = await _picker.pickVideo(
         source: ImageSource.camera,
-        maxDuration: const Duration(minutes: 1),
+        maxDuration: const Duration(seconds: maxVideoDurationSeconds),
       );
       if (video != null) {
         setState(() {

@@ -795,7 +795,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         paymentMethod: _selectedPaymentMethod.name,
       );
 
+      // Stop loading before navigation
+      setState(() => _isLoading = false);
+
       if (order != null) {
+        // Clear items from this seller first
+        _cartController.clearSellerItems(widget.sellerId);
+        
         // If payment method is not cash, navigate to payment screen
         if (_selectedPaymentMethod != PaymentMethod.cash) {
           final orderId = order['id']?.toString() ?? '0';
@@ -804,17 +810,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             orderId: orderId,
             onPaymentComplete: (success, transactionId) {
               if (success) {
-                // Clear items from this seller
-                _cartController.clearSellerItems(widget.sellerId);
-                // Navigate to success screen
-                Get.off(() => OrderSuccessScreen(order: order));
+                // Navigate to success screen using offAll to clear navigation stack
+                Get.offAll(() => OrderSuccessScreen(order: order));
               }
             },
           ));
         } else {
-          // Cash payment - go directly to success
-          _cartController.clearSellerItems(widget.sellerId);
-          Get.off(() => OrderSuccessScreen(order: order));
+          // Cash payment - go directly to success screen
+          // Use offAll to clear the navigation stack and prevent back navigation issues
+          Get.offAll(() => OrderSuccessScreen(order: order));
         }
       } else {
         Get.snackbar(
@@ -827,8 +831,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           colorText: Colors.white,
         );
       }
-    } finally {
+    } catch (e) {
       setState(() => _isLoading = false);
+      Get.snackbar(
+        'Ошибка',
+        'Произошла ошибка при создании заказа: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 
