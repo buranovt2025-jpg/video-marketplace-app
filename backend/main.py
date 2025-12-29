@@ -76,9 +76,19 @@ async def init_db():
                 delivery_address TEXT,
                 delivery_latitude DOUBLE PRECISION,
                 delivery_longitude DOUBLE PRECISION,
+                payment_method VARCHAR(50) DEFAULT 'cash',
                 notes TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
+        ''')
+        # Add payment_method column if it doesn't exist (for existing databases)
+        await conn.execute('''
+            DO $$ 
+            BEGIN 
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name='payment_method') THEN
+                    ALTER TABLE orders ADD COLUMN payment_method VARCHAR(50) DEFAULT 'cash';
+                END IF;
+            END $$;
         ''')
         await conn.execute('''
             CREATE TABLE IF NOT EXISTS order_items (
@@ -132,27 +142,49 @@ async def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
-                await conn.execute('''
-                    CREATE TABLE IF NOT EXISTS reviews (
-                        id SERIAL PRIMARY KEY,
-                        product_id INTEGER REFERENCES products(id),
-                        user_id INTEGER REFERENCES users(id),
-                        rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
-                        comment TEXT,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        UNIQUE(product_id, user_id)
-                    )
-                ''')
-                await conn.execute('''
-                    CREATE TABLE IF NOT EXISTS favorites (
-                        id SERIAL PRIMARY KEY,
-                        product_id INTEGER REFERENCES products(id),
-                        user_id INTEGER REFERENCES users(id),
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        UNIQUE(product_id, user_id)
-                    )
-                ''')
-                demo_users = [
+        await conn.execute('''
+            CREATE TABLE IF NOT EXISTS reviews (
+                id SERIAL PRIMARY KEY,
+                product_id INTEGER REFERENCES products(id),
+                user_id INTEGER REFERENCES users(id),
+                rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+                comment TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(product_id, user_id)
+            )
+        ''')
+        await conn.execute('''
+            CREATE TABLE IF NOT EXISTS favorites (
+                id SERIAL PRIMARY KEY,
+                product_id INTEGER REFERENCES products(id),
+                user_id INTEGER REFERENCES users(id),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(product_id, user_id)
+            )
+        ''')
+        await conn.execute('''
+            CREATE TABLE IF NOT EXISTS platform_settings (
+                id SERIAL PRIMARY KEY,
+                setting_key VARCHAR(100) UNIQUE NOT NULL,
+                setting_value TEXT NOT NULL,
+                description TEXT,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        # Insert default platform settings
+        default_settings = [
+            ('platform_commission', '10', 'Platform commission percentage from each sale'),
+            ('courier_fee', '15000', 'Fixed delivery fee for couriers in sum'),
+            ('min_order_amount', '50000', 'Minimum order amount in sum'),
+        ]
+        for key, value, desc in default_settings:
+            exists = await conn.fetchval('SELECT id FROM platform_settings WHERE setting_key = $1', key)
+            if not exists:
+                await conn.execute(
+                    'INSERT INTO platform_settings (setting_key, setting_value, description) VALUES ($1, $2, $3)',
+                    key, value, desc
+                )
+        demo_users = [
             ('seller@demo.com', 'demo123', 'Demo Seller', 'seller'),
             ('buyer@demo.com', 'demo123', 'Demo Buyer', 'buyer'),
             ('courier@demo.com', 'demo123', 'Demo Courier', 'courier'),
@@ -212,6 +244,7 @@ class OrderCreate(BaseModel):
     delivery_address: str
     delivery_latitude: float
     delivery_longitude: float
+    payment_method: Optional[str] = 'cash'
     notes: Optional[str] = None
 
 class ContentCreate(BaseModel):
@@ -422,14 +455,65 @@ async def get_orders(user: dict = Depends(get_current_user)):
     pool = await get_db()
     async with pool.acquire() as conn:
         if user['role'] == 'admin':
-            rows = await conn.fetch('SELECT * FROM orders ORDER BY created_at DESC')
+            rows = await conn.fetch('''
+                SELECT o.*, 
+                       b.name as buyer_name, b.email as buyer_email, b.phone as buyer_phone,
+                       s.name as seller_name, s.email as seller_email,
+                       c.name as courier_name
+                FROM orders o
+                LEFT JOIN users b ON o.buyer_id = b.id
+                LEFT JOIN users s ON o.seller_id = s.id
+                LEFT JOIN users c ON o.courier_id = c.id
+                ORDER BY o.created_at DESC
+            ''')
         elif user['role'] == 'seller':
-            rows = await conn.fetch('SELECT * FROM orders WHERE seller_id = $1 ORDER BY created_at DESC', user['id'])
+            rows = await conn.fetch('''
+                SELECT o.*, 
+                       b.name as buyer_name, b.email as buyer_email, b.phone as buyer_phone,
+                       c.name as courier_name
+                FROM orders o
+                LEFT JOIN users b ON o.buyer_id = b.id
+                LEFT JOIN users c ON o.courier_id = c.id
+                WHERE o.seller_id = $1 
+                ORDER BY o.created_at DESC
+            ''', user['id'])
         elif user['role'] == 'courier':
-            rows = await conn.fetch("SELECT * FROM orders WHERE courier_id = $1 OR (courier_id IS NULL AND status = 'ready') ORDER BY created_at DESC", user['id'])
+            rows = await conn.fetch('''
+                SELECT o.*, 
+                       b.name as buyer_name, b.phone as buyer_phone,
+                       s.name as seller_name
+                FROM orders o
+                LEFT JOIN users b ON o.buyer_id = b.id
+                LEFT JOIN users s ON o.seller_id = s.id
+                WHERE o.courier_id = $1 OR (o.courier_id IS NULL AND o.status = 'ready') 
+                ORDER BY o.created_at DESC
+            ''', user['id'])
         else:
-            rows = await conn.fetch('SELECT * FROM orders WHERE buyer_id = $1 ORDER BY created_at DESC', user['id'])
-        return [dict(row) for row in rows]
+            rows = await conn.fetch('''
+                SELECT o.*, 
+                       s.name as seller_name,
+                       c.name as courier_name
+                FROM orders o
+                LEFT JOIN users s ON o.seller_id = s.id
+                LEFT JOIN users c ON o.courier_id = c.id
+                WHERE o.buyer_id = $1 
+                ORDER BY o.created_at DESC
+            ''', user['id'])
+        
+        # Get order items for each order
+        orders = []
+        for row in rows:
+            order = dict(row)
+            items = await conn.fetch('''
+                SELECT oi.*, p.name as product_name, p.image_url
+                FROM order_items oi
+                LEFT JOIN products p ON oi.product_id = p.id
+                WHERE oi.order_id = $1
+            ''', order['id'])
+            order['items'] = [dict(item) for item in items]
+            orders.append(order)
+        
+        return orders
 
 @app.post("/api/orders")
 async def create_order(order: OrderCreate, user: dict = Depends(get_current_user)):
@@ -437,8 +521,8 @@ async def create_order(order: OrderCreate, user: dict = Depends(get_current_user
     async with pool.acquire() as conn:
         total = sum(item['price'] * item['quantity'] for item in order.items)
         order_id = await conn.fetchval(
-            'INSERT INTO orders (buyer_id, seller_id, total_amount, delivery_address, delivery_latitude, delivery_longitude, notes) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
-            user['id'], order.seller_id, total, order.delivery_address, order.delivery_latitude, order.delivery_longitude, order.notes
+            'INSERT INTO orders (buyer_id, seller_id, total_amount, delivery_address, delivery_latitude, delivery_longitude, payment_method, notes) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id',
+            user['id'], order.seller_id, total, order.delivery_address, order.delivery_latitude, order.delivery_longitude, order.payment_method, order.notes
         )
         for item in order.items:
             await conn.execute('INSERT INTO order_items (order_id, product_id, quantity, price) VALUES ($1, $2, $3, $4)', order_id, item['product_id'], item['quantity'], item['price'])
@@ -749,6 +833,103 @@ async def check_favorite(product_id: int, user: dict = Depends(get_current_user)
             product_id, user['id']
         )
         return {"is_favorite": existing is not None}
+
+# Platform Settings endpoints (admin only)
+@app.get("/api/settings")
+async def get_settings(user: dict = Depends(get_current_user)):
+    if user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch('SELECT * FROM platform_settings ORDER BY setting_key')
+        return [dict(row) for row in rows]
+
+@app.get("/api/settings/{key}")
+async def get_setting(key: str):
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow('SELECT * FROM platform_settings WHERE setting_key = $1', key)
+        if not row:
+            raise HTTPException(status_code=404, detail="Setting not found")
+        return dict(row)
+
+@app.put("/api/settings/{key}")
+async def update_setting(key: str, body: dict, user: dict = Depends(get_current_user)):
+    if user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        value = body.get('value')
+        if value is None:
+            raise HTTPException(status_code=400, detail="Value is required")
+        await conn.execute(
+            'UPDATE platform_settings SET setting_value = $1, updated_at = CURRENT_TIMESTAMP WHERE setting_key = $2',
+            str(value), key
+        )
+        row = await conn.fetchrow('SELECT * FROM platform_settings WHERE setting_key = $1', key)
+        if not row:
+            raise HTTPException(status_code=404, detail="Setting not found")
+        return dict(row)
+
+# Admin statistics endpoint
+@app.get("/api/admin/stats")
+async def get_admin_stats(user: dict = Depends(get_current_user)):
+    if user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        # Get total revenue
+        total_revenue = await conn.fetchval(
+            "SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE status NOT IN ('cancelled')"
+        )
+        # Get commission rate
+        commission_row = await conn.fetchrow(
+            "SELECT setting_value FROM platform_settings WHERE setting_key = 'platform_commission'"
+        )
+        commission_rate = float(commission_row['setting_value']) if commission_row else 10.0
+        platform_earnings = total_revenue * (commission_rate / 100)
+        
+        # Get order counts
+        total_orders = await conn.fetchval('SELECT COUNT(*) FROM orders')
+        completed_orders = await conn.fetchval(
+            "SELECT COUNT(*) FROM orders WHERE status IN ('delivered', 'completed')"
+        )
+        pending_orders = await conn.fetchval(
+            "SELECT COUNT(*) FROM orders WHERE status NOT IN ('delivered', 'completed', 'cancelled')"
+        )
+        cancelled_orders = await conn.fetchval(
+            "SELECT COUNT(*) FROM orders WHERE status = 'cancelled'"
+        )
+        
+        # Get user counts
+        total_users = await conn.fetchval('SELECT COUNT(*) FROM users')
+        buyers = await conn.fetchval("SELECT COUNT(*) FROM users WHERE role = 'buyer'")
+        sellers = await conn.fetchval("SELECT COUNT(*) FROM users WHERE role = 'seller'")
+        couriers = await conn.fetchval("SELECT COUNT(*) FROM users WHERE role = 'courier'")
+        
+        # Get product count
+        total_products = await conn.fetchval('SELECT COUNT(*) FROM products')
+        
+        return {
+            "revenue": {
+                "total": total_revenue,
+                "platform_earnings": platform_earnings,
+                "commission_rate": commission_rate,
+            },
+            "orders": {
+                "total": total_orders,
+                "completed": completed_orders,
+                "pending": pending_orders,
+                "cancelled": cancelled_orders,
+            },
+            "users": {
+                "total": total_users,
+                "buyers": buyers,
+                "sellers": sellers,
+                "couriers": couriers,
+            },
+            "products": total_products,
+        }
 
 if __name__ == "__main__":
     import uvicorn

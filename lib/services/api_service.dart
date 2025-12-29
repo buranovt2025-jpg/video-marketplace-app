@@ -624,6 +624,61 @@ class ApiService {
       throw ApiException(response.statusCode, 'Failed to check favorite');
     }
   }
+
+  // Platform Settings endpoints (admin only)
+  static Future<List<dynamic>> getSettings() async {
+    final response = await client.get(
+      Uri.parse('$baseUrl/api/settings'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return _decodeResponse(response);
+    } else {
+      throw ApiException(response.statusCode, 'Failed to get settings');
+    }
+  }
+
+  static Future<Map<String, dynamic>> getSetting(String key) async {
+    final response = await client.get(
+      Uri.parse('$baseUrl/api/settings/$key'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return _decodeResponse(response);
+    } else {
+      throw ApiException(response.statusCode, 'Failed to get setting');
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateSetting(String key, String value) async {
+    final response = await client.put(
+      Uri.parse('$baseUrl/api/settings/$key'),
+      headers: _headers,
+      body: jsonEncode({'value': value}),
+    );
+    
+    if (response.statusCode == 200) {
+      return _decodeResponse(response);
+    } else {
+      throw ApiException(response.statusCode, 'Failed to update setting');
+    }
+  }
+
+  // Admin statistics endpoint
+  static Future<Map<String, dynamic>> getAdminStats() async {
+    final response = await client.get(
+      Uri.parse('$baseUrl/api/admin/stats'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return _decodeResponse(response);
+    } else {
+      throw ApiException(response.statusCode, 'Failed to get admin stats');
+    }
+  }
 }
 
 class ApiException implements Exception {

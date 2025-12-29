@@ -5,6 +5,7 @@ import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/views/screens/admin/admin_users_screen.dart';
 import 'package:tiktok_tutorial/views/screens/admin/admin_orders_screen.dart';
 import 'package:tiktok_tutorial/views/screens/admin/admin_content_screen.dart';
+import 'package:tiktok_tutorial/views/screens/admin/admin_settings_screen.dart';
 import 'package:tiktok_tutorial/views/screens/auth/marketplace_login_screen.dart';
 
 class AdminHomeScreen extends StatefulWidget {
@@ -37,41 +38,46 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor,
-      body: IndexedStack(
-        index: _currentIndex,
-        children: [
-          _buildDashboard(),
-          const AdminUsersScreen(),
-          const AdminOrdersScreen(),
-          const AdminContentScreen(),
-        ],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.grey[900],
-        selectedItemColor: buttonColor,
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
-            label: 'Дашборд',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people),
-            label: 'Пользователи',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_bag),
-            label: 'Заказы',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.video_library),
-            label: 'Контент',
-          ),
-        ],
-      ),
+            body: IndexedStack(
+              index: _currentIndex,
+              children: [
+                _buildDashboard(),
+                const AdminUsersScreen(),
+                const AdminOrdersScreen(),
+                const AdminContentScreen(),
+                const AdminSettingsScreen(),
+              ],
+            ),
+            bottomNavigationBar: BottomNavigationBar(
+              currentIndex: _currentIndex,
+              onTap: (index) => setState(() => _currentIndex = index),
+              type: BottomNavigationBarType.fixed,
+              backgroundColor: Colors.grey[900],
+              selectedItemColor: buttonColor,
+              unselectedItemColor: Colors.grey,
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.dashboard),
+                  label: 'Дашборд',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.people),
+                  label: 'Люди',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.receipt_long),
+                  label: 'Сделки',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.video_library),
+                  label: 'Контент',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.settings),
+                  label: 'Настройки',
+                ),
+              ],
+            ),
     );
   }
 
