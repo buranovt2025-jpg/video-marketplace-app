@@ -1059,6 +1059,7 @@ class ApiService {
   }
   
   // Upload video file and return server URL
+  // Uses client.send() to ensure SSL certificate bypass is applied
   static Future<String> uploadVideo(String filePath) async {
     final uri = Uri.parse('$baseUrl/api/upload/video');
     final request = http.MultipartRequest('POST', uri);
@@ -1069,7 +1070,9 @@ class ApiService {
     
     request.files.add(await http.MultipartFile.fromPath('file', filePath));
     
-    final streamedResponse = await request.send();
+    // Use client.send() instead of request.send() to use our custom HTTP client
+    // that bypasses SSL certificate verification for self-signed certificates
+    final streamedResponse = await client.send(request);
     final response = await http.Response.fromStream(streamedResponse);
     
     if (response.statusCode == 200) {
@@ -1081,6 +1084,7 @@ class ApiService {
   }
   
   // Upload image file and return server URL
+  // Uses client.send() to ensure SSL certificate bypass is applied
   static Future<String> uploadImage(String filePath) async {
     final uri = Uri.parse('$baseUrl/api/upload/image');
     final request = http.MultipartRequest('POST', uri);
@@ -1091,7 +1095,9 @@ class ApiService {
     
     request.files.add(await http.MultipartFile.fromPath('file', filePath));
     
-    final streamedResponse = await request.send();
+    // Use client.send() instead of request.send() to use our custom HTTP client
+    // that bypasses SSL certificate verification for self-signed certificates
+    final streamedResponse = await client.send(request);
     final response = await http.Response.fromStream(streamedResponse);
     
     if (response.statusCode == 200) {
