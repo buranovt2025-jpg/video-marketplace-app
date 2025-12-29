@@ -60,6 +60,8 @@ dev_dependencies:
 dependency_overrides:
   win32: ^5.0.0
   file: ^7.0.0
+  mobile_scanner:
+    path: packages/mobile_scanner
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
