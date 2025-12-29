@@ -1,8 +1,7 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:http/io_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tiktok_tutorial/services/http_client_factory.dart';
 
 // Helper function to decode response body as UTF-8
 dynamic _decodeResponse(http.Response response) {
@@ -14,13 +13,9 @@ class ApiService {
   static String? _token;
   static http.Client? _client;
   
-  // Create HTTP client that accepts self-signed certificates
+  // Create HTTP client (uses IOClient with self-signed cert support on mobile, regular Client on web)
   static http.Client get client {
-    if (_client == null) {
-      final httpClient = HttpClient()
-        ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
-      _client = IOClient(httpClient);
-    }
+    _client ??= createHttpClient();
     return _client!;
   }
   
