@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/services/api_service.dart';
 
 class CreateStoryScreen extends StatefulWidget {
   const CreateStoryScreen({Key? key}) : super(key: key);
@@ -123,9 +124,43 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
       return;
     }
 
+    String? imageUrl = hasImage ? _imageUrlController.text.trim() : null;
+    String? videoUrl = hasVideo ? _videoUrlController.text.trim() : null;
+    
+    // If a local media file was selected, upload it first
+    if (_selectedMedia != null) {
+      try {
+        Get.snackbar(
+          'Загрузка',
+          'Загружаем файл на сервер...',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.blue,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 2),
+        );
+        
+        if (_isVideo && (videoUrl == null || !videoUrl.startsWith('http'))) {
+          videoUrl = await ApiService.uploadVideo(_selectedMedia!.path);
+          imageUrl = null;
+        } else if (!_isVideo && (imageUrl == null || !imageUrl.startsWith('http'))) {
+          imageUrl = await ApiService.uploadImage(_selectedMedia!.path);
+          videoUrl = null;
+        }
+      } catch (e) {
+        Get.snackbar(
+          'Ошибка',
+          'Не удалось загрузить файл: $e',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return;
+      }
+    }
+
     final story = await _controller.createStory(
-      imageUrl: hasImage ? _imageUrlController.text.trim() : null,
-      videoUrl: hasVideo ? _videoUrlController.text.trim() : null,
+      imageUrl: imageUrl,
+      videoUrl: videoUrl,
       caption: _captionController.text.isNotEmpty 
           ? _captionController.text.trim() 
           : null,

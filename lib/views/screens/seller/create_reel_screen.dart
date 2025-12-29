@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/services/api_service.dart';
 
 class CreateReelScreen extends StatefulWidget {
   const CreateReelScreen({Key? key}) : super(key: key);
@@ -91,8 +92,35 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
       return;
     }
 
+    String videoUrl = _videoUrlController.text.trim();
+    
+    // If a local video file was selected, upload it first
+    if (_selectedVideo != null && !videoUrl.startsWith('http')) {
+      try {
+        Get.snackbar(
+          'Загрузка',
+          'Загружаем видео на сервер...',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.blue,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 2),
+        );
+        
+        videoUrl = await ApiService.uploadVideo(_selectedVideo!.path);
+      } catch (e) {
+        Get.snackbar(
+          'Ошибка',
+          'Не удалось загрузить видео: $e',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return;
+      }
+    }
+
     final reel = await _controller.createReel(
-      videoUrl: _videoUrlController.text.trim(),
+      videoUrl: videoUrl,
       caption: _captionController.text.isNotEmpty 
           ? _captionController.text.trim() 
           : null,

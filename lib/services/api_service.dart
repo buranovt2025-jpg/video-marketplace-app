@@ -1021,6 +1021,50 @@ class ApiService {
       throw ApiException(response.statusCode, 'Failed to get online users');
     }
   }
+  
+  // Upload video file and return server URL
+  static Future<String> uploadVideo(String filePath) async {
+    final uri = Uri.parse('$baseUrl/api/upload/video');
+    final request = http.MultipartRequest('POST', uri);
+    
+    if (_token != null) {
+      request.headers['Authorization'] = 'Bearer $_token';
+    }
+    
+    request.files.add(await http.MultipartFile.fromPath('file', filePath));
+    
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+    
+    if (response.statusCode == 200) {
+      final data = _decodeResponse(response);
+      return data['url'] as String;
+    } else {
+      throw ApiException(response.statusCode, 'Failed to upload video');
+    }
+  }
+  
+  // Upload image file and return server URL
+  static Future<String> uploadImage(String filePath) async {
+    final uri = Uri.parse('$baseUrl/api/upload/image');
+    final request = http.MultipartRequest('POST', uri);
+    
+    if (_token != null) {
+      request.headers['Authorization'] = 'Bearer $_token';
+    }
+    
+    request.files.add(await http.MultipartFile.fromPath('file', filePath));
+    
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+    
+    if (response.statusCode == 200) {
+      final data = _decodeResponse(response);
+      return data['url'] as String;
+    } else {
+      throw ApiException(response.statusCode, 'Failed to upload image');
+    }
+  }
 }
 
 class ApiException implements Exception {
