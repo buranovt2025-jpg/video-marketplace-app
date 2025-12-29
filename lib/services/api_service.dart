@@ -1065,6 +1065,40 @@ class ApiService {
       throw ApiException(response.statusCode, 'Failed to upload image');
     }
   }
+  
+  // Comments endpoints
+  static Future<List<dynamic>> getComments(String contentId) async {
+    final response = await client.get(
+      Uri.parse('$baseUrl/api/comments/$contentId'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return _decodeResponse(response) as List<dynamic>;
+    } else if (response.statusCode == 404) {
+      // No comments yet
+      return [];
+    } else {
+      throw ApiException(response.statusCode, 'Failed to load comments');
+    }
+  }
+  
+  static Future<Map<String, dynamic>> postComment(String contentId, String text) async {
+    final response = await client.post(
+      Uri.parse('$baseUrl/api/comments'),
+      headers: _headers,
+      body: jsonEncode({
+        'content_id': contentId,
+        'text': text,
+      }),
+    );
+    
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return _decodeResponse(response) as Map<String, dynamic>;
+    } else {
+      throw ApiException(response.statusCode, 'Failed to post comment');
+    }
+  }
 }
 
 class ApiException implements Exception {

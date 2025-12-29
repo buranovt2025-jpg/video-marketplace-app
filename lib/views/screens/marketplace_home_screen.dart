@@ -138,13 +138,268 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   }
 
   void _showCommentsSheet(BuildContext context, Map<String, dynamic> content) {
-    Get.snackbar(
-      'Комментарии',
-      'Функция комментариев в разработке',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.blue,
-      colorText: Colors.white,
+    final contentId = content['id']?.toString() ?? '';
+    final TextEditingController commentController = TextEditingController();
+    final RxList<Map<String, dynamic>> comments = <Map<String, dynamic>>[].obs;
+    final RxBool isLoading = true.obs;
+    
+    // Load comments
+    _loadComments(contentId, comments, isLoading);
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.7,
+        decoration: BoxDecoration(
+          color: Colors.grey[900],
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          children: [
+            // Handle bar
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[600],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            // Title
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Комментарии',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(color: Colors.grey),
+            // Comments list
+            Expanded(
+              child: Obx(() {
+                if (isLoading.value) {
+                  return const Center(
+                    child: CircularProgressIndicator(color: primaryColor),
+                  );
+                }
+                if (comments.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.chat_bubble_outline, size: 48, color: Colors.grey[600]),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Пока нет комментариев',
+                          style: TextStyle(color: Colors.grey[500], fontSize: 16),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Будьте первым!',
+                          style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: comments.length,
+                  itemBuilder: (context, index) {
+                    final comment = comments[index];
+                    return _buildCommentItem(comment);
+                  },
+                );
+              }),
+            ),
+            // Comment input
+            Container(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 8,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.grey[850],
+                border: Border(top: BorderSide(color: Colors.grey[800]!)),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: commentController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        hintText: 'Написать комментарий...',
+                        hintStyle: TextStyle(color: Colors.grey[500]),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                          borderSide: BorderSide.none,
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey[800],
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: const Icon(Icons.send, color: primaryColor),
+                    onPressed: () async {
+                      final text = commentController.text.trim();
+                      if (text.isEmpty) return;
+                      
+                      if (_isGuestMode) {
+                        Get.snackbar(
+                          'Войдите',
+                          'Чтобы оставить комментарий, войдите в аккаунт',
+                          snackPosition: SnackPosition.BOTTOM,
+                          backgroundColor: Colors.orange,
+                          colorText: Colors.white,
+                        );
+                        return;
+                      }
+                      
+                      await _postComment(contentId, text, comments);
+                      commentController.clear();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
+  }
+  
+  Widget _buildCommentItem(Map<String, dynamic> comment) {
+    final createdAt = comment['created_at'];
+    String timeAgo = '';
+    if (createdAt != null) {
+      try {
+        final date = DateTime.parse(createdAt.toString());
+        final diff = DateTime.now().difference(date);
+        if (diff.inDays > 0) {
+          timeAgo = '${diff.inDays}д';
+        } else if (diff.inHours > 0) {
+          timeAgo = '${diff.inHours}ч';
+        } else if (diff.inMinutes > 0) {
+          timeAgo = '${diff.inMinutes}м';
+        } else {
+          timeAgo = 'сейчас';
+        }
+      } catch (e) {
+        timeAgo = '';
+      }
+    }
+    
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            radius: 18,
+            backgroundColor: Colors.grey[700],
+            child: const Icon(Icons.person, color: Colors.white, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      comment['author_name'] ?? 'Пользователь',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    if (timeAgo.isNotEmpty) ...[
+                      const SizedBox(width: 8),
+                      Text(
+                        timeAgo,
+                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  comment['text'] ?? '',
+                  style: const TextStyle(color: Colors.white70, fontSize: 14),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.favorite_border, color: Colors.grey[500], size: 18),
+            onPressed: () {},
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Future<void> _loadComments(String contentId, RxList<Map<String, dynamic>> comments, RxBool isLoading) async {
+    try {
+      isLoading.value = true;
+      final loadedComments = await _controller.getComments(contentId);
+      comments.value = loadedComments;
+    } catch (e) {
+      // Silently fail, show empty state
+    } finally {
+      isLoading.value = false;
+    }
+  }
+  
+  Future<void> _postComment(String contentId, String text, RxList<Map<String, dynamic>> comments) async {
+    try {
+      final newComment = await _controller.postComment(contentId, text);
+      if (newComment != null) {
+        comments.insert(0, newComment);
+        Get.snackbar(
+          'Готово',
+          'Комментарий добавлен',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 2),
+        );
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Ошибка',
+        'Не удалось добавить комментарий',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
   }
 
   void _shareContent(Map<String, dynamic> content) {

@@ -494,4 +494,26 @@ class MarketplaceController extends GetxController {
       return false;
     }
   }
+  
+  // Comments methods
+  Future<List<Map<String, dynamic>>> getComments(String contentId) async {
+    try {
+      final data = await ApiService.getComments(contentId);
+      return List<Map<String, dynamic>>.from(data);
+    } catch (e) {
+      error.value = e.toString();
+      return [];
+    }
+  }
+  
+  Future<Map<String, dynamic>?> postComment(String contentId, String text) async {
+    if (!isLoggedIn) return null;
+    try {
+      final comment = await ApiService.postComment(contentId, text);
+      return comment;
+    } catch (e) {
+      error.value = e.toString();
+      return null;
+    }
+  }
 }

@@ -192,6 +192,16 @@ async def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
+        # Content comments (for reels and stories)
+        await conn.execute('''
+            CREATE TABLE IF NOT EXISTS content_comments (
+                id SERIAL PRIMARY KEY,
+                content_id INTEGER REFERENCES content(id) ON DELETE CASCADE,
+                user_id INTEGER REFERENCES users(id),
+                text TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
         await conn.execute('''
             CREATE TABLE IF NOT EXISTS reviews (
                 id SERIAL PRIMARY KEY,
@@ -1084,6 +1094,41 @@ async def delete_product_comment(comment_id: int, user: dict = Depends(get_curre
             raise HTTPException(status_code=403, detail="Not authorized")
         await conn.execute('DELETE FROM product_comments WHERE id = $1', comment_id)
         return {"status": "deleted"}
+
+# Content comments endpoints (for reels and stories)
+@app.get("/api/comments/{content_id}")
+async def get_content_comments(content_id: int):
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch('''
+            SELECT c.*, u.name as author_name
+            FROM content_comments c
+            JOIN users u ON c.user_id = u.id
+            WHERE c.content_id = $1
+            ORDER BY c.created_at DESC
+        ''', content_id)
+        return [dict(row) for row in rows]
+
+class ContentCommentCreate(BaseModel):
+    content_id: int
+    text: str
+
+@app.post("/api/comments")
+async def create_content_comment(comment: ContentCommentCreate, user: dict = Depends(get_current_user)):
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            'INSERT INTO content_comments (content_id, user_id, text) VALUES ($1, $2, $3) RETURNING id, created_at',
+            comment.content_id, user['id'], comment.text
+        )
+        return {
+            'id': row['id'],
+            'content_id': comment.content_id,
+            'user_id': user['id'],
+            'author_name': user['name'],
+            'text': comment.text,
+            'created_at': row['created_at'].isoformat() if row['created_at'] else None
+        }
 
 # Favorites endpoints
 @app.get("/api/favorites")
