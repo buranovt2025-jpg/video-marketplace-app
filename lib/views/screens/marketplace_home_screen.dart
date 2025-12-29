@@ -137,6 +137,28 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     }
   }
 
+  void _showCommentsSheet(BuildContext context, Map<String, dynamic> content) {
+    Get.snackbar(
+      'Комментарии',
+      'Функция комментариев в разработке',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.blue,
+      colorText: Colors.white,
+    );
+  }
+
+  void _shareContent(Map<String, dynamic> content) {
+    final caption = content['caption'] ?? '';
+    final authorName = content['author_name'] ?? '';
+    Get.snackbar(
+      'Поделиться',
+      'Функция "Поделиться" в разработке',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.blue,
+      colorText: Colors.white,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -686,7 +708,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               children: [
                 IconButton(
                   icon: const Icon(Icons.favorite_border, color: Colors.white),
-                  onPressed: () => _controller.likeContent(reel['id']),
+                  onPressed: () => _controller.likeContent(reel['id'].toString()),
                 ),
                 Text(
                   '${reel['likes'] ?? 0}',
@@ -695,11 +717,11 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 const SizedBox(width: 16),
                 IconButton(
                   icon: const Icon(Icons.comment_outlined, color: Colors.white),
-                  onPressed: () {},
+                  onPressed: () => _showCommentsSheet(context, reel),
                 ),
                 IconButton(
                   icon: const Icon(Icons.share_outlined, color: Colors.white),
-                  onPressed: () {},
+                  onPressed: () => _shareContent(reel),
                 ),
                 const Spacer(),
                 // Buy button for reels with linked product (hidden for sellers)

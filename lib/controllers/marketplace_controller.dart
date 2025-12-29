@@ -180,7 +180,10 @@ class MarketplaceController extends GetxController {
     if (!isSeller && !isAdmin) return;
     
     try {
-      final data = await ApiService.getProducts(sellerId: userId);
+      // Admin can see all products, seller sees only their own
+      final data = isAdmin 
+          ? await ApiService.getProducts()
+          : await ApiService.getProducts(sellerId: userId);
       myProducts.value = List<Map<String, dynamic>>.from(data);
     } catch (e) {
       error.value = e.toString();
@@ -336,7 +339,13 @@ class MarketplaceController extends GetxController {
   
   Future<void> likeContent(String contentId) async {
     try {
-      await ApiService.likeContent(contentId);
+      final updatedContent = await ApiService.likeContent(contentId);
+      // Update the reel in the list to reflect new like count
+      final index = reels.indexWhere((r) => r['id'].toString() == contentId);
+      if (index != -1) {
+        reels[index] = updatedContent;
+        reels.refresh();
+      }
     } catch (e) {
       error.value = e.toString();
     }
