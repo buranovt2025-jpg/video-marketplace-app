@@ -283,6 +283,12 @@ class ApiService {
     String? caption,
     String? productId,
   }) async {
+    // Convert productId to int if provided
+    int? productIdInt;
+    if (productId != null && productId.isNotEmpty) {
+      productIdInt = int.tryParse(productId);
+    }
+    
     final response = await client.post(
       Uri.parse('$baseUrl/api/content'),
       headers: _headers,
@@ -291,14 +297,20 @@ class ApiService {
         'video_url': videoUrl,
         'image_url': imageUrl,
         'caption': caption,
-        'product_id': productId,
+        'product_id': productIdInt,
       }),
+    ).timeout(
+      const Duration(seconds: 30),
+      onTimeout: () {
+        throw ApiException(408, 'Request timeout - please try again');
+      },
     );
     
     if (response.statusCode == 200) {
       return _decodeResponse(response);
     } else {
-      throw ApiException(response.statusCode, 'Failed to create content');
+      final errorDetail = _tryDecodeError(response);
+      throw ApiException(response.statusCode, errorDetail ?? 'Failed to create content');
     }
   }
   
