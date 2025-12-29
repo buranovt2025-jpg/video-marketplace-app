@@ -442,7 +442,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       ),
       bottomNavigationBar: _marketplaceController.isSeller 
           ? _buildSellerRestrictionBar() 
-          : (inStock ? _buildBottomBar(product) : _buildOutOfStockBar()),
+          : (product['is_admin_content'] == true 
+              ? _buildAdminContentBar()
+              : (inStock ? _buildBottomBar(product) : _buildOutOfStockBar())),
     );
   }
   
@@ -1119,6 +1121,49 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   'Продавцы не могут покупать товары.\nВы можете только выставлять товары и следить за продажами.',
                   style: TextStyle(
                     color: Colors.orange,
+                    fontSize: 14,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAdminContentBar() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey[900],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+          decoration: BoxDecoration(
+            color: Colors.purple.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.purple.withOpacity(0.5)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.admin_panel_settings, color: Colors.purple, size: 24),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Официальный контент администрации.\nЭтот контент нельзя купить - только просмотр.',
+                  style: TextStyle(
+                    color: Colors.purple,
                     fontSize: 14,
                   ),
                   textAlign: TextAlign.center,

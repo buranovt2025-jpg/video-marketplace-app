@@ -154,6 +154,15 @@ async def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
+        # Add is_admin_content column for admin-created content (non-purchasable)
+        await conn.execute('''
+            DO $$ 
+            BEGIN 
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='content' AND column_name='is_admin_content') THEN
+                    ALTER TABLE content ADD COLUMN is_admin_content BOOLEAN DEFAULT FALSE;
+                END IF;
+            END $$;
+        ''')
         await conn.execute('''
             CREATE TABLE IF NOT EXISTS messages (
                 id SERIAL PRIMARY KEY,
@@ -594,9 +603,11 @@ async def create_content(content: ContentCreate, user: dict = Depends(get_curren
         raise HTTPException(status_code=403, detail="Only sellers can create content")
     pool = await get_db()
     async with pool.acquire() as conn:
+        # Mark content as admin content if created by admin (non-purchasable)
+        is_admin_content = user['role'] == 'admin'
         content_id = await conn.fetchval(
-            'INSERT INTO content (author_id, content_type, video_url, image_url, caption, product_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
-            user['id'], content.content_type, content.video_url, content.image_url, content.caption, content.product_id
+            'INSERT INTO content (author_id, content_type, video_url, image_url, caption, product_id, is_admin_content) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
+            user['id'], content.content_type, content.video_url, content.image_url, content.caption, content.product_id, is_admin_content
         )
         row = await conn.fetchrow('SELECT * FROM content WHERE id = $1', content_id)
         return dict(row)

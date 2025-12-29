@@ -775,6 +775,13 @@ class _UserDetailSheetState extends State<UserDetailSheet> {
                           ),
                           if (user['block_reason'] != null && user['block_reason'].toString().isNotEmpty)
                             _buildDetailRow(Icons.info, 'Причина блокировки', user['block_reason']),
+                          if (role == 'admin')
+                            _buildDetailRow(
+                              Icons.admin_panel_settings,
+                              'Уровень админа',
+                              _getAdminLevelLabel(user['admin_level']),
+                              valueColor: Colors.purple,
+                            ),
                         ]),
                         
                         const SizedBox(height: 16),
@@ -961,6 +968,18 @@ class _UserDetailSheetState extends State<UserDetailSheet> {
       return date.toString();
     }
   }
+
+  String _getAdminLevelLabel(dynamic level) {
+    final adminLevel = level is int ? level : int.tryParse(level?.toString() ?? '0') ?? 0;
+    switch (adminLevel) {
+      case 2:
+        return 'Главный админ';
+      case 1:
+        return 'Средний админ';
+      default:
+        return 'Обычный админ';
+    }
+  }
 }
 
 class EditUserDialog extends StatefulWidget {
@@ -982,6 +1001,7 @@ class _EditUserDialogState extends State<EditUserDialog> {
   late TextEditingController _phoneController;
   late TextEditingController _addressController;
   String _selectedRole = 'buyer';
+  int _adminLevel = 0;
 
   @override
   void initState() {
@@ -990,6 +1010,7 @@ class _EditUserDialogState extends State<EditUserDialog> {
     _phoneController = TextEditingController(text: widget.user['phone'] ?? '');
     _addressController = TextEditingController(text: widget.user['address'] ?? '');
     _selectedRole = widget.user['role'] ?? 'buyer';
+    _adminLevel = widget.user['admin_level'] ?? 0;
   }
 
   @override
@@ -1092,6 +1113,36 @@ class _EditUserDialogState extends State<EditUserDialog> {
                 }
               },
             ),
+            if (_selectedRole == 'admin') ...[
+              const SizedBox(height: 16),
+              DropdownButtonFormField<int>(
+                value: _adminLevel,
+                dropdownColor: Colors.grey[800],
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: 'Уровень админа',
+                  labelStyle: TextStyle(color: Colors.grey[500]),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey[700]!),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: buttonColor),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                items: const [
+                  DropdownMenuItem(value: 0, child: Text('Обычный админ')),
+                  DropdownMenuItem(value: 1, child: Text('Средний админ')),
+                  DropdownMenuItem(value: 2, child: Text('Главный админ')),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => _adminLevel = value);
+                  }
+                },
+              ),
+            ],
           ],
         ),
       ),
@@ -1114,6 +1165,9 @@ class _EditUserDialogState extends State<EditUserDialog> {
             }
             if (_selectedRole != widget.user['role']) {
               updates['role'] = _selectedRole;
+            }
+            if (_selectedRole == 'admin' && _adminLevel != (widget.user['admin_level'] ?? 0)) {
+              updates['admin_level'] = _adminLevel;
             }
             
             Navigator.pop(context);
