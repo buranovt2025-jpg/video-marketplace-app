@@ -496,6 +496,61 @@ class ApiService {
     }
   }
   
+  // Admin user management endpoints
+  static Future<Map<String, dynamic>> getUserDetails(int userId) async {
+    final response = await client.get(
+      Uri.parse('$baseUrl/api/admin/users/$userId'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return _decodeResponse(response);
+    } else {
+      throw ApiException(response.statusCode, 'Failed to get user details');
+    }
+  }
+  
+  static Future<Map<String, dynamic>> adminUpdateUser(int userId, Map<String, dynamic> updates) async {
+    final response = await client.put(
+      Uri.parse('$baseUrl/api/admin/users/$userId'),
+      headers: _headers,
+      body: jsonEncode(updates),
+    );
+    
+    if (response.statusCode == 200) {
+      return _decodeResponse(response);
+    } else {
+      throw ApiException(response.statusCode, 'Failed to update user');
+    }
+  }
+  
+  static Future<Map<String, dynamic>> blockUser(int userId, {bool isBlocked = true, String reason = ''}) async {
+    final response = await client.post(
+      Uri.parse('$baseUrl/api/admin/users/$userId/block'),
+      headers: _headers,
+      body: jsonEncode({'is_blocked': isBlocked, 'reason': reason}),
+    );
+    
+    if (response.statusCode == 200) {
+      return _decodeResponse(response);
+    } else {
+      throw ApiException(response.statusCode, 'Failed to block user');
+    }
+  }
+  
+  static Future<Map<String, dynamic>> approveUser(int userId) async {
+    final response = await client.post(
+      Uri.parse('$baseUrl/api/admin/users/$userId/approve'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return _decodeResponse(response);
+    } else {
+      throw ApiException(response.statusCode, 'Failed to approve user');
+    }
+  }
+  
   static Future<void> deleteContent(String contentId) async {
     final response = await client.delete(
       Uri.parse('$baseUrl/api/content/$contentId'),

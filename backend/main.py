@@ -116,6 +116,21 @@ async def init_db():
             SET roles = ARRAY[role], active_role = role 
             WHERE roles IS NULL OR active_role IS NULL
         ''')
+        # Add admin user management columns
+        await conn.execute('''
+            DO $$ 
+            BEGIN 
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='is_blocked') THEN
+                    ALTER TABLE users ADD COLUMN is_blocked BOOLEAN DEFAULT FALSE;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='block_reason') THEN
+                    ALTER TABLE users ADD COLUMN block_reason TEXT;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='admin_level') THEN
+                    ALTER TABLE users ADD COLUMN admin_level INTEGER DEFAULT 0;
+                END IF;
+            END $$;
+        ''')
         await conn.execute('''
             CREATE TABLE IF NOT EXISTS order_items (
                 id SERIAL PRIMARY KEY,
@@ -785,6 +800,124 @@ async def get_users(user: dict = Depends(get_current_user)):
     async with pool.acquire() as conn:
         rows = await conn.fetch('SELECT * FROM users ORDER BY created_at DESC')
         return [dict(row) for row in rows]
+
+# ==================== ADMIN USER MANAGEMENT ====================
+
+@app.get("/api/admin/users/{user_id}")
+async def get_user_details(user_id: int, user: dict = Depends(get_current_user)):
+    """Get detailed user information for admin"""
+    if user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Admin only")
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        user_data = await conn.fetchrow('SELECT * FROM users WHERE id = $1', user_id)
+        if not user_data:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Get user's orders count
+        orders_count = await conn.fetchval(
+            'SELECT COUNT(*) FROM orders WHERE buyer_id = $1 OR seller_id = $1 OR courier_id = $1',
+            user_id
+        )
+        
+        # Get user's products count (if seller)
+        products_count = await conn.fetchval(
+            'SELECT COUNT(*) FROM products WHERE seller_id = $1',
+            user_id
+        )
+        
+        # Get user's verification status
+        verification = await conn.fetchrow(
+            'SELECT * FROM user_verifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1',
+            user_id
+        )
+        
+        result = dict(user_data)
+        result['orders_count'] = orders_count
+        result['products_count'] = products_count
+        result['verification'] = dict(verification) if verification else None
+        
+        return result
+
+@app.put("/api/admin/users/{user_id}")
+async def admin_update_user(user_id: int, updates: dict, user: dict = Depends(get_current_user)):
+    """Admin can update any user's data"""
+    if user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Admin only")
+    
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        # Check if user exists
+        existing = await conn.fetchrow('SELECT * FROM users WHERE id = $1', user_id)
+        if not existing:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Allowed fields for admin to update
+        allowed = ['name', 'phone', 'address', 'role', 'is_verified', 'is_blocked', 'admin_level']
+        set_parts, values, idx = [], [], 1
+        for key, value in updates.items():
+            if key in allowed:
+                set_parts.append(f"{key} = ${idx}")
+                values.append(value)
+                idx += 1
+        
+        if set_parts:
+            values.append(user_id)
+            await conn.execute(f"UPDATE users SET {', '.join(set_parts)} WHERE id = ${idx}", *values)
+        
+        updated = await conn.fetchrow('SELECT * FROM users WHERE id = $1', user_id)
+        return dict(updated)
+
+@app.post("/api/admin/users/{user_id}/block")
+async def block_user(user_id: int, body: dict, user: dict = Depends(get_current_user)):
+    """Block or unblock a user"""
+    if user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Admin only")
+    
+    is_blocked = body.get('is_blocked', True)
+    reason = body.get('reason', '')
+    
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        # Check if user exists
+        existing = await conn.fetchrow('SELECT * FROM users WHERE id = $1', user_id)
+        if not existing:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Cannot block another admin
+        if existing['role'] == 'admin' and user['id'] != user_id:
+            raise HTTPException(status_code=403, detail="Cannot block another admin")
+        
+        await conn.execute(
+            'UPDATE users SET is_blocked = $1, block_reason = $2 WHERE id = $3',
+            is_blocked, reason, user_id
+        )
+        
+        updated = await conn.fetchrow('SELECT * FROM users WHERE id = $1', user_id)
+        return {"message": f"User {'blocked' if is_blocked else 'unblocked'}", "user": dict(updated)}
+
+@app.post("/api/admin/users/{user_id}/approve")
+async def approve_user(user_id: int, user: dict = Depends(get_current_user)):
+    """Approve a user (set is_verified = true)"""
+    if user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Admin only")
+    
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        existing = await conn.fetchrow('SELECT * FROM users WHERE id = $1', user_id)
+        if not existing:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        await conn.execute('UPDATE users SET is_verified = TRUE WHERE id = $1', user_id)
+        
+        # Also update verification record if exists
+        await conn.execute(
+            "UPDATE user_verifications SET status = 'approved' WHERE user_id = $1 AND status = 'pending'",
+            user_id
+        )
+        
+        updated = await conn.fetchrow('SELECT * FROM users WHERE id = $1', user_id)
+        return {"message": "User approved", "user": dict(updated)}
 
 @app.get("/api/reviews/{product_id}")
 async def get_product_reviews(product_id: int):
