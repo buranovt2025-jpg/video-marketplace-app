@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:tiktok_tutorial/constants.dart';
-import 'package:tiktok_tutorial/controllers/cart_controller.dart';
-import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
-import 'package:tiktok_tutorial/views/screens/buyer/order_success_screen.dart';
-import 'package:tiktok_tutorial/views/screens/common/location_picker_screen.dart';
+import 'package:gogomarket/constants.dart';
+import 'package:gogomarket/controllers/cart_controller.dart';
+import 'package:gogomarket/controllers/marketplace_controller.dart';
+import 'package:gogomarket/views/screens/buyer/order_success_screen.dart';
+import 'package:gogomarket/views/screens/buyer/payment_screen.dart';
+import 'package:gogomarket/views/screens/common/location_picker_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final String sellerId;
@@ -34,6 +35,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   static const double _standardDeliveryFee = 15000; // 15,000 сум
   static const double _expressDeliveryFee = 30000; // 30,000 сум
   static const double _freeDeliveryThreshold = 500000; // Free delivery over 500K сум
+  
+  // Payment method
+  PaymentMethod _selectedPaymentMethod = PaymentMethod.cash;
 
   @override
   void initState() {
@@ -396,50 +400,104 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Widget _buildPaymentMethod() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[900],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: buttonColor!, width: 2),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: buttonColor!.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(Icons.money, color: buttonColor),
+    return Column(
+      children: [
+        _buildPaymentMethodTile(
+          PaymentMethod.card,
+          'Банковская карта',
+          'Visa, Mastercard, Uzcard, Humo',
+          Icons.credit_card,
+          Colors.blue,
+        ),
+        const SizedBox(height: 12),
+        _buildPaymentMethodTile(
+          PaymentMethod.click,
+          'Click',
+          'Оплата через Click',
+          Icons.touch_app,
+          Colors.green,
+        ),
+        const SizedBox(height: 12),
+        _buildPaymentMethodTile(
+          PaymentMethod.payme,
+          'Payme',
+          'Оплата через Payme',
+          Icons.account_balance_wallet,
+          Colors.cyan,
+        ),
+        const SizedBox(height: 12),
+        _buildPaymentMethodTile(
+          PaymentMethod.cash,
+          'Наличными',
+          'Оплата при получении',
+          Icons.money,
+          Colors.orange,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPaymentMethodTile(
+    PaymentMethod method,
+    String title,
+    String subtitle,
+    IconData icon,
+    Color color,
+  ) {
+    final isSelected = _selectedPaymentMethod == method;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedPaymentMethod = method),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey[900],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? primaryColor : Colors.grey[800]!,
+            width: isSelected ? 2 : 1,
           ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Наличными курьеру',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'Оплата при получении',
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: color, size: 20),
             ),
-          ),
-          Icon(Icons.check_circle, color: buttonColor),
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: Colors.grey[500],
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (isSelected)
+              Icon(Icons.check_circle, color: primaryColor)
+            else
+              Icon(Icons.circle_outlined, color: Colors.grey[600]),
+          ],
+        ),
       ),
     );
   }
@@ -722,7 +780,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     try {
       final items = _cartController.getItemsBySeller(widget.sellerId);
       final orderItems = items.map((item) => item.toOrderItem()).toList();
+      final total = _cartController.getTotalBySeller(widget.sellerId);
+      final deliveryFee = _getDeliveryFee(total);
+      final grandTotal = total + deliveryFee;
 
+      // Create order first
       final order = await _marketplaceController.createOrder(
         sellerId: widget.sellerId,
         items: orderItems,
@@ -730,14 +792,34 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         deliveryLatitude: _latitude,
         deliveryLongitude: _longitude,
         notes: _notesController.text.isNotEmpty ? _notesController.text : null,
+        paymentMethod: _selectedPaymentMethod.name,
       );
 
+      // Stop loading before navigation
+      setState(() => _isLoading = false);
+
       if (order != null) {
-        // Clear items from this seller
+        // Clear items from this seller first
         _cartController.clearSellerItems(widget.sellerId);
         
-        // Navigate to success screen
-        Get.off(() => OrderSuccessScreen(order: order));
+        // If payment method is not cash, navigate to payment screen
+        if (_selectedPaymentMethod != PaymentMethod.cash) {
+          final orderId = order['id']?.toString() ?? '0';
+          Get.to(() => PaymentScreen(
+            amount: grandTotal,
+            orderId: orderId,
+            onPaymentComplete: (success, transactionId) {
+              if (success) {
+                // Navigate to success screen using offAll to clear navigation stack
+                Get.offAll(() => OrderSuccessScreen(order: order));
+              }
+            },
+          ));
+        } else {
+          // Cash payment - go directly to success screen
+          // Use offAll to clear the navigation stack and prevent back navigation issues
+          Get.offAll(() => OrderSuccessScreen(order: order));
+        }
       } else {
         Get.snackbar(
           'Ошибка',
@@ -749,8 +831,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           colorText: Colors.white,
         );
       }
-    } finally {
+    } catch (e) {
       setState(() => _isLoading = false);
+      Get.snackbar(
+        'Ошибка',
+        'Произошла ошибка при создании заказа: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 

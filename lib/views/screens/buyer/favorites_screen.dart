@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:tiktok_tutorial/constants.dart';
-import 'package:tiktok_tutorial/controllers/favorites_controller.dart';
-import 'package:tiktok_tutorial/controllers/cart_controller.dart';
+import 'package:gogomarket/constants.dart';
+import 'package:gogomarket/controllers/favorites_controller.dart';
+import 'package:gogomarket/controllers/cart_controller.dart';
 
 class FavoritesScreen extends StatelessWidget {
   const FavoritesScreen({Key? key}) : super(key: key);

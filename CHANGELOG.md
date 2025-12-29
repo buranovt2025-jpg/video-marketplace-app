@@ -1,6 +1,6 @@
 # Changelog
 
-Все значимые изменения в проекте Video Marketplace App будут документироваться в этом файле.
+Все значимые изменения в проекте Gogomarket.uz будут документироваться в этом файле.
 
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.0.0/),
 и этот проект придерживается [Semantic Versioning](https://semver.org/lang/ru/).

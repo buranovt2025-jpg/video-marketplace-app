@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:tiktok_tutorial/constants.dart';
-import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:gogomarket/constants.dart';
+import 'package:gogomarket/controllers/marketplace_controller.dart';
+import 'package:gogomarket/services/api_service.dart';
 
 class CreateReelScreen extends StatefulWidget {
   const CreateReelScreen({Key? key}) : super(key: key);
@@ -14,8 +16,10 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
   final TextEditingController _captionController = TextEditingController();
   final TextEditingController _videoUrlController = TextEditingController();
   final MarketplaceController _controller = Get.find<MarketplaceController>();
+  final ImagePicker _picker = ImagePicker();
   
   String? _selectedProductId;
+  XFile? _selectedVideo;
 
   @override
   void initState() {
@@ -30,11 +34,60 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
     super.dispose();
   }
 
-  Future<void> _createReel() async {
-    if (_videoUrlController.text.isEmpty) {
+  // Maximum video duration for reels: 60 seconds
+  static const int maxVideoDurationSeconds = 60;
+
+  Future<void> _pickVideo() async {
+    try {
+      final XFile? video = await _picker.pickVideo(
+        source: ImageSource.gallery,
+        maxDuration: const Duration(seconds: maxVideoDurationSeconds),
+      );
+      if (video != null) {
+        setState(() {
+          _selectedVideo = video;
+          _videoUrlController.text = video.path;
+        });
+      }
+    } catch (e) {
       Get.snackbar(
         'Ошибка',
-        'Добавьте ссылку на видео',
+        'Не удалось выбрать видео: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  Future<void> _recordVideo() async {
+    try {
+      final XFile? video = await _picker.pickVideo(
+        source: ImageSource.camera,
+        maxDuration: const Duration(seconds: maxVideoDurationSeconds),
+      );
+      if (video != null) {
+        setState(() {
+          _selectedVideo = video;
+          _videoUrlController.text = video.path;
+        });
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Ошибка',
+        'Не удалось записать видео: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  Future<void> _createReel() async {
+    if (_selectedVideo == null && _videoUrlController.text.isEmpty) {
+      Get.snackbar(
+        'Ошибка',
+        'Добавьте видео из галереи или укажите ссылку',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -42,8 +95,35 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
       return;
     }
 
+    String videoUrl = _videoUrlController.text.trim();
+    
+    // If a local video file was selected, upload it first
+    if (_selectedVideo != null && !videoUrl.startsWith('http')) {
+      try {
+        Get.snackbar(
+          'Загрузка',
+          'Загружаем видео на сервер...',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.blue,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 2),
+        );
+        
+        videoUrl = await ApiService.uploadVideo(_selectedVideo!.path);
+      } catch (e) {
+        Get.snackbar(
+          'Ошибка',
+          'Не удалось загрузить видео: $e',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return;
+      }
+    }
+
     final reel = await _controller.createReel(
-      videoUrl: _videoUrlController.text.trim(),
+      videoUrl: videoUrl,
       caption: _captionController.text.isNotEmpty 
           ? _captionController.text.trim() 
           : null,
@@ -116,49 +196,131 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Video preview area
-            GestureDetector(
-              onTap: () {
-                // TODO: Implement video picker
-              },
-              child: Container(
-                height: 400,
-                decoration: BoxDecoration(
-                  color: Colors.grey[900],
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey[800]!),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.video_call, size: 64, color: Colors.grey[600]),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Добавить видео',
-                      style: TextStyle(
-                        color: Colors.grey[500],
-                        fontSize: 16,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Рекомендуемый формат: 9:16',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
+            Container(
+              height: 300,
+              decoration: BoxDecoration(
+                color: Colors.grey[900],
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey[800]!),
               ),
+              child: _selectedVideo != null
+                  ? Stack(
+                      children: [
+                        Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.videocam, size: 64, color: Colors.green),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Видео выбрано',
+                                style: TextStyle(color: Colors.green, fontSize: 16),
+                              ),
+                              const SizedBox(height: 8),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                child: Text(
+                                  _selectedVideo!.name,
+                                  style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                                  textAlign: TextAlign.center,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: IconButton(
+                            icon: const Icon(Icons.close, color: Colors.red),
+                            onPressed: () {
+                              setState(() {
+                                _selectedVideo = null;
+                                _videoUrlController.clear();
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    )
+                  : Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.video_call, size: 64, color: Colors.grey[600]),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Добавить видео',
+                          style: TextStyle(color: Colors.grey[500], fontSize: 16),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Рекомендуемый формат: 9:16',
+                          style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                        ),
+                      ],
+                    ),
             ),
             const SizedBox(height: 16),
             
-            // Video URL field (temporary until file upload is implemented)
+            // Gallery and Camera buttons
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _pickVideo,
+                    icon: const Icon(Icons.photo_library),
+                    label: const Text('Галерея'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: buttonColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _recordVideo,
+                    icon: const Icon(Icons.videocam),
+                    label: const Text('Камера'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.grey[800],
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            
+            // OR divider
+            Row(
+              children: [
+                Expanded(child: Divider(color: Colors.grey[700])),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text('или', style: TextStyle(color: Colors.grey[500])),
+                ),
+                Expanded(child: Divider(color: Colors.grey[700])),
+              ],
+            ),
+            const SizedBox(height: 16),
+            
+            // Video URL field (alternative option)
             TextField(
               controller: _videoUrlController,
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
-                labelText: 'URL видео *',
+                labelText: 'URL видео',
                 labelStyle: TextStyle(color: Colors.grey[400]),
                 hintText: 'https://example.com/video.mp4',
                 hintStyle: TextStyle(color: Colors.grey[600]),

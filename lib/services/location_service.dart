@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -10,7 +11,11 @@ class LocationService extends GetxService {
   final RxString error = ''.obs;
   
   Future<LocationService> init() async {
-    await _checkPermissions();
+    // Skip permission check on web during init to avoid hanging
+    // Permissions will be checked when location is actually needed
+    if (!kIsWeb) {
+      await _checkPermissions();
+    }
     return this;
   }
   

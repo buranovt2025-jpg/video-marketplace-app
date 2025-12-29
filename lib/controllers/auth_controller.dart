@@ -3,10 +3,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:tiktok_tutorial/constants.dart';
-import 'package:tiktok_tutorial/models/user.dart' as model;
-import 'package:tiktok_tutorial/views/screens/auth/login_screen.dart';
-import 'package:tiktok_tutorial/views/screens/home_screen.dart';
+import 'package:gogomarket/constants.dart';
+import 'package:gogomarket/models/user.dart' as model;
+import 'package:gogomarket/views/screens/auth/login_screen.dart';
+import 'package:gogomarket/views/screens/home_screen.dart';
 
 class AuthController extends GetxController {
   static AuthController instance = Get.find();

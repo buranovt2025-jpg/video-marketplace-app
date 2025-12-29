@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:tiktok_tutorial/constants.dart';
-import 'package:tiktok_tutorial/services/location_service.dart';
+import 'package:gogomarket/constants.dart';
+import 'package:gogomarket/services/location_service.dart';
 
 class LocationPickerScreen extends StatefulWidget {
   final String? initialAddress;

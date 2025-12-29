@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:tiktok_tutorial/controllers/upload_video_controller.dart';
-import 'package:tiktok_tutorial/views/widgets/text_input_field.dart';
+import 'package:gogomarket/controllers/upload_video_controller.dart';
+import 'package:gogomarket/views/widgets/text_input_field.dart';
 import 'package:video_player/video_player.dart';
 
 class ConfirmScreen extends StatefulWidget {

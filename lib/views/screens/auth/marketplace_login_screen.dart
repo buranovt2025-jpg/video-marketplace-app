@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:tiktok_tutorial/constants.dart';
-import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
-import 'package:tiktok_tutorial/utils/responsive_helper.dart';
-import 'package:tiktok_tutorial/views/screens/auth/marketplace_register_screen.dart';
-import 'package:tiktok_tutorial/views/screens/auth/forgot_password_screen.dart';
-import 'package:tiktok_tutorial/views/screens/marketplace_home_screen.dart';
-import 'package:tiktok_tutorial/views/screens/courier/courier_home_screen.dart';
-import 'package:tiktok_tutorial/views/screens/admin/admin_home_screen.dart';
+import 'package:gogomarket/constants.dart';
+import 'package:gogomarket/controllers/marketplace_controller.dart';
+import 'package:gogomarket/utils/responsive_helper.dart';
+import 'package:gogomarket/views/screens/auth/marketplace_register_screen.dart';
+import 'package:gogomarket/views/screens/auth/forgot_password_screen.dart';
+import 'package:gogomarket/views/screens/marketplace_home_screen.dart';
+import 'package:gogomarket/views/screens/courier/courier_home_screen.dart';
+import 'package:gogomarket/views/screens/admin/admin_home_screen.dart';
 
 class MarketplaceLoginScreen extends StatefulWidget {
   const MarketplaceLoginScreen({Key? key}) : super(key: key);
@@ -30,6 +30,12 @@ class _MarketplaceLoginScreenState extends State<MarketplaceLoginScreen> {
   }
 
   void _continueAsGuest() {
+    // If already in guest mode, just go back to home
+    if (_controller.isGuest) {
+      Get.offAll(() => const MarketplaceHomeScreen());
+      return;
+    }
+    // Set guest mode and navigate to home
     _controller.setGuestMode(true);
     Get.offAll(() => const MarketplaceHomeScreen());
   }
@@ -101,9 +107,23 @@ class _MarketplaceLoginScreenState extends State<MarketplaceLoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: 40),
+                    const SizedBox(height: 20),
+                
+                  // Language selector
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildLanguageButton('RU', 'ru_RU'),
+                      const SizedBox(width: 12),
+                      _buildLanguageButton('UZ', 'uz_UZ'),
+                      const SizedBox(width: 12),
+                      _buildLanguageButton('EN', 'en_US'),
+                    ],
+                  ),
+                
+                  const SizedBox(height: 24),
               
-                            // Logo
+                  // Logo
                             Image.asset(
                               'assets/images/logo_white.png',
                               height: 120,
@@ -315,6 +335,35 @@ class _MarketplaceLoginScreenState extends State<MarketplaceLoginScreen> {
                         ],
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLanguageButton(String label, String locale) {
+    final parts = locale.split('_');
+    final currentLocale = Get.locale;
+    final isSelected = currentLocale?.languageCode == parts[0];
+    
+    return GestureDetector(
+      onTap: () {
+        Get.updateLocale(Locale(parts[0], parts[1]));
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? buttonColor : Colors.grey[800],
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? buttonColor! : Colors.grey[700]!,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.grey[400],
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           ),
         ),
       ),

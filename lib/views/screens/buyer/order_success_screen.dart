@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:tiktok_tutorial/constants.dart';
-import 'package:tiktok_tutorial/views/screens/buyer/order_tracking_screen.dart';
-import 'package:tiktok_tutorial/views/screens/marketplace_home_screen.dart';
+import 'package:gogomarket/constants.dart';
+import 'package:gogomarket/views/screens/buyer/order_tracking_screen.dart';
+import 'package:gogomarket/views/screens/marketplace_home_screen.dart';
 
 class OrderSuccessScreen extends StatelessWidget {
   final Map<String, dynamic> order;

@@ -22,7 +22,7 @@ class CartItem {
   double get total => price * quantity;
 
   Map<String, dynamic> toOrderItem() => {
-    'product_id': productId,
+    'product_id': int.tryParse(productId) ?? 0,
     'quantity': quantity,
     'price': price,
   };

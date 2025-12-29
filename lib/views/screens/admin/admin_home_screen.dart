@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:tiktok_tutorial/constants.dart';
-import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
-import 'package:tiktok_tutorial/views/screens/admin/admin_users_screen.dart';
-import 'package:tiktok_tutorial/views/screens/admin/admin_orders_screen.dart';
-import 'package:tiktok_tutorial/views/screens/admin/admin_content_screen.dart';
-import 'package:tiktok_tutorial/views/screens/auth/marketplace_login_screen.dart';
+import 'package:gogomarket/constants.dart';
+import 'package:gogomarket/controllers/marketplace_controller.dart';
+import 'package:gogomarket/views/screens/admin/admin_users_screen.dart';
+import 'package:gogomarket/views/screens/admin/admin_orders_screen.dart';
+import 'package:gogomarket/views/screens/admin/admin_content_screen.dart';
+import 'package:gogomarket/views/screens/admin/admin_settings_screen.dart';
+import 'package:gogomarket/views/screens/admin/category_moderation_screen.dart';
+import 'package:gogomarket/views/screens/auth/marketplace_login_screen.dart';
 
 class AdminHomeScreen extends StatefulWidget {
   const AdminHomeScreen({Key? key}) : super(key: key);
@@ -37,41 +39,46 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor,
-      body: IndexedStack(
-        index: _currentIndex,
-        children: [
-          _buildDashboard(),
-          const AdminUsersScreen(),
-          const AdminOrdersScreen(),
-          const AdminContentScreen(),
-        ],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.grey[900],
-        selectedItemColor: buttonColor,
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
-            label: 'Дашборд',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people),
-            label: 'Пользователи',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_bag),
-            label: 'Заказы',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.video_library),
-            label: 'Контент',
-          ),
-        ],
-      ),
+            body: IndexedStack(
+              index: _currentIndex,
+              children: [
+                _buildDashboard(),
+                const AdminUsersScreen(),
+                const AdminOrdersScreen(),
+                const AdminContentScreen(),
+                const AdminSettingsScreen(),
+              ],
+            ),
+            bottomNavigationBar: BottomNavigationBar(
+              currentIndex: _currentIndex,
+              onTap: (index) => setState(() => _currentIndex = index),
+              type: BottomNavigationBarType.fixed,
+              backgroundColor: Colors.grey[900],
+              selectedItemColor: buttonColor,
+              unselectedItemColor: Colors.grey,
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.dashboard),
+                  label: 'Дашборд',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.people),
+                  label: 'Люди',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.receipt_long),
+                  label: 'Сделки',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.video_library),
+                  label: 'Контент',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.settings),
+                  label: 'Настройки',
+                ),
+              ],
+            ),
     );
   }
 
@@ -355,24 +362,50 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
   }
 
   Widget _buildQuickActions() {
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          child: _buildActionButton(
-            'Создать рилс',
-            Icons.video_call,
-            Colors.purple,
-            () => setState(() => _currentIndex = 3),
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: _buildActionButton(
+                'Создать рилс',
+                Icons.video_call,
+                Colors.purple,
+                () => setState(() => _currentIndex = 3),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildActionButton(
+                'Создать историю',
+                Icons.add_photo_alternate,
+                Colors.orange,
+                () => setState(() => _currentIndex = 3),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildActionButton(
-            'Создать историю',
-            Icons.add_photo_alternate,
-            Colors.orange,
-            () => setState(() => _currentIndex = 3),
-          ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildActionButton(
+                'Категории',
+                Icons.category,
+                Colors.teal,
+                () => Get.to(() => const CategoryModerationScreen()),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildActionButton(
+                'Верификация',
+                Icons.verified_user,
+                Colors.blue,
+                () => setState(() => _currentIndex = 1),
+              ),
+            ),
+          ],
         ),
       ],
     );

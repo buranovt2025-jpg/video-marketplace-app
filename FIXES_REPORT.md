@@ -1,7 +1,7 @@
-# 📋 Отчет об исправлениях в Video Marketplace App
+# 📋 Отчет об исправлениях в Gogomarket.uz
 
 **Дата:** 24 декабря 2024  
-**Репозиторий:** https://github.com/buranovt2025-jpg/video-marketplace-app  
+**Репозиторий:** https://github.com/buranovt2025-jpg/gogomarket  
 **Ветка:** feature/initial-upload  
 **Коммит:** b28f2d9
 

@@ -1,4 +1,4 @@
-# Журнал разработки Video Marketplace App
+# Журнал разработки Gogomarket.uz
 
 ## Сессия 28 декабря 2024
 

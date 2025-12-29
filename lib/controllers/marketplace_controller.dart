@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import 'package:tiktok_tutorial/services/api_service.dart';
+import 'package:gogomarket/services/api_service.dart';
 
 class MarketplaceController extends GetxController {
   static MarketplaceController get instance => Get.find();
@@ -9,6 +9,12 @@ class MarketplaceController extends GetxController {
     final RxBool isLoading = false.obs;
     final RxString error = ''.obs;
     final RxBool isGuestMode = false.obs;
+    
+    // Specific loading states for UX
+    final RxBool isLoadingProducts = false.obs;
+    final RxBool isLoadingStories = false.obs;
+    final RxBool isLoadingReels = false.obs;
+    final RxBool isLoadingOrders = false.obs;
   
   // Products state
   final RxList<Map<String, dynamic>> products = <Map<String, dynamic>>[].obs;
@@ -21,13 +27,17 @@ class MarketplaceController extends GetxController {
   // Orders state
   final RxList<Map<String, dynamic>> orders = <Map<String, dynamic>>[].obs;
   
-  // Chat state
-  final RxList<Map<String, dynamic>> conversations = <Map<String, dynamic>>[].obs;
-  final RxInt unreadCount = 0.obs;
+    // Chat state
+    final RxList<Map<String, dynamic>> conversations = <Map<String, dynamic>>[].obs;
+    final RxInt unreadCount = 0.obs;
+  
+    // Favorites state
+    final RxList<Map<String, dynamic>> favorites = <Map<String, dynamic>>[].obs;
+    final RxSet<int> favoriteIds = <int>{}.obs;
   
   // Getters
-  String get userId => currentUser.value?['id'] ?? '';
-  String get userRole => currentUser.value?['role'] ?? '';
+  String get userId => currentUser.value?['id']?.toString() ?? '';
+  String get userRole => currentUser.value?['role']?.toString() ?? '';
   String get userName => currentUser.value?['name'] ?? '';
   String get userEmail => currentUser.value?['email'] ?? '';
   String get userAvatar => currentUser.value?['avatar_url'] ?? '';
@@ -35,8 +45,8 @@ class MarketplaceController extends GetxController {
   bool get isBuyer => userRole == 'buyer';
   bool get isCourier => userRole == 'courier';
   bool get isAdmin => userRole == 'admin';
-  bool get isLoggedIn => currentUser.value != null;
-  bool get isGuest => isGuestMode.value;
+  bool get isGuest => userRole == 'guest';
+  bool get isLoggedIn => currentUser.value != null && !isGuest;
   
   @override
   void onInit() {
@@ -59,6 +69,7 @@ class MarketplaceController extends GetxController {
       
       final response = await ApiService.login(email, password);
       currentUser.value = response['user'];
+      isGuestMode.value = false; // Clear guest mode on login
       
       await _loadInitialData();
       return true;
@@ -95,6 +106,7 @@ class MarketplaceController extends GetxController {
         longitude: longitude,
       );
       currentUser.value = response['user'];
+      isGuestMode.value = false; // Clear guest mode on registration
       
       await _loadInitialData();
       return true;
@@ -122,8 +134,13 @@ class MarketplaceController extends GetxController {
     void setGuestMode(bool value) {
       isGuestMode.value = value;
       if (value) {
-        // Set a guest user for browsing
-        currentUser.value = null;
+        // Set a guest user with role='guest' for browsing
+        currentUser.value = {
+          'id': 'guest',
+          'name': 'Guest',
+          'email': '',
+          'role': 'guest',
+        };
         _loadInitialData();
       }
     }
@@ -150,6 +167,7 @@ class MarketplaceController extends GetxController {
   // Products methods
   Future<void> fetchProducts({String? sellerId, String? category, String? search}) async {
     try {
+      isLoadingProducts.value = true;
       final data = await ApiService.getProducts(
         sellerId: sellerId,
         category: category,
@@ -162,6 +180,8 @@ class MarketplaceController extends GetxController {
       }
     } catch (e) {
       error.value = e.toString();
+    } finally {
+      isLoadingProducts.value = false;
     }
   }
   
@@ -169,7 +189,10 @@ class MarketplaceController extends GetxController {
     if (!isSeller && !isAdmin) return;
     
     try {
-      final data = await ApiService.getProducts(sellerId: userId);
+      // Admin can see all products, seller sees only their own
+      final data = isAdmin 
+          ? await ApiService.getProducts()
+          : await ApiService.getProducts(sellerId: userId);
       myProducts.value = List<Map<String, dynamic>>.from(data);
     } catch (e) {
       error.value = e.toString();
@@ -253,19 +276,25 @@ class MarketplaceController extends GetxController {
   // Content methods
   Future<void> fetchReels() async {
     try {
+      isLoadingReels.value = true;
       final data = await ApiService.getReels();
       reels.value = List<Map<String, dynamic>>.from(data);
     } catch (e) {
       error.value = e.toString();
+    } finally {
+      isLoadingReels.value = false;
     }
   }
   
   Future<void> fetchStories() async {
     try {
+      isLoadingStories.value = true;
       final data = await ApiService.getStories();
       stories.value = List<Map<String, dynamic>>.from(data);
     } catch (e) {
       error.value = e.toString();
+    } finally {
+      isLoadingStories.value = false;
     }
   }
   
@@ -325,7 +354,13 @@ class MarketplaceController extends GetxController {
   
   Future<void> likeContent(String contentId) async {
     try {
-      await ApiService.likeContent(contentId);
+      final updatedContent = await ApiService.likeContent(contentId);
+      // Update the reel in the list to reflect new like count
+      final index = reels.indexWhere((r) => r['id'].toString() == contentId);
+      if (index != -1) {
+        reels[index] = updatedContent;
+        reels.refresh();
+      }
     } catch (e) {
       error.value = e.toString();
     }
@@ -334,10 +369,13 @@ class MarketplaceController extends GetxController {
   // Orders methods
   Future<void> fetchOrders() async {
     try {
+      isLoadingOrders.value = true;
       final data = await ApiService.getOrders();
       orders.value = List<Map<String, dynamic>>.from(data);
     } catch (e) {
       error.value = e.toString();
+    } finally {
+      isLoadingOrders.value = false;
     }
   }
   
@@ -348,6 +386,7 @@ class MarketplaceController extends GetxController {
     required double deliveryLatitude,
     required double deliveryLongitude,
     String? notes,
+    String paymentMethod = 'cash',
   }) async {
     try {
       isLoading.value = true;
@@ -360,6 +399,7 @@ class MarketplaceController extends GetxController {
         deliveryLatitude: deliveryLatitude,
         deliveryLongitude: deliveryLongitude,
         notes: notes,
+        paymentMethod: paymentMethod,
       );
       
       orders.insert(0, order);
@@ -423,6 +463,74 @@ class MarketplaceController extends GetxController {
     try {
       final message = await ApiService.sendMessage(receiverId, content);
       return message;
+    } catch (e) {
+      error.value = e.toString();
+      return null;
+    }
+  }
+  
+  // Favorites methods
+  Future<void> fetchFavorites() async {
+    if (!isLoggedIn) return;
+    try {
+      final data = await ApiService.getFavorites();
+      favorites.value = List<Map<String, dynamic>>.from(data);
+      favoriteIds.value = favorites.map((f) => f['id'] as int).toSet();
+    } catch (e) {
+      error.value = e.toString();
+    }
+  }
+  
+  Future<bool> toggleFavorite(int productId) async {
+    if (!isLoggedIn) return false;
+    try {
+      final result = await ApiService.toggleFavorite(productId);
+      final isFavorite = result['is_favorite'] ?? false;
+      
+      if (isFavorite) {
+        favoriteIds.add(productId);
+      } else {
+        favoriteIds.remove(productId);
+      }
+      
+      // Refresh favorites list
+      await fetchFavorites();
+      return isFavorite;
+    } catch (e) {
+      error.value = e.toString();
+      return false;
+    }
+  }
+  
+  bool isFavorite(int productId) {
+    return favoriteIds.contains(productId);
+  }
+  
+  Future<bool> checkFavorite(int productId) async {
+    if (!isLoggedIn) return false;
+    try {
+      return await ApiService.checkFavorite(productId);
+    } catch (e) {
+      return false;
+    }
+  }
+  
+  // Comments methods
+  Future<List<Map<String, dynamic>>> getComments(String contentId) async {
+    try {
+      final data = await ApiService.getComments(contentId);
+      return List<Map<String, dynamic>>.from(data);
+    } catch (e) {
+      error.value = e.toString();
+      return [];
+    }
+  }
+  
+  Future<Map<String, dynamic>?> postComment(String contentId, String text) async {
+    if (!isLoggedIn) return null;
+    try {
+      final comment = await ApiService.postComment(contentId, text);
+      return comment;
     } catch (e) {
       error.value = e.toString();
       return null;

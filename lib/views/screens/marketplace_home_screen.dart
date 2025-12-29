@@ -1,25 +1,28 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:tiktok_tutorial/constants.dart';
-import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
-import 'package:tiktok_tutorial/controllers/cart_controller.dart';
-import 'package:tiktok_tutorial/utils/responsive_helper.dart';
-import 'package:tiktok_tutorial/views/screens/seller/create_product_screen.dart';
-import 'package:tiktok_tutorial/views/screens/seller/create_reel_screen.dart';
-import 'package:tiktok_tutorial/views/screens/seller/create_story_screen.dart';
-import 'package:tiktok_tutorial/views/screens/seller/my_products_screen.dart';
-import 'package:tiktok_tutorial/views/screens/auth/marketplace_login_screen.dart';
-import 'package:tiktok_tutorial/views/screens/buyer/product_detail_screen.dart';
-import 'package:tiktok_tutorial/views/screens/buyer/cart_screen.dart';
-import 'package:tiktok_tutorial/views/screens/buyer/order_tracking_screen.dart';
-import 'package:tiktok_tutorial/views/screens/chat/chat_screen.dart';
-import 'package:tiktok_tutorial/views/screens/profile/edit_profile_screen.dart';
-import 'package:tiktok_tutorial/views/screens/stories/story_viewer_screen.dart';
-import 'package:tiktok_tutorial/views/screens/cabinets/seller_cabinet_screen.dart';
-import 'package:tiktok_tutorial/views/screens/cabinets/buyer_cabinet_screen.dart';
-import 'package:tiktok_tutorial/views/screens/buyer/nearby_sellers_screen.dart';
-import 'package:tiktok_tutorial/views/screens/common/delete_account_screen.dart';
-import 'package:tiktok_tutorial/views/screens/admin/seller_verification_screen.dart';
+import 'package:gogomarket/constants.dart';
+import 'package:gogomarket/controllers/marketplace_controller.dart';
+import 'package:gogomarket/controllers/cart_controller.dart';
+import 'package:gogomarket/utils/responsive_helper.dart';
+import 'package:gogomarket/views/screens/seller/create_product_screen.dart';
+import 'package:gogomarket/views/screens/seller/create_reel_screen.dart';
+import 'package:gogomarket/views/screens/seller/create_story_screen.dart';
+import 'package:gogomarket/views/screens/seller/my_products_screen.dart';
+import 'package:gogomarket/views/screens/auth/marketplace_login_screen.dart';
+import 'package:gogomarket/views/screens/buyer/product_detail_screen.dart';
+import 'package:gogomarket/views/screens/buyer/cart_screen.dart';
+import 'package:gogomarket/views/screens/buyer/order_tracking_screen.dart';
+import 'package:gogomarket/views/screens/chat/chat_screen.dart';
+import 'package:gogomarket/views/screens/profile/edit_profile_screen.dart';
+import 'package:gogomarket/views/screens/stories/story_viewer_screen.dart';
+import 'package:gogomarket/views/screens/cabinets/seller_cabinet_screen.dart';
+import 'package:gogomarket/views/screens/cabinets/buyer_cabinet_screen.dart';
+import 'package:gogomarket/views/screens/buyer/nearby_sellers_screen.dart';
+import 'package:gogomarket/views/screens/common/delete_account_screen.dart';
+import 'package:gogomarket/views/screens/admin/seller_verification_screen.dart';
+import 'package:gogomarket/views/widgets/shimmer_loading.dart';
+import 'package:gogomarket/views/screens/legal/legal_page.dart';
 
 class MarketplaceHomeScreen extends StatefulWidget {
   final bool isGuestMode;
@@ -34,7 +37,36 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   final MarketplaceController _controller = Get.find<MarketplaceController>();
   int _currentIndex = 0;
   
-  bool get _isGuestMode => widget.isGuestMode;
+  // Search and filter state
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  String _selectedCategory = 'all';
+  String _sortBy = 'default'; // default, price_low, price_high, newest
+  bool _isSearching = false;
+  
+  // Debounce timer for search
+  Timer? _searchDebounce;
+  
+  final List<Map<String, String>> _categories = [
+    {'value': 'all', 'label': 'Все'},
+    {'value': 'electronics', 'label': 'Электроника'},
+    {'value': 'clothing', 'label': 'Одежда'},
+    {'value': 'food', 'label': 'Продукты'},
+    {'value': 'home', 'label': 'Дом и сад'},
+    {'value': 'beauty', 'label': 'Красота'},
+    {'value': 'sports', 'label': 'Спорт'},
+    {'value': 'other', 'label': 'Другое'},
+  ];
+  
+  final List<Map<String, String>> _sortOptions = [
+    {'value': 'default', 'label': 'По умолчанию'},
+    {'value': 'price_low', 'label': 'Сначала дешевые'},
+    {'value': 'price_high', 'label': 'Сначала дорогие'},
+    {'value': 'newest', 'label': 'Сначала новые'},
+  ];
+  
+  // Use controller's isGuestMode flag OR widget parameter (for robustness)
+  bool get _isGuestMode => widget.isGuestMode || _controller.isGuest;
   bool get _isSeller => !_isGuestMode && _controller.currentUser.value?['role'] == 'seller';
   bool get _isBuyer => _isGuestMode || _controller.currentUser.value?['role'] == 'buyer';
   
@@ -72,20 +104,44 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     );
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _loadData();
-  }
-
-  Future<void> _loadData() async {
-    await _controller.fetchProducts();
-    await _controller.fetchReels();
-    await _controller.fetchStories();
-    if (_controller.isLoggedIn) {
-      await _controller.fetchOrders();
+    @override
+    void initState() {
+      super.initState();
+      _loadData();
     }
-  }
+  
+    @override
+    void dispose() {
+      _searchDebounce?.cancel();
+      _searchController.dispose();
+      super.dispose();
+    }
+
+    Future<void> _loadData() async {
+      await _controller.fetchProducts();
+      await _controller.fetchReels();
+      await _controller.fetchStories();
+      if (_controller.isLoggedIn) {
+        await _controller.fetchOrders();
+      }
+    }
+  
+    Future<void> _performSearch() async {
+      if (_searchQuery.isEmpty && _selectedCategory == 'all') {
+        // Reset to all products
+        setState(() => _isSearching = true);
+        await _controller.fetchProducts();
+        setState(() => _isSearching = false);
+        return;
+      }
+    
+      setState(() => _isSearching = true);
+      await _controller.fetchProducts(
+        search: _searchQuery.isNotEmpty ? _searchQuery : null,
+        category: _selectedCategory != 'all' ? _selectedCategory : null,
+      );
+      setState(() => _isSearching = false);
+    }
 
   void _openProductFromReel(Map<String, dynamic> reel) {
     final productId = reel['product_id'];
@@ -110,47 +166,332 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     }
   }
 
+  void _showCommentsSheet(BuildContext context, Map<String, dynamic> content) {
+    final contentId = content['id']?.toString() ?? '';
+    final TextEditingController commentController = TextEditingController();
+    final RxList<Map<String, dynamic>> comments = <Map<String, dynamic>>[].obs;
+    final RxBool isLoading = true.obs;
+    
+    // Load comments
+    _loadComments(contentId, comments, isLoading);
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.7,
+        decoration: BoxDecoration(
+          color: Colors.grey[900],
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          children: [
+            // Handle bar
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[600],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            // Title
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Комментарии',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(color: Colors.grey),
+            // Comments list
+            Expanded(
+              child: Obx(() {
+                if (isLoading.value) {
+                  return const Center(
+                    child: CircularProgressIndicator(color: primaryColor),
+                  );
+                }
+                if (comments.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.chat_bubble_outline, size: 48, color: Colors.grey[600]),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Пока нет комментариев',
+                          style: TextStyle(color: Colors.grey[500], fontSize: 16),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Будьте первым!',
+                          style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: comments.length,
+                  itemBuilder: (context, index) {
+                    final comment = comments[index];
+                    return _buildCommentItem(comment);
+                  },
+                );
+              }),
+            ),
+            // Comment input
+            Container(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 8,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.grey[850],
+                border: Border(top: BorderSide(color: Colors.grey[800]!)),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: commentController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        hintText: 'Написать комментарий...',
+                        hintStyle: TextStyle(color: Colors.grey[500]),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                          borderSide: BorderSide.none,
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey[800],
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: const Icon(Icons.send, color: primaryColor),
+                    onPressed: () async {
+                      final text = commentController.text.trim();
+                      if (text.isEmpty) return;
+                      
+                      if (_isGuestMode) {
+                        Get.snackbar(
+                          'Войдите',
+                          'Чтобы оставить комментарий, войдите в аккаунт',
+                          snackPosition: SnackPosition.BOTTOM,
+                          backgroundColor: Colors.orange,
+                          colorText: Colors.white,
+                        );
+                        return;
+                      }
+                      
+                      await _postComment(contentId, text, comments);
+                      commentController.clear();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildCommentItem(Map<String, dynamic> comment) {
+    final createdAt = comment['created_at'];
+    String timeAgo = '';
+    if (createdAt != null) {
+      try {
+        final date = DateTime.parse(createdAt.toString());
+        final diff = DateTime.now().difference(date);
+        if (diff.inDays > 0) {
+          timeAgo = '${diff.inDays}д';
+        } else if (diff.inHours > 0) {
+          timeAgo = '${diff.inHours}ч';
+        } else if (diff.inMinutes > 0) {
+          timeAgo = '${diff.inMinutes}м';
+        } else {
+          timeAgo = 'сейчас';
+        }
+      } catch (e) {
+        timeAgo = '';
+      }
+    }
+    
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            radius: 18,
+            backgroundColor: Colors.grey[700],
+            child: const Icon(Icons.person, color: Colors.white, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      comment['author_name'] ?? 'Пользователь',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    if (timeAgo.isNotEmpty) ...[
+                      const SizedBox(width: 8),
+                      Text(
+                        timeAgo,
+                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  comment['text'] ?? '',
+                  style: const TextStyle(color: Colors.white70, fontSize: 14),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.favorite_border, color: Colors.grey[500], size: 18),
+            onPressed: () {},
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Future<void> _loadComments(String contentId, RxList<Map<String, dynamic>> comments, RxBool isLoading) async {
+    try {
+      isLoading.value = true;
+      final loadedComments = await _controller.getComments(contentId);
+      comments.value = loadedComments;
+    } catch (e) {
+      // Silently fail, show empty state
+    } finally {
+      isLoading.value = false;
+    }
+  }
+  
+  Future<void> _postComment(String contentId, String text, RxList<Map<String, dynamic>> comments) async {
+    try {
+      final newComment = await _controller.postComment(contentId, text);
+      if (newComment != null) {
+        comments.insert(0, newComment);
+        Get.snackbar(
+          'Готово',
+          'Комментарий добавлен',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 2),
+        );
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Ошибка',
+        'Не удалось добавить комментарий',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  void _shareContent(Map<String, dynamic> content) {
+    final caption = content['caption'] ?? '';
+    final authorName = content['author_name'] ?? '';
+    Get.snackbar(
+      'Поделиться',
+      'Функция "Поделиться" в разработке',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.blue,
+      colorText: Colors.white,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor,
-      body: _isGuestMode 
-        ? _buildGuestModeBody()
-        : Obx(() {
-            if (!_controller.isLoggedIn) {
-              return const Center(
-                child: CircularProgressIndicator(color: primaryColor),
-              );
-            }
-            
-            // Different tabs for seller vs buyer
-            if (_isSeller) {
-              return IndexedStack(
-                index: _safeCurrentIndex,
-                children: [
-                  _buildFeedTab(),
-                  _buildExploreTab(),
-                  _buildCreateTab(),
-                  _buildOrdersTab(),
-                  _buildProfileTab(),
-                ],
-              );
-            } else {
-              // Buyer: no Create tab
-              return IndexedStack(
-                index: _safeCurrentIndex,
-                children: [
-                  _buildFeedTab(),
-                  _buildExploreTab(),
-                  _buildOrdersTab(),
-                  _buildProfileTab(),
-                ],
-              );
-            }
-          }),
-      bottomNavigationBar: _isGuestMode 
-        ? _buildGuestBottomNav()
-        : Obx(() => BottomNavigationBar(
+      body: Obx(() {
+        // Check guest mode reactively from controller
+        final isGuest = widget.isGuestMode || _controller.isGuest;
+        
+        if (isGuest) {
+          return _buildGuestModeBody();
+        }
+        
+        if (!_controller.isLoggedIn) {
+          return const Center(
+            child: CircularProgressIndicator(color: primaryColor),
+          );
+        }
+        
+        // Different tabs for seller vs buyer
+        if (_isSeller) {
+          return IndexedStack(
+            index: _safeCurrentIndex,
+            children: [
+              _buildFeedTab(),
+              _buildExploreTab(),
+              _buildCreateTab(),
+              _buildOrdersTab(),
+              _buildProfileTab(),
+            ],
+          );
+        } else {
+          // Buyer: no Create tab
+          return IndexedStack(
+            index: _safeCurrentIndex,
+            children: [
+              _buildFeedTab(),
+              _buildExploreTab(),
+              _buildOrdersTab(),
+              _buildProfileTab(),
+            ],
+          );
+        }
+      }),
+      bottomNavigationBar: Obx(() {
+        final isGuest = widget.isGuestMode || _controller.isGuest;
+        if (isGuest) {
+          return _buildGuestBottomNav();
+        }
+        return BottomNavigationBar(
             currentIndex: _safeCurrentIndex,
             onTap: (index) {
               setState(() {
@@ -200,7 +541,8 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 label: 'profile'.tr,
               ),
             ],
-          )),
+          );
+      }),
     );
   }
   
@@ -346,40 +688,45 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   }
 
   Widget _buildFeedTab() {
-    return CustomScrollView(
-      slivers: [
-        SliverAppBar(
-          floating: true,
-          backgroundColor: backgroundColor,
-          title: const Text(
-            'Video Marketplace',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
+    return RefreshIndicator(
+      onRefresh: _loadData,
+      color: primaryColor,
+      backgroundColor: Colors.grey[900],
+      child: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            floating: true,
+            backgroundColor: backgroundColor,
+            title: const Text(
+              'GoGoMarket',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+                onPressed: () {},
+              ),
+              IconButton(
+                icon: const Icon(Icons.message_outlined, color: Colors.white),
+                onPressed: () {},
+              ),
+            ],
           ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-              onPressed: () {},
-            ),
-            IconButton(
-              icon: const Icon(Icons.message_outlined, color: Colors.white),
-              onPressed: () {},
-            ),
-          ],
-        ),
-        
-        // Stories row
-        SliverToBoxAdapter(
-          child: _buildStoriesRow(),
-        ),
-        
-        // Reels feed
-        SliverToBoxAdapter(
-          child: _buildReelsFeed(),
-        ),
-      ],
+          
+          // Stories row
+          SliverToBoxAdapter(
+            child: _buildStoriesRow(),
+          ),
+          
+          // Reels feed
+          SliverToBoxAdapter(
+            child: _buildReelsFeed(),
+          ),
+        ],
+      ),
     );
   }
 
@@ -389,6 +736,12 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Obx(() {
         final stories = _controller.stories;
+        final isLoading = _controller.isLoadingStories.value;
+        
+        // Show shimmer while loading
+        if (isLoading && stories.isEmpty) {
+          return const StoriesRowShimmer();
+        }
         
         return ListView.builder(
           scrollDirection: Axis.horizontal,
@@ -645,7 +998,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               children: [
                 IconButton(
                   icon: const Icon(Icons.favorite_border, color: Colors.white),
-                  onPressed: () => _controller.likeContent(reel['id']),
+                  onPressed: () => _controller.likeContent(reel['id'].toString()),
                 ),
                 Text(
                   '${reel['likes'] ?? 0}',
@@ -654,15 +1007,15 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 const SizedBox(width: 16),
                 IconButton(
                   icon: const Icon(Icons.comment_outlined, color: Colors.white),
-                  onPressed: () {},
+                  onPressed: () => _showCommentsSheet(context, reel),
                 ),
                 IconButton(
                   icon: const Icon(Icons.share_outlined, color: Colors.white),
-                  onPressed: () {},
+                  onPressed: () => _shareContent(reel),
                 ),
                 const Spacer(),
-                // Buy button for reels with linked product
-                if (reel['product_id'] != null) ...[
+                // Buy button for reels with linked product (hidden for sellers)
+                if (reel['product_id'] != null && !_controller.isSeller) ...[
                   ElevatedButton.icon(
                     onPressed: () => _openProductFromReel(reel),
                     icon: const Icon(Icons.shopping_cart, size: 18),
@@ -700,85 +1053,425 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     );
   }
 
-  Widget _buildExploreTab() {
-    return CustomScrollView(
-      slivers: [
-        SliverAppBar(
-          floating: true,
-          backgroundColor: backgroundColor,
-          title: Container(
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.grey[900],
-              borderRadius: BorderRadius.circular(10),
+    Widget _buildExploreTab() {
+      return RefreshIndicator(
+        onRefresh: () async {
+          await _controller.fetchProducts();
+        },
+        color: primaryColor,
+        backgroundColor: Colors.grey[900],
+        child: CustomScrollView(
+          slivers: [
+            // Search bar
+            SliverAppBar(
+            floating: true,
+            backgroundColor: backgroundColor,
+            title: Container(
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.grey[900],
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: TextField(
+                controller: _searchController,
+                style: const TextStyle(color: Colors.white),
+                                onChanged: (value) {
+                                  setState(() {
+                                    _searchQuery = value.toLowerCase();
+                                  });
+                                  // Debounce backend search for better performance
+                                  _searchDebounce?.cancel();
+                                  _searchDebounce = Timer(const Duration(milliseconds: 500), () {
+                                    _performSearch();
+                                  });
+                                },
+                                onSubmitted: (value) {
+                                  _performSearch();
+                                },
+                decoration: InputDecoration(
+                  hintText: 'Поиск товаров и продавцов',
+                  hintStyle: TextStyle(color: Colors.grey[500]),
+                  prefixIcon: Icon(Icons.search, color: Colors.grey[500]),
+                                    suffixIcon: _searchQuery.isNotEmpty
+                                        ? IconButton(
+                                            icon: Icon(Icons.clear, color: Colors.grey[500]),
+                                            onPressed: () {
+                                              setState(() {
+                                                _searchController.clear();
+                                                _searchQuery = '';
+                                              });
+                                              _performSearch();
+                                            },
+                                          )
+                                        : (_isSearching 
+                                            ? const Padding(
+                                                padding: EdgeInsets.all(12),
+                                                child: SizedBox(
+                                                  width: 16,
+                                                  height: 16,
+                                                  child: CircularProgressIndicator(
+                                                    strokeWidth: 2,
+                                                    color: primaryColor,
+                                                  ),
+                                                ),
+                                              )
+                                            : null),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                ),
+              ),
             ),
-            child: TextField(
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: 'Поиск товаров и продавцов',
-                hintStyle: TextStyle(color: Colors.grey[500]),
-                prefixIcon: Icon(Icons.search, color: Colors.grey[500]),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.filter_list, color: Colors.white),
+                onPressed: _showFilterBottomSheet,
+              ),
+            ],
+          ),
+        
+          // Category chips
+          SliverToBoxAdapter(
+            child: Container(
+              height: 50,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                itemCount: _categories.length,
+                itemBuilder: (context, index) {
+                  final category = _categories[index];
+                  final isSelected = _selectedCategory == category['value'];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: FilterChip(
+                      label: Text(category['label']!),
+                      selected: isSelected,
+                                            onSelected: (selected) {
+                                              setState(() {
+                                                _selectedCategory = category['value']!;
+                                              });
+                                              _performSearch();
+                                            },
+                      backgroundColor: Colors.grey[900],
+                      selectedColor: buttonColor!.withOpacity(0.3),
+                      labelStyle: TextStyle(
+                        color: isSelected ? buttonColor : Colors.grey[400],
+                        fontSize: 12,
+                      ),
+                      checkmarkColor: buttonColor,
+                      side: BorderSide(
+                        color: isSelected ? buttonColor! : Colors.grey[700]!,
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ),
-        ),
         
-        // Products grid (Instagram Explore style)
-        SliverPadding(
-          padding: const EdgeInsets.all(2),
-          sliver: Obx(() {
-            final products = _controller.products;
+          // Sort indicator
+          if (_sortBy != 'default')
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                child: Row(
+                  children: [
+                    Icon(Icons.sort, size: 16, color: Colors.grey[500]),
+                    const SizedBox(width: 4),
+                    Text(
+                      _sortOptions.firstWhere((s) => s['value'] == _sortBy)['label']!,
+                      style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                    ),
+                    const Spacer(),
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _sortBy = 'default';
+                        });
+                      },
+                      child: Icon(Icons.close, size: 16, color: Colors.grey[500]),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        
+          // Products grid (Instagram Explore style)
+          SliverPadding(
+            padding: const EdgeInsets.all(2),
+            sliver: Obx(() {
+              final isLoading = _controller.isLoadingProducts.value;
+              
+              // Show shimmer while loading
+              if (isLoading && _controller.products.isEmpty) {
+                return SliverToBoxAdapter(
+                  child: ProductGridShimmer(itemCount: 6),
+                );
+              }
+              
+              var products = _controller.products.toList();
             
-            if (products.isEmpty) {
-              return SliverToBoxAdapter(
-                child: Container(
-                  height: 300,
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+              // Apply search filter
+              if (_searchQuery.isNotEmpty) {
+                products = products.where((p) {
+                  final name = (p['name'] ?? '').toString().toLowerCase();
+                  final description = (p['description'] ?? '').toString().toLowerCase();
+                  final sellerName = (p['seller_name'] ?? '').toString().toLowerCase();
+                  return name.contains(_searchQuery) ||
+                      description.contains(_searchQuery) ||
+                      sellerName.contains(_searchQuery);
+                }).toList();
+              }
+            
+              // Apply category filter
+              if (_selectedCategory != 'all') {
+                products = products.where((p) {
+                  final category = (p['category'] ?? '').toString().toLowerCase();
+                  return category == _selectedCategory;
+                }).toList();
+              }
+            
+              // Apply sorting
+              switch (_sortBy) {
+                case 'price_low':
+                  products.sort((a, b) {
+                    final priceA = (a['price'] ?? 0) as num;
+                    final priceB = (b['price'] ?? 0) as num;
+                    return priceA.compareTo(priceB);
+                  });
+                  break;
+                case 'price_high':
+                  products.sort((a, b) {
+                    final priceA = (a['price'] ?? 0) as num;
+                    final priceB = (b['price'] ?? 0) as num;
+                    return priceB.compareTo(priceA);
+                  });
+                  break;
+                case 'newest':
+                  products.sort((a, b) {
+                    final dateA = a['created_at'] ?? '';
+                    final dateB = b['created_at'] ?? '';
+                    return dateB.toString().compareTo(dateA.toString());
+                  });
+                  break;
+              }
+            
+              if (products.isEmpty) {
+                return SliverToBoxAdapter(
+                  child: Container(
+                    height: 300,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.search_off, size: 64, color: Colors.grey[700]),
+                          const SizedBox(height: 16),
+                          Text(
+                            _searchQuery.isNotEmpty || _selectedCategory != 'all'
+                                ? 'Ничего не найдено'
+                                : 'Пока нет товаров',
+                            style: TextStyle(color: Colors.grey[500], fontSize: 16),
+                          ),
+                          if (_searchQuery.isNotEmpty || _selectedCategory != 'all') ...[
+                            const SizedBox(height: 8),
+                            TextButton(
+                              onPressed: () {
+                                setState(() {
+                                  _searchController.clear();
+                                  _searchQuery = '';
+                                  _selectedCategory = 'all';
+                                  _sortBy = 'default';
+                                });
+                              },
+                              child: Text(
+                                'Сбросить фильтры',
+                                style: TextStyle(color: buttonColor),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }
+            
+              // Responsive grid columns based on screen size
+              final gridColumns = ResponsiveHelper.responsiveValue(
+                context,
+                mobile: 3,
+                tablet: 4,
+                desktop: 6,
+              );
+            
+              return SliverGrid(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: gridColumns,
+                  mainAxisSpacing: 2,
+                  crossAxisSpacing: 2,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final product = products[index];
+                    return _buildProductGridItem(product);
+                  },
+                  childCount: products.length,
+                ),
+              );
+            }),
+          ),
+        ],
+        ),
+      );
+    }
+  
+    void _showFilterBottomSheet() {
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.grey[900],
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        builder: (context) {
+          return StatefulBuilder(
+            builder: (context, setModalState) {
+              return Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Icon(Icons.inventory_2, size: 64, color: Colors.grey[700]),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Пока нет товаров',
-                          style: TextStyle(color: Colors.grey[500], fontSize: 16),
+                        const Text(
+                          'Фильтры',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            setState(() {
+                              _selectedCategory = 'all';
+                              _sortBy = 'default';
+                            });
+                            setModalState(() {});
+                          },
+                          child: Text(
+                            'Сбросить',
+                            style: TextStyle(color: Colors.grey[400]),
+                          ),
                         ),
                       ],
                     ),
-                  ),
+                    const SizedBox(height: 20),
+                  
+                    // Sort options
+                    Text(
+                      'Сортировка',
+                      style: TextStyle(
+                        color: Colors.grey[400],
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _sortOptions.map((option) {
+                        final isSelected = _sortBy == option['value'];
+                        return ChoiceChip(
+                          label: Text(option['label']!),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            setState(() {
+                              _sortBy = option['value']!;
+                            });
+                            setModalState(() {});
+                          },
+                          backgroundColor: Colors.grey[800],
+                          selectedColor: buttonColor!.withOpacity(0.3),
+                          labelStyle: TextStyle(
+                            color: isSelected ? buttonColor : Colors.grey[400],
+                            fontSize: 13,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  
+                    const SizedBox(height: 24),
+                  
+                    // Category options
+                    Text(
+                      'Категория',
+                      style: TextStyle(
+                        color: Colors.grey[400],
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _categories.map((category) {
+                        final isSelected = _selectedCategory == category['value'];
+                        return ChoiceChip(
+                          label: Text(category['label']!),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            setState(() {
+                              _selectedCategory = category['value']!;
+                            });
+                            setModalState(() {});
+                          },
+                          backgroundColor: Colors.grey[800],
+                          selectedColor: buttonColor!.withOpacity(0.3),
+                          labelStyle: TextStyle(
+                            color: isSelected ? buttonColor : Colors.grey[400],
+                            fontSize: 13,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  
+                    const SizedBox(height: 24),
+                  
+                    // Apply button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: buttonColor,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Применить',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                 ),
               );
-            }
-            
-            // Responsive grid columns based on screen size
-            final gridColumns = ResponsiveHelper.responsiveValue(
-              context,
-              mobile: 3,
-              tablet: 4,
-              desktop: 6,
-            );
-            
-            return SliverGrid(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: gridColumns,
-                mainAxisSpacing: 2,
-                crossAxisSpacing: 2,
-              ),
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final product = products[index];
-                  return _buildProductGridItem(product);
-                },
-                childCount: products.length,
-              ),
-            );
-          }),
-        ),
-      ],
-    );
-  }
+            },
+          );
+        },
+      );
+    }
 
     Widget _buildProductGridItem(Map<String, dynamic> product) {
       return GestureDetector(
@@ -790,13 +1483,28 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            if (product['image_url'] != null)
+            if (product['image_url'] != null && product['image_url'].toString().isNotEmpty)
               Image.network(
                 product['image_url'],
                 fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    color: Colors.grey[800],
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                            : null,
+                        strokeWidth: 2,
+                        color: primaryColor,
+                      ),
+                    ),
+                  );
+                },
                 errorBuilder: (_, __, ___) => Container(
                   color: Colors.grey[800],
-                  child: Icon(Icons.image, color: Colors.grey[600]),
+                  child: Icon(Icons.broken_image, color: Colors.grey[600]),
                 ),
               )
             else
@@ -973,52 +1681,89 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   }
 
   Widget _buildOrdersTab() {
-    return CustomScrollView(
-      slivers: [
-        const SliverAppBar(
-          floating: true,
-          backgroundColor: backgroundColor,
-          title: Text(
-            'Заказы',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+    // Trigger orders fetch when tab is displayed
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_controller.isLoggedIn && _controller.orders.isEmpty) {
+        _controller.fetchOrders();
+      }
+    });
+    
+    return RefreshIndicator(
+      onRefresh: () => _controller.fetchOrders(),
+      child: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            floating: true,
+            backgroundColor: backgroundColor,
+            title: const Text(
+              'Заказы',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.refresh, color: Colors.white),
+                onPressed: () => _controller.fetchOrders(),
+              ),
+            ],
           ),
-        ),
-        
-        Obx(() {
-          final orders = _controller.orders;
           
-          if (orders.isEmpty) {
-            return SliverToBoxAdapter(
-              child: Container(
-                height: 400,
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.shopping_bag_outlined, size: 64, color: Colors.grey[700]),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Пока нет заказов',
-                        style: TextStyle(color: Colors.grey[500], fontSize: 16),
-                      ),
-                    ],
+          Obx(() {
+            final orders = _controller.orders;
+            final isLoading = _controller.isLoadingOrders.value;
+            
+            if (isLoading && orders.isEmpty) {
+              return const SliverToBoxAdapter(
+                child: SizedBox(
+                  height: 400,
+                  child: Center(
+                    child: CircularProgressIndicator(color: primaryColor),
                   ),
                 ),
+              );
+            }
+            
+            if (orders.isEmpty) {
+              return SliverToBoxAdapter(
+                child: SizedBox(
+                  height: 400,
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.shopping_bag_outlined, size: 64, color: Colors.grey[700]),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Пока нет заказов',
+                          style: TextStyle(color: Colors.grey[500], fontSize: 16),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: () => _controller.fetchOrders(),
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Обновить'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }
+            
+            return SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final order = orders[index];
+                  return _buildOrderCard(order);
+                },
+                childCount: orders.length,
               ),
             );
-          }
-          
-          return SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final order = orders[index];
-                return _buildOrderCard(order);
-              },
-              childCount: orders.length,
-            ),
-          );
-        }),
-      ],
+          }),
+        ],
+      ),
     );
   }
 
@@ -1294,33 +2039,99 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                     ),
                   ],
                   
-                  const SizedBox(height: 32),
+                    const SizedBox(height: 32),
                   
-                  // Delete Account button
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () => Get.to(() => const DeleteAccountScreen()),
-                      icon: const Icon(Icons.delete_forever, color: Colors.red),
-                      label: Text('delete_account'.tr, style: const TextStyle(color: Colors.red)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
-                        side: const BorderSide(color: Colors.red),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                    // Legal documents section
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[900],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Документы',
+                            style: TextStyle(
+                              color: Colors.grey[400],
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          _buildLegalLink(
+                            icon: Icons.description,
+                            title: 'Публичная оферта',
+                            onTap: () => Get.to(() => const OfferPage()),
+                          ),
+                          _buildLegalLink(
+                            icon: Icons.privacy_tip,
+                            title: 'Политика конфиденциальности',
+                            onTap: () => Get.to(() => const PrivacyPolicyPage()),
+                          ),
+                          _buildLegalLink(
+                            icon: Icons.gavel,
+                            title: 'Пользовательское соглашение',
+                            onTap: () => Get.to(() => const UserAgreementPage()),
+                          ),
+                        ],
+                      ),
+                    ),
+                  
+                    const SizedBox(height: 24),
+                  
+                    // Delete Account button
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () => Get.to(() => const DeleteAccountScreen()),
+                        icon: const Icon(Icons.delete_forever, color: Colors.red),
+                        label: Text('delete_account'.tr, style: const TextStyle(color: Colors.red)),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.red,
+                          side: const BorderSide(color: Colors.red),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
+          ],
+        );
+      });
+    }
+  
+    Widget _buildLegalLink({
+      required IconData icon,
+      required String title,
+      required VoidCallback onTap,
+    }) {
+      return InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            children: [
+              Icon(icon, color: Colors.grey[500], size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                ),
+              ),
+              Icon(Icons.chevron_right, color: Colors.grey[600], size: 20),
+            ],
           ),
-        ],
+        ),
       );
-    });
-  }
+    }
   
   void _showLanguageDialog() {
     Get.dialog(

@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
-import 'package:tiktok_tutorial/constants.dart';
-import 'package:tiktok_tutorial/demo_config.dart';
-import 'package:tiktok_tutorial/models/video.dart';
+import 'package:gogomarket/constants.dart';
+import 'package:gogomarket/demo_config.dart';
+import 'package:gogomarket/models/video.dart';
 
 class VideoController extends GetxController {
   final Rx<List<Video>> _videoList = Rx<List<Video>>([]);
