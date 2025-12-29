@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/views/screens/buyer/delivery_map_screen.dart';
 import 'package:tiktok_tutorial/views/screens/chat/chat_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -319,6 +320,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   }
 
   Widget _buildDeliveryInfo() {
+    final isInTransit = _order['status'] == 'in_transit' || 
+                        _order['status'] == 'picked_up' ||
+                        _order['status'] == 'delivering';
+    
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -350,6 +355,25 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             ],
           ),
           const SizedBox(height: 12),
+          
+          // Live tracking button (shown when courier is delivering)
+          if (isInTransit || _order['courier_id'] != null) ...[
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => Get.to(() => DeliveryMapScreen(order: _order)),
+                icon: const Icon(Icons.location_searching),
+                label: const Text('Отслеживать курьера на карте'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
@@ -358,7 +382,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               label: const Text('Открыть в навигаторе'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: buttonColor,
-                side: BorderSide(color: buttonColor!),
+                side: BorderSide(color: buttonColor ?? Colors.grey),
               ),
             ),
           ),
