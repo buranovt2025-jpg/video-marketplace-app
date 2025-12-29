@@ -392,9 +392,15 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
             
             // User ID
             const SizedBox(height: 8),
-            Text(
-              'ID: ${user['id']?.toString().substring(0, 8) ?? ''}',
-              style: TextStyle(color: Colors.grey[600], fontSize: 11),
+            Builder(
+              builder: (context) {
+                final idStr = (user['id'] ?? '').toString();
+                final shortId = idStr.length > 8 ? idStr.substring(0, 8) : idStr;
+                return Text(
+                  'ID: $shortId',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 11),
+                );
+              },
             ),
           ],
         ),
