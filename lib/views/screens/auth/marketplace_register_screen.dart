@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/views/screens/marketplace_home_screen.dart';
+import 'package:tiktok_tutorial/views/screens/legal/legal_page.dart';
 
 class MarketplaceRegisterScreen extends StatefulWidget {
   const MarketplaceRegisterScreen({Key? key}) : super(key: key);
@@ -19,8 +20,9 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
   final TextEditingController _addressController = TextEditingController();
   final MarketplaceController _controller = Get.find<MarketplaceController>();
   
-  String _selectedRole = 'buyer';
-  bool _obscurePassword = true;
+    String _selectedRole = 'buyer';
+    bool _obscurePassword = true;
+    bool _agreedToTerms = false;
 
   final List<Map<String, dynamic>> _roles = [
     {
@@ -67,18 +69,29 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
       return;
     }
 
-    if (_passwordController.text.length < 6) {
-      Get.snackbar(
-        'Ошибка',
-        'Пароль должен быть не менее 6 символов',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-      return;
-    }
+        if (_passwordController.text.length < 6) {
+          Get.snackbar(
+            'Ошибка',
+            'Пароль должен быть не менее 6 символов',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+          );
+          return;
+        }
 
-    final success = await _controller.register(
+        if (!_agreedToTerms) {
+          Get.snackbar(
+            'Ошибка',
+            'Необходимо принять условия использования',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+          );
+          return;
+        }
+
+        final success = await _controller.register(
       email: _emailController.text.trim(),
       password: _passwordController.text,
       name: _nameController.text.trim(),
@@ -322,10 +335,86 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
                 ),
               ),
               
-              const SizedBox(height: 32),
+                            const SizedBox(height: 24),
               
-              // Register button
-              Obx(() => ElevatedButton(
+                            // Terms agreement checkbox
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: Checkbox(
+                                    value: _agreedToTerms,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _agreedToTerms = value ?? false;
+                                      });
+                                    },
+                                    activeColor: buttonColor,
+                                    checkColor: Colors.white,
+                                    side: BorderSide(color: Colors.grey[600]!),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Wrap(
+                                    children: [
+                                      Text(
+                                        'Я принимаю условия ',
+                                        style: TextStyle(color: Colors.grey[400], fontSize: 13),
+                                      ),
+                                      GestureDetector(
+                                        onTap: () => Get.to(() => const OfferPage()),
+                                        child: Text(
+                                          'публичной оферты',
+                                          style: TextStyle(
+                                            color: buttonColor,
+                                            fontSize: 13,
+                                            decoration: TextDecoration.underline,
+                                          ),
+                                        ),
+                                      ),
+                                      Text(
+                                        ', ',
+                                        style: TextStyle(color: Colors.grey[400], fontSize: 13),
+                                      ),
+                                      GestureDetector(
+                                        onTap: () => Get.to(() => const PrivacyPolicyPage()),
+                                        child: Text(
+                                          'политику конфиденциальности',
+                                          style: TextStyle(
+                                            color: buttonColor,
+                                            fontSize: 13,
+                                            decoration: TextDecoration.underline,
+                                          ),
+                                        ),
+                                      ),
+                                      Text(
+                                        ' и ',
+                                        style: TextStyle(color: Colors.grey[400], fontSize: 13),
+                                      ),
+                                      GestureDetector(
+                                        onTap: () => Get.to(() => const UserAgreementPage()),
+                                        child: Text(
+                                          'пользовательское соглашение',
+                                          style: TextStyle(
+                                            color: buttonColor,
+                                            fontSize: 13,
+                                            decoration: TextDecoration.underline,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+              
+                            const SizedBox(height: 24),
+              
+                            // Register button
+                            Obx(() => ElevatedButton(
                 onPressed: _controller.isLoading.value ? null : _register,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: buttonColor,

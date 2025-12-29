@@ -21,6 +21,7 @@ import 'package:tiktok_tutorial/views/screens/buyer/nearby_sellers_screen.dart';
 import 'package:tiktok_tutorial/views/screens/common/delete_account_screen.dart';
 import 'package:tiktok_tutorial/views/screens/admin/seller_verification_screen.dart';
 import 'package:tiktok_tutorial/views/widgets/shimmer_loading.dart';
+import 'package:tiktok_tutorial/views/screens/legal/legal_page.dart';
 
 class MarketplaceHomeScreen extends StatefulWidget {
   final bool isGuestMode;
@@ -1310,33 +1311,99 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                     ),
                   ],
                   
-                  const SizedBox(height: 32),
+                    const SizedBox(height: 32),
                   
-                  // Delete Account button
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () => Get.to(() => const DeleteAccountScreen()),
-                      icon: const Icon(Icons.delete_forever, color: Colors.red),
-                      label: Text('delete_account'.tr, style: const TextStyle(color: Colors.red)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
-                        side: const BorderSide(color: Colors.red),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                    // Legal documents section
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[900],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Документы',
+                            style: TextStyle(
+                              color: Colors.grey[400],
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          _buildLegalLink(
+                            icon: Icons.description,
+                            title: 'Публичная оферта',
+                            onTap: () => Get.to(() => const OfferPage()),
+                          ),
+                          _buildLegalLink(
+                            icon: Icons.privacy_tip,
+                            title: 'Политика конфиденциальности',
+                            onTap: () => Get.to(() => const PrivacyPolicyPage()),
+                          ),
+                          _buildLegalLink(
+                            icon: Icons.gavel,
+                            title: 'Пользовательское соглашение',
+                            onTap: () => Get.to(() => const UserAgreementPage()),
+                          ),
+                        ],
+                      ),
+                    ),
+                  
+                    const SizedBox(height: 24),
+                  
+                    // Delete Account button
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () => Get.to(() => const DeleteAccountScreen()),
+                        icon: const Icon(Icons.delete_forever, color: Colors.red),
+                        label: Text('delete_account'.tr, style: const TextStyle(color: Colors.red)),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.red,
+                          side: const BorderSide(color: Colors.red),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
+          ],
+        );
+      });
+    }
+  
+    Widget _buildLegalLink({
+      required IconData icon,
+      required String title,
+      required VoidCallback onTap,
+    }) {
+      return InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            children: [
+              Icon(icon, color: Colors.grey[500], size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                ),
+              ),
+              Icon(Icons.chevron_right, color: Colors.grey[600], size: 20),
+            ],
           ),
-        ],
+        ),
       );
-    });
-  }
+    }
   
   void _showLanguageDialog() {
     Get.dialog(
