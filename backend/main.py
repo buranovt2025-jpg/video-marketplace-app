@@ -98,6 +98,24 @@ async def init_db():
                 END IF;
             END $$;
         ''')
+        # Add multi-role support columns
+        await conn.execute('''
+            DO $$ 
+            BEGIN 
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='roles') THEN
+                    ALTER TABLE users ADD COLUMN roles TEXT[] DEFAULT ARRAY['buyer'];
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='active_role') THEN
+                    ALTER TABLE users ADD COLUMN active_role VARCHAR(50);
+                END IF;
+            END $$;
+        ''')
+        # Migrate existing users: set roles array from current role, set active_role = role
+        await conn.execute('''
+            UPDATE users 
+            SET roles = ARRAY[role], active_role = role 
+            WHERE roles IS NULL OR active_role IS NULL
+        ''')
         await conn.execute('''
             CREATE TABLE IF NOT EXISTS order_items (
                 id SERIAL PRIMARY KEY,
@@ -351,12 +369,13 @@ async def register(user: UserCreate):
         if exists:
             raise HTTPException(status_code=400, detail="Email already registered")
         password_hash = hashlib.sha256(user.password.encode()).hexdigest()
+        # Initialize roles array with selected role, set active_role = role
         user_id = await conn.fetchval(
-            'INSERT INTO users (email, password_hash, name, role, phone) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-            user.email, password_hash, user.name, user.role, user.phone
+            'INSERT INTO users (email, password_hash, name, role, roles, active_role, phone) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
+            user.email, password_hash, user.name, user.role, [user.role], user.role, user.phone
         )
         token = create_token(user_id)
-        return {"access_token": token, "user": {"id": user_id, "email": user.email, "name": user.name, "role": user.role}}
+        return {"access_token": token, "user": {"id": user_id, "email": user.email, "name": user.name, "role": user.role, "roles": [user.role], "active_role": user.role}}
 
 @app.post("/api/auth/login")
 async def login(credentials: UserLogin):
@@ -389,6 +408,94 @@ async def update_me(updates: dict, user: dict = Depends(get_current_user)):
             await conn.execute(f"UPDATE users SET {', '.join(set_parts)} WHERE id = ${idx}", *values)
         updated = await conn.fetchrow('SELECT * FROM users WHERE id = $1', user['id'])
         return dict(updated)
+
+# ==================== MULTI-ROLE MANAGEMENT ====================
+
+@app.post("/api/auth/switch-role")
+async def switch_role(body: dict, user: dict = Depends(get_current_user)):
+    """Switch active role for multi-role accounts"""
+    new_role = body.get('role')
+    if not new_role:
+        raise HTTPException(status_code=400, detail="Role is required")
+    
+    valid_roles = ['buyer', 'seller', 'courier']
+    if new_role not in valid_roles:
+        raise HTTPException(status_code=400, detail=f"Invalid role. Must be one of: {valid_roles}")
+    
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        # Get user's available roles
+        user_data = await conn.fetchrow('SELECT roles, active_role FROM users WHERE id = $1', user['id'])
+        roles = user_data['roles'] or [user.get('role', 'buyer')]
+        
+        # Check if user has this role
+        if new_role not in roles:
+            raise HTTPException(status_code=403, detail=f"You don't have the '{new_role}' role. Add it first.")
+        
+        # If switching away from courier, set offline
+        if user_data['active_role'] == 'courier' and new_role != 'courier':
+            await conn.execute(
+                'UPDATE courier_locations SET is_online = FALSE WHERE courier_id = $1',
+                user['id']
+            )
+        
+        # Update active role
+        await conn.execute(
+            'UPDATE users SET active_role = $1, role = $1 WHERE id = $2',
+            new_role, user['id']
+        )
+        
+        updated = await conn.fetchrow('SELECT * FROM users WHERE id = $1', user['id'])
+        return dict(updated)
+
+@app.post("/api/auth/add-role")
+async def add_role(body: dict, user: dict = Depends(get_current_user)):
+    """Add a new role to user's account"""
+    new_role = body.get('role')
+    if not new_role:
+        raise HTTPException(status_code=400, detail="Role is required")
+    
+    valid_roles = ['buyer', 'seller', 'courier']
+    if new_role not in valid_roles:
+        raise HTTPException(status_code=400, detail=f"Invalid role. Must be one of: {valid_roles}")
+    
+    # Admin role cannot be added this way
+    if new_role == 'admin':
+        raise HTTPException(status_code=403, detail="Admin role cannot be added")
+    
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        # Get user's current roles
+        user_data = await conn.fetchrow('SELECT roles FROM users WHERE id = $1', user['id'])
+        roles = list(user_data['roles'] or [user.get('role', 'buyer')])
+        
+        # Check if user already has this role
+        if new_role in roles:
+            raise HTTPException(status_code=400, detail=f"You already have the '{new_role}' role")
+        
+        # Add new role
+        roles.append(new_role)
+        await conn.execute(
+            'UPDATE users SET roles = $1 WHERE id = $2',
+            roles, user['id']
+        )
+        
+        updated = await conn.fetchrow('SELECT * FROM users WHERE id = $1', user['id'])
+        return {"message": f"Role '{new_role}' added successfully", "user": dict(updated)}
+
+@app.get("/api/auth/roles")
+async def get_my_roles(user: dict = Depends(get_current_user)):
+    """Get user's available roles and active role"""
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        user_data = await conn.fetchrow('SELECT roles, active_role, role FROM users WHERE id = $1', user['id'])
+        roles = user_data['roles'] or [user_data['role']]
+        active_role = user_data['active_role'] or user_data['role']
+        return {
+            "roles": roles,
+            "active_role": active_role,
+            "can_add_roles": [r for r in ['buyer', 'seller', 'courier'] if r not in roles]
+        }
 
 @app.get("/api/products")
 async def get_products(seller_id: Optional[int] = None, category: Optional[str] = None, search: Optional[str] = None):
@@ -561,8 +668,19 @@ async def get_orders(user: dict = Depends(get_current_user)):
 
 @app.post("/api/orders")
 async def create_order(order: OrderCreate, user: dict = Depends(get_current_user)):
+    # Only users with active_role='buyer' can create orders
+    active_role = user.get('active_role') or user.get('role')
+    if active_role != 'buyer':
+        raise HTTPException(status_code=403, detail="Only buyers can create orders. Switch to buyer role first.")
+    
     pool = await get_db()
     async with pool.acquire() as conn:
+        # Check if user is trying to buy their own product
+        for item in order.items:
+            product = await conn.fetchrow('SELECT seller_id FROM products WHERE id = $1', item['product_id'])
+            if product and product['seller_id'] == user['id']:
+                raise HTTPException(status_code=400, detail="You cannot buy your own products")
+        
         total = sum(item['price'] * item['quantity'] for item in order.items)
         order_id = await conn.fetchval(
             'INSERT INTO orders (buyer_id, seller_id, total_amount, delivery_address, delivery_latitude, delivery_longitude, payment_method, notes) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id',

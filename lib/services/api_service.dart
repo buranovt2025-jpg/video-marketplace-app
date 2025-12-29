@@ -127,6 +127,48 @@ class ApiService {
     }
   }
   
+  // Multi-role management endpoints
+  static Future<Map<String, dynamic>> switchRole(String role) async {
+    final response = await client.post(
+      Uri.parse('$baseUrl/api/auth/switch-role'),
+      headers: _headers,
+      body: jsonEncode({'role': role}),
+    );
+    
+    if (response.statusCode == 200) {
+      return _decodeResponse(response);
+    } else {
+      throw ApiException(response.statusCode, _decodeResponse(response)['detail'] ?? 'Failed to switch role');
+    }
+  }
+  
+  static Future<Map<String, dynamic>> addRole(String role) async {
+    final response = await client.post(
+      Uri.parse('$baseUrl/api/auth/add-role'),
+      headers: _headers,
+      body: jsonEncode({'role': role}),
+    );
+    
+    if (response.statusCode == 200) {
+      return _decodeResponse(response);
+    } else {
+      throw ApiException(response.statusCode, _decodeResponse(response)['detail'] ?? 'Failed to add role');
+    }
+  }
+  
+  static Future<Map<String, dynamic>> getMyRoles() async {
+    final response = await client.get(
+      Uri.parse('$baseUrl/api/auth/roles'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return _decodeResponse(response);
+    } else {
+      throw ApiException(response.statusCode, 'Failed to get roles');
+    }
+  }
+  
   // Products endpoints
   static Future<List<dynamic>> getProducts({String? sellerId, String? category, String? search}) async {
     final queryParams = <String, String>{};

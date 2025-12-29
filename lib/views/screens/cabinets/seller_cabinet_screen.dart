@@ -7,6 +7,7 @@ import 'package:tiktok_tutorial/views/screens/seller/my_products_screen.dart';
 import 'package:tiktok_tutorial/views/screens/common/qr_code_screen.dart';
 import 'package:tiktok_tutorial/views/screens/seller/seller_analytics_screen.dart';
 import 'package:tiktok_tutorial/views/screens/my_stats_screen.dart';
+import 'package:tiktok_tutorial/services/api_service.dart';
 
 class SellerCabinetScreen extends StatefulWidget {
   const SellerCabinetScreen({Key? key}) : super(key: key);
@@ -23,13 +24,99 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
   static const int _orderAcceptanceTimeSeconds = 300; // 5 minutes
   final Map<String, int> _orderTimers = {}; // orderId -> remaining seconds
   Timer? _countdownTimer;
+  
+  // Role management state
+  final RxList<String> _userRoles = <String>[].obs;
+  final RxString _activeRole = ''.obs;
+  final RxList<String> _canAddRoles = <String>[].obs;
+  final RxBool _isLoadingRoles = false.obs;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _loadData();
     _startCountdownTimer();
+    _loadRoles();
+  }
+  
+  Future<void> _loadRoles() async {
+    try {
+      _isLoadingRoles.value = true;
+      final rolesData = await ApiService.getMyRoles();
+      _userRoles.value = List<String>.from(rolesData['roles'] ?? []);
+      _activeRole.value = rolesData['active_role'] ?? '';
+      _canAddRoles.value = List<String>.from(rolesData['can_add_roles'] ?? []);
+    } catch (e) {
+      final user = _controller.currentUser.value;
+      if (user != null) {
+        _userRoles.value = user['roles'] != null 
+            ? List<String>.from(user['roles']) 
+            : [user['role'] ?? 'seller'];
+        _activeRole.value = user['active_role'] ?? user['role'] ?? 'seller';
+      }
+    } finally {
+      _isLoadingRoles.value = false;
+    }
+  }
+  
+  Future<void> _switchRole(String role) async {
+    try {
+      _isLoadingRoles.value = true;
+      final updatedUser = await ApiService.switchRole(role);
+      _controller.currentUser.value = updatedUser;
+      _activeRole.value = role;
+      Get.snackbar('success'.tr, 'Роль переключена на: ${_getRoleName(role)}',
+        backgroundColor: Colors.green, colorText: Colors.white);
+      await _controller.fetchCurrentUser();
+    } catch (e) {
+      Get.snackbar('error'.tr, e.toString(),
+        backgroundColor: Colors.red, colorText: Colors.white);
+    } finally {
+      _isLoadingRoles.value = false;
+    }
+  }
+  
+  Future<void> _addRole(String role) async {
+    try {
+      _isLoadingRoles.value = true;
+      await ApiService.addRole(role);
+      await _loadRoles();
+      Get.snackbar('success'.tr, 'Роль "${_getRoleName(role)}" добавлена',
+        backgroundColor: Colors.green, colorText: Colors.white);
+    } catch (e) {
+      Get.snackbar('error'.tr, e.toString(),
+        backgroundColor: Colors.red, colorText: Colors.white);
+    } finally {
+      _isLoadingRoles.value = false;
+    }
+  }
+  
+  String _getRoleName(String role) {
+    switch (role) {
+      case 'buyer': return 'Покупатель';
+      case 'seller': return 'Продавец';
+      case 'courier': return 'Курьер';
+      default: return role;
+    }
+  }
+  
+  IconData _getRoleIcon(String role) {
+    switch (role) {
+      case 'buyer': return Icons.shopping_cart;
+      case 'seller': return Icons.store;
+      case 'courier': return Icons.delivery_dining;
+      default: return Icons.person;
+    }
+  }
+  
+  String _getRoleDescription(String role) {
+    switch (role) {
+      case 'buyer': return 'Покупайте товары и отслеживайте заказы';
+      case 'seller': return 'Продавайте товары и управляйте магазином';
+      case 'courier': return 'Доставляйте заказы и зарабатывайте';
+      default: return '';
+    }
   }
 
   @override
@@ -110,10 +197,12 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
           indicatorColor: primaryColor,
           labelColor: primaryColor,
           unselectedLabelColor: Colors.grey,
+          isScrollable: true,
           tabs: [
             Tab(text: 'orders'.tr),
             Tab(text: 'statistics'.tr),
             Tab(text: 'Товары'),
+            const Tab(text: 'Роли'),
           ],
         ),
       ),
@@ -123,6 +212,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
           _buildOrdersTab(),
           _buildStatisticsTab(),
           _buildInventoryTab(),
+          _buildRolesTab(),
         ],
       ),
     );
@@ -764,6 +854,187 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildRolesTab() {
+    return Obx(() {
+      if (_isLoadingRoles.value) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Активная роль',
+              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text('Выберите роль для работы в приложении',
+              style: TextStyle(color: Colors.grey[400], fontSize: 14)),
+            const SizedBox(height: 16),
+            
+            ..._userRoles.map((role) => _buildRoleCard(
+              role: role,
+              isActive: role == _activeRole.value,
+              onTap: () => _switchRole(role),
+            )),
+            
+            if (_canAddRoles.isNotEmpty) ...[
+              const SizedBox(height: 24),
+              const Divider(color: Colors.grey),
+              const SizedBox(height: 16),
+              const Text('Добавить роль',
+                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Text('Вы можете добавить дополнительные роли к вашему аккаунту',
+                style: TextStyle(color: Colors.grey[400], fontSize: 14)),
+              const SizedBox(height: 16),
+              ..._canAddRoles.map((role) => _buildAddRoleCard(role)),
+            ],
+            
+            const SizedBox(height: 24),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.blue.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline, color: Colors.blue),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'При переключении роли меняются доступные функции. Например, продавец не может покупать товары, а покупатель не может добавлять товары.',
+                      style: TextStyle(color: Colors.grey[300], fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    });
+  }
+  
+  Widget _buildRoleCard({required String role, required bool isActive, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: isActive ? null : onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isActive ? primaryColor.withOpacity(0.2) : cardColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: isActive ? primaryColor : Colors.grey[700]!, width: isActive ? 2 : 1),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isActive ? primaryColor : Colors.grey[800],
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(_getRoleIcon(role), color: Colors.white, size: 24),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(_getRoleName(role),
+                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Text(_getRoleDescription(role), style: TextStyle(color: Colors.grey[400], fontSize: 12)),
+                ],
+              ),
+            ),
+            if (isActive)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(color: primaryColor, borderRadius: BorderRadius.circular(20)),
+                child: const Text('Активна', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+              )
+            else
+              const Icon(Icons.chevron_right, color: Colors.grey),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildAddRoleCard(String role) {
+    return GestureDetector(
+      onTap: () => _showAddRoleDialog(role),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[700]!),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey[800],
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.grey[600]!),
+              ),
+              child: Icon(_getRoleIcon(role), color: Colors.grey[400], size: 24),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(_getRoleName(role),
+                    style: TextStyle(color: Colors.grey[300], fontSize: 16, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Text(_getRoleDescription(role), style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: primaryColor.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.add, color: primaryColor, size: 20),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  void _showAddRoleDialog(String role) {
+    Get.dialog(
+      AlertDialog(
+        backgroundColor: cardColor,
+        title: Text('Добавить роль "${_getRoleName(role)}"?', style: const TextStyle(color: Colors.white)),
+        content: Text('Вы сможете переключаться между ролями в любое время. ${_getRoleDescription(role)}',
+          style: TextStyle(color: Colors.grey[300])),
+        actions: [
+          TextButton(onPressed: () => Get.back(),
+            child: Text('cancel'.tr, style: const TextStyle(color: Colors.grey))),
+          ElevatedButton(
+            onPressed: () { Get.back(); _addRole(role); },
+            style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
+            child: const Text('Добавить'),
+          ),
+        ],
       ),
     );
   }
