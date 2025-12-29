@@ -20,6 +20,7 @@ import 'package:tiktok_tutorial/views/screens/cabinets/buyer_cabinet_screen.dart
 import 'package:tiktok_tutorial/views/screens/buyer/nearby_sellers_screen.dart';
 import 'package:tiktok_tutorial/views/screens/common/delete_account_screen.dart';
 import 'package:tiktok_tutorial/views/screens/admin/seller_verification_screen.dart';
+import 'package:tiktok_tutorial/views/widgets/shimmer_loading.dart';
 
 class MarketplaceHomeScreen extends StatefulWidget {
   final bool isGuestMode;
@@ -356,40 +357,45 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   }
 
   Widget _buildFeedTab() {
-    return CustomScrollView(
-      slivers: [
-        SliverAppBar(
-          floating: true,
-          backgroundColor: backgroundColor,
-          title: const Text(
-            'Video Marketplace',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
+    return RefreshIndicator(
+      onRefresh: _loadData,
+      color: primaryColor,
+      backgroundColor: Colors.grey[900],
+      child: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            floating: true,
+            backgroundColor: backgroundColor,
+            title: const Text(
+              'GoGoMarket',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+                onPressed: () {},
+              ),
+              IconButton(
+                icon: const Icon(Icons.message_outlined, color: Colors.white),
+                onPressed: () {},
+              ),
+            ],
           ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-              onPressed: () {},
-            ),
-            IconButton(
-              icon: const Icon(Icons.message_outlined, color: Colors.white),
-              onPressed: () {},
-            ),
-          ],
-        ),
-        
-        // Stories row
-        SliverToBoxAdapter(
-          child: _buildStoriesRow(),
-        ),
-        
-        // Reels feed
-        SliverToBoxAdapter(
-          child: _buildReelsFeed(),
-        ),
-      ],
+          
+          // Stories row
+          SliverToBoxAdapter(
+            child: _buildStoriesRow(),
+          ),
+          
+          // Reels feed
+          SliverToBoxAdapter(
+            child: _buildReelsFeed(),
+          ),
+        ],
+      ),
     );
   }
 
