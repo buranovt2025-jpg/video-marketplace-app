@@ -679,6 +679,48 @@ class ApiService {
       throw ApiException(response.statusCode, 'Failed to get admin stats');
     }
   }
+
+  // User-specific statistics (personal reports)
+  static Future<Map<String, dynamic>> getMyStats() async {
+    final response = await client.get(
+      Uri.parse('$baseUrl/api/my/stats'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return _decodeResponse(response);
+    } else {
+      throw ApiException(response.statusCode, 'Failed to get my stats');
+    }
+  }
+
+  // Export user statistics as CSV
+  static Future<String> exportMyStats() async {
+    final response = await client.get(
+      Uri.parse('$baseUrl/api/my/stats/export'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return response.body;
+    } else {
+      throw ApiException(response.statusCode, 'Failed to export stats');
+    }
+  }
+
+  // Admin export all transactions as CSV
+  static Future<String> exportAdminStats() async {
+    final response = await client.get(
+      Uri.parse('$baseUrl/api/admin/export'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return response.body;
+    } else {
+      throw ApiException(response.statusCode, 'Failed to export admin stats');
+    }
+  }
 }
 
 class ApiException implements Exception {

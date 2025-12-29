@@ -6,6 +6,7 @@ import 'package:tiktok_tutorial/controllers/favorites_controller.dart';
 import 'package:tiktok_tutorial/controllers/cart_controller.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/order_tracking_screen.dart';
 import 'package:tiktok_tutorial/views/screens/common/location_picker_screen.dart';
+import 'package:tiktok_tutorial/views/screens/my_stats_screen.dart';
 
 class BuyerCabinetScreen extends StatefulWidget {
   const BuyerCabinetScreen({Key? key}) : super(key: key);
@@ -61,6 +62,13 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
       appBar: AppBar(
         backgroundColor: backgroundColor,
         title: Text('my_cabinet'.tr, style: const TextStyle(color: Colors.white)),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.bar_chart, color: Colors.white),
+            onPressed: () => Get.to(() => const MyStatsScreen()),
+            tooltip: 'Моя статистика',
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: primaryColor,

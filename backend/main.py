@@ -931,6 +931,285 @@ async def get_admin_stats(user: dict = Depends(get_current_user)):
             "products": total_products,
         }
 
+# User-specific statistics endpoints for personal reports
+@app.get("/api/my/stats")
+async def get_my_stats(user: dict = Depends(get_current_user)):
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        user_id = user['id']
+        role = user['role']
+        
+        if role == 'seller':
+            # Seller statistics
+            total_products = await conn.fetchval(
+                'SELECT COUNT(*) FROM products WHERE seller_id = $1', user_id
+            )
+            total_orders = await conn.fetchval(
+                'SELECT COUNT(*) FROM orders WHERE seller_id = $1', user_id
+            )
+            completed_orders = await conn.fetchval(
+                "SELECT COUNT(*) FROM orders WHERE seller_id = $1 AND status IN ('delivered', 'completed')", user_id
+            )
+            pending_orders = await conn.fetchval(
+                "SELECT COUNT(*) FROM orders WHERE seller_id = $1 AND status NOT IN ('delivered', 'completed', 'cancelled')", user_id
+            )
+            cancelled_orders = await conn.fetchval(
+                "SELECT COUNT(*) FROM orders WHERE seller_id = $1 AND status = 'cancelled'", user_id
+            )
+            total_revenue = await conn.fetchval(
+                "SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE seller_id = $1 AND status NOT IN ('cancelled')", user_id
+            )
+            # Get commission rate
+            commission_row = await conn.fetchrow(
+                "SELECT setting_value FROM platform_settings WHERE setting_key = 'platform_commission'"
+            )
+            commission_rate = float(commission_row['setting_value']) if commission_row else 10.0
+            commission_amount = total_revenue * (commission_rate / 100)
+            net_earnings = total_revenue - commission_amount
+            
+            # Get average rating
+            avg_rating = await conn.fetchval(
+                '''SELECT AVG(r.rating) FROM reviews r 
+                   JOIN products p ON r.product_id = p.id 
+                   WHERE p.seller_id = $1''', user_id
+            )
+            total_reviews = await conn.fetchval(
+                '''SELECT COUNT(*) FROM reviews r 
+                   JOIN products p ON r.product_id = p.id 
+                   WHERE p.seller_id = $1''', user_id
+            )
+            
+            return {
+                "role": "seller",
+                "products": total_products,
+                "orders": {
+                    "total": total_orders,
+                    "completed": completed_orders,
+                    "pending": pending_orders,
+                    "cancelled": cancelled_orders,
+                },
+                "revenue": {
+                    "total": total_revenue,
+                    "commission_rate": commission_rate,
+                    "commission_amount": commission_amount,
+                    "net_earnings": net_earnings,
+                },
+                "rating": {
+                    "average": float(avg_rating) if avg_rating else 0.0,
+                    "total_reviews": total_reviews,
+                },
+            }
+        
+        elif role == 'courier':
+            # Courier statistics
+            total_deliveries = await conn.fetchval(
+                'SELECT COUNT(*) FROM orders WHERE courier_id = $1', user_id
+            )
+            completed_deliveries = await conn.fetchval(
+                "SELECT COUNT(*) FROM orders WHERE courier_id = $1 AND status IN ('delivered', 'completed')", user_id
+            )
+            in_progress = await conn.fetchval(
+                "SELECT COUNT(*) FROM orders WHERE courier_id = $1 AND status = 'in_transit'", user_id
+            )
+            # Get courier fee
+            fee_row = await conn.fetchrow(
+                "SELECT setting_value FROM platform_settings WHERE setting_key = 'courier_fee'"
+            )
+            courier_fee = float(fee_row['setting_value']) if fee_row else 15000.0
+            total_earnings = completed_deliveries * courier_fee
+            
+            return {
+                "role": "courier",
+                "deliveries": {
+                    "total": total_deliveries,
+                    "completed": completed_deliveries,
+                    "in_progress": in_progress,
+                },
+                "earnings": {
+                    "fee_per_delivery": courier_fee,
+                    "total_earnings": total_earnings,
+                },
+            }
+        
+        elif role == 'buyer':
+            # Buyer statistics
+            total_orders = await conn.fetchval(
+                'SELECT COUNT(*) FROM orders WHERE buyer_id = $1', user_id
+            )
+            completed_orders = await conn.fetchval(
+                "SELECT COUNT(*) FROM orders WHERE buyer_id = $1 AND status IN ('delivered', 'completed')", user_id
+            )
+            pending_orders = await conn.fetchval(
+                "SELECT COUNT(*) FROM orders WHERE buyer_id = $1 AND status NOT IN ('delivered', 'completed', 'cancelled')", user_id
+            )
+            cancelled_orders = await conn.fetchval(
+                "SELECT COUNT(*) FROM orders WHERE buyer_id = $1 AND status = 'cancelled'", user_id
+            )
+            total_spent = await conn.fetchval(
+                "SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE buyer_id = $1 AND status NOT IN ('cancelled')", user_id
+            )
+            favorites_count = await conn.fetchval(
+                'SELECT COUNT(*) FROM favorites WHERE user_id = $1', user_id
+            )
+            reviews_count = await conn.fetchval(
+                'SELECT COUNT(*) FROM reviews WHERE user_id = $1', user_id
+            )
+            
+            return {
+                "role": "buyer",
+                "orders": {
+                    "total": total_orders,
+                    "completed": completed_orders,
+                    "pending": pending_orders,
+                    "cancelled": cancelled_orders,
+                },
+                "spending": {
+                    "total_spent": total_spent,
+                },
+                "activity": {
+                    "favorites": favorites_count,
+                    "reviews": reviews_count,
+                },
+            }
+        
+        else:
+            # Admin or unknown role
+            return {
+                "role": role,
+                "message": "Use /api/admin/stats for admin statistics",
+            }
+
+# Export user statistics as CSV
+@app.get("/api/my/stats/export")
+async def export_my_stats(user: dict = Depends(get_current_user)):
+    from fastapi.responses import Response
+    import csv
+    import io
+    
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        user_id = user['id']
+        role = user['role']
+        
+        output = io.StringIO()
+        writer = csv.writer(output)
+        
+        if role == 'seller':
+            # Export seller orders
+            orders = await conn.fetch(
+                '''SELECT o.id, o.status, o.total_amount, o.payment_method, o.created_at,
+                          b.name as buyer_name, b.email as buyer_email
+                   FROM orders o
+                   LEFT JOIN users b ON o.buyer_id = b.id
+                   WHERE o.seller_id = $1
+                   ORDER BY o.created_at DESC''', user_id
+            )
+            writer.writerow(['Order ID', 'Status', 'Amount', 'Payment Method', 'Date', 'Buyer Name', 'Buyer Email'])
+            for order in orders:
+                writer.writerow([
+                    order['id'], order['status'], order['total_amount'],
+                    order['payment_method'], str(order['created_at']),
+                    order['buyer_name'], order['buyer_email']
+                ])
+        
+        elif role == 'courier':
+            # Export courier deliveries
+            deliveries = await conn.fetch(
+                '''SELECT o.id, o.status, o.delivery_address, o.created_at,
+                          b.name as buyer_name, s.name as seller_name
+                   FROM orders o
+                   LEFT JOIN users b ON o.buyer_id = b.id
+                   LEFT JOIN users s ON o.seller_id = s.id
+                   WHERE o.courier_id = $1
+                   ORDER BY o.created_at DESC''', user_id
+            )
+            writer.writerow(['Delivery ID', 'Status', 'Address', 'Date', 'Buyer', 'Seller'])
+            for d in deliveries:
+                writer.writerow([
+                    d['id'], d['status'], d['delivery_address'],
+                    str(d['created_at']), d['buyer_name'], d['seller_name']
+                ])
+        
+        elif role == 'buyer':
+            # Export buyer orders
+            orders = await conn.fetch(
+                '''SELECT o.id, o.status, o.total_amount, o.payment_method, o.created_at,
+                          s.name as seller_name
+                   FROM orders o
+                   LEFT JOIN users s ON o.seller_id = s.id
+                   WHERE o.buyer_id = $1
+                   ORDER BY o.created_at DESC''', user_id
+            )
+            writer.writerow(['Order ID', 'Status', 'Amount', 'Payment Method', 'Date', 'Seller'])
+            for order in orders:
+                writer.writerow([
+                    order['id'], order['status'], order['total_amount'],
+                    order['payment_method'], str(order['created_at']),
+                    order['seller_name']
+                ])
+        
+        csv_content = output.getvalue()
+        output.close()
+        
+        return Response(
+            content=csv_content,
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": f"attachment; filename={role}_report.csv"
+            }
+        )
+
+# Admin export all transactions
+@app.get("/api/admin/export")
+async def export_admin_stats(user: dict = Depends(get_current_user)):
+    if user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    from fastapi.responses import Response
+    import csv
+    import io
+    
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        output = io.StringIO()
+        writer = csv.writer(output)
+        
+        orders = await conn.fetch(
+            '''SELECT o.id, o.status, o.total_amount, o.payment_method, o.delivery_address, o.created_at,
+                      b.name as buyer_name, b.email as buyer_email, b.phone as buyer_phone,
+                      s.name as seller_name, s.email as seller_email,
+                      c.name as courier_name
+               FROM orders o
+               LEFT JOIN users b ON o.buyer_id = b.id
+               LEFT JOIN users s ON o.seller_id = s.id
+               LEFT JOIN users c ON o.courier_id = c.id
+               ORDER BY o.created_at DESC'''
+        )
+        
+        writer.writerow([
+            'Order ID', 'Status', 'Amount', 'Payment Method', 'Delivery Address', 'Date',
+            'Buyer Name', 'Buyer Email', 'Buyer Phone',
+            'Seller Name', 'Seller Email', 'Courier Name'
+        ])
+        for order in orders:
+            writer.writerow([
+                order['id'], order['status'], order['total_amount'],
+                order['payment_method'], order['delivery_address'], str(order['created_at']),
+                order['buyer_name'], order['buyer_email'], order['buyer_phone'],
+                order['seller_name'], order['seller_email'], order['courier_name']
+            ])
+        
+        csv_content = output.getvalue()
+        output.close()
+        
+        return Response(
+            content=csv_content,
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": "attachment; filename=all_transactions.csv"
+            }
+        )
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8080)

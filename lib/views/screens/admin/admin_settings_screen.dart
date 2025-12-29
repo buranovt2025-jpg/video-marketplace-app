@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/services/api_service.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 class AdminSettingsScreen extends StatefulWidget {
   const AdminSettingsScreen({Key? key}) : super(key: key);
@@ -12,6 +15,7 @@ class AdminSettingsScreen extends StatefulWidget {
 
 class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
   bool _isLoading = true;
+  bool _isExporting = false;
   List<Map<String, dynamic>> _settings = [];
   Map<String, dynamic>? _stats;
 
@@ -119,6 +123,33 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
     }
   }
 
+  Future<void> _exportTransactions() async {
+    setState(() => _isExporting = true);
+
+    try {
+      final csvContent = await ApiService.exportAdminStats();
+      
+      final directory = await getTemporaryDirectory();
+      final file = File('${directory.path}/all_transactions.csv');
+      await file.writeAsString(csvContent);
+      
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        subject: 'All Transactions Report',
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Ошибка',
+        'Не удалось экспортировать данные: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      setState(() => _isExporting = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -131,6 +162,20 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
         ),
         automaticallyImplyLeading: false,
         actions: [
+          IconButton(
+            icon: _isExporting
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Icon(Icons.download, color: Colors.white),
+            onPressed: _isExporting ? null : _exportTransactions,
+            tooltip: 'Экспорт CSV',
+          ),
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.white),
             onPressed: _loadData,

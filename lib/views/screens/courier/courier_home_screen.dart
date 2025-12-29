@@ -4,6 +4,7 @@ import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/views/screens/courier/courier_order_detail_screen.dart';
 import 'package:tiktok_tutorial/views/screens/auth/marketplace_login_screen.dart';
+import 'package:tiktok_tutorial/views/screens/my_stats_screen.dart';
 
 class CourierHomeScreen extends StatefulWidget {
   const CourierHomeScreen({Key? key}) : super(key: key);
@@ -44,6 +45,11 @@ class _CourierHomeScreenState extends State<CourierHomeScreen> with SingleTicker
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.bar_chart, color: Colors.white),
+            onPressed: () => Get.to(() => const MyStatsScreen()),
+            tooltip: 'Моя статистика',
+          ),
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.white),
             onPressed: _loadOrders,

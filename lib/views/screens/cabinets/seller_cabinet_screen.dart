@@ -6,6 +6,7 @@ import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/views/screens/seller/my_products_screen.dart';
 import 'package:tiktok_tutorial/views/screens/common/qr_code_screen.dart';
 import 'package:tiktok_tutorial/views/screens/seller/seller_analytics_screen.dart';
+import 'package:tiktok_tutorial/views/screens/my_stats_screen.dart';
 
 class SellerCabinetScreen extends StatefulWidget {
   const SellerCabinetScreen({Key? key}) : super(key: key);
@@ -97,6 +98,13 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
       appBar: AppBar(
         backgroundColor: backgroundColor,
         title: Text('my_cabinet'.tr, style: const TextStyle(color: Colors.white)),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.bar_chart, color: Colors.white),
+            onPressed: () => Get.to(() => const MyStatsScreen()),
+            tooltip: 'Моя статистика',
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: primaryColor,
