@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:gogomarket/constants.dart';
@@ -41,6 +42,10 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   String _searchQuery = '';
   String _selectedCategory = 'all';
   String _sortBy = 'default'; // default, price_low, price_high, newest
+  bool _isSearching = false;
+  
+  // Debounce timer for search
+  Timer? _searchDebounce;
   
   final List<Map<String, String>> _categories = [
     {'value': 'all', 'label': 'Все'},
@@ -99,20 +104,44 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     );
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _loadData();
-  }
-
-  Future<void> _loadData() async {
-    await _controller.fetchProducts();
-    await _controller.fetchReels();
-    await _controller.fetchStories();
-    if (_controller.isLoggedIn) {
-      await _controller.fetchOrders();
+    @override
+    void initState() {
+      super.initState();
+      _loadData();
     }
-  }
+  
+    @override
+    void dispose() {
+      _searchDebounce?.cancel();
+      _searchController.dispose();
+      super.dispose();
+    }
+
+    Future<void> _loadData() async {
+      await _controller.fetchProducts();
+      await _controller.fetchReels();
+      await _controller.fetchStories();
+      if (_controller.isLoggedIn) {
+        await _controller.fetchOrders();
+      }
+    }
+  
+    Future<void> _performSearch() async {
+      if (_searchQuery.isEmpty && _selectedCategory == 'all') {
+        // Reset to all products
+        setState(() => _isSearching = true);
+        await _controller.fetchProducts();
+        setState(() => _isSearching = false);
+        return;
+      }
+    
+      setState(() => _isSearching = true);
+      await _controller.fetchProducts(
+        search: _searchQuery.isNotEmpty ? _searchQuery : null,
+        category: _selectedCategory != 'all' ? _selectedCategory : null,
+      );
+      setState(() => _isSearching = false);
+    }
 
   void _openProductFromReel(Map<String, dynamic> reel) {
     final productId = reel['product_id'];
@@ -1034,26 +1063,47 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               child: TextField(
                 controller: _searchController,
                 style: const TextStyle(color: Colors.white),
-                onChanged: (value) {
-                  setState(() {
-                    _searchQuery = value.toLowerCase();
-                  });
-                },
+                                onChanged: (value) {
+                                  setState(() {
+                                    _searchQuery = value.toLowerCase();
+                                  });
+                                  // Debounce backend search for better performance
+                                  _searchDebounce?.cancel();
+                                  _searchDebounce = Timer(const Duration(milliseconds: 500), () {
+                                    _performSearch();
+                                  });
+                                },
+                                onSubmitted: (value) {
+                                  _performSearch();
+                                },
                 decoration: InputDecoration(
                   hintText: 'Поиск товаров и продавцов',
                   hintStyle: TextStyle(color: Colors.grey[500]),
                   prefixIcon: Icon(Icons.search, color: Colors.grey[500]),
-                  suffixIcon: _searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: Icon(Icons.clear, color: Colors.grey[500]),
-                          onPressed: () {
-                            setState(() {
-                              _searchController.clear();
-                              _searchQuery = '';
-                            });
-                          },
-                        )
-                      : null,
+                                    suffixIcon: _searchQuery.isNotEmpty
+                                        ? IconButton(
+                                            icon: Icon(Icons.clear, color: Colors.grey[500]),
+                                            onPressed: () {
+                                              setState(() {
+                                                _searchController.clear();
+                                                _searchQuery = '';
+                                              });
+                                              _performSearch();
+                                            },
+                                          )
+                                        : (_isSearching 
+                                            ? const Padding(
+                                                padding: EdgeInsets.all(12),
+                                                child: SizedBox(
+                                                  width: 16,
+                                                  height: 16,
+                                                  child: CircularProgressIndicator(
+                                                    strokeWidth: 2,
+                                                    color: primaryColor,
+                                                  ),
+                                                ),
+                                              )
+                                            : null),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 10),
                 ),
@@ -1084,11 +1134,12 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                     child: FilterChip(
                       label: Text(category['label']!),
                       selected: isSelected,
-                      onSelected: (selected) {
-                        setState(() {
-                          _selectedCategory = category['value']!;
-                        });
-                      },
+                                            onSelected: (selected) {
+                                              setState(() {
+                                                _selectedCategory = category['value']!;
+                                              });
+                                              _performSearch();
+                                            },
                       backgroundColor: Colors.grey[900],
                       selectedColor: buttonColor!.withOpacity(0.3),
                       labelStyle: TextStyle(
