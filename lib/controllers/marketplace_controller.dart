@@ -21,9 +21,13 @@ class MarketplaceController extends GetxController {
   // Orders state
   final RxList<Map<String, dynamic>> orders = <Map<String, dynamic>>[].obs;
   
-  // Chat state
-  final RxList<Map<String, dynamic>> conversations = <Map<String, dynamic>>[].obs;
-  final RxInt unreadCount = 0.obs;
+    // Chat state
+    final RxList<Map<String, dynamic>> conversations = <Map<String, dynamic>>[].obs;
+    final RxInt unreadCount = 0.obs;
+  
+    // Favorites state
+    final RxList<Map<String, dynamic>> favorites = <Map<String, dynamic>>[].obs;
+    final RxSet<int> favoriteIds = <int>{}.obs;
   
   // Getters
   String get userId => currentUser.value?['id']?.toString() ?? '';
@@ -433,6 +437,52 @@ class MarketplaceController extends GetxController {
     } catch (e) {
       error.value = e.toString();
       return null;
+    }
+  }
+  
+  // Favorites methods
+  Future<void> fetchFavorites() async {
+    if (!isLoggedIn) return;
+    try {
+      final data = await ApiService.getFavorites();
+      favorites.value = List<Map<String, dynamic>>.from(data);
+      favoriteIds.value = favorites.map((f) => f['id'] as int).toSet();
+    } catch (e) {
+      error.value = e.toString();
+    }
+  }
+  
+  Future<bool> toggleFavorite(int productId) async {
+    if (!isLoggedIn) return false;
+    try {
+      final result = await ApiService.toggleFavorite(productId);
+      final isFavorite = result['is_favorite'] ?? false;
+      
+      if (isFavorite) {
+        favoriteIds.add(productId);
+      } else {
+        favoriteIds.remove(productId);
+      }
+      
+      // Refresh favorites list
+      await fetchFavorites();
+      return isFavorite;
+    } catch (e) {
+      error.value = e.toString();
+      return false;
+    }
+  }
+  
+  bool isFavorite(int productId) {
+    return favoriteIds.contains(productId);
+  }
+  
+  Future<bool> checkFavorite(int productId) async {
+    if (!isLoggedIn) return false;
+    try {
+      return await ApiService.checkFavorite(productId);
+    } catch (e) {
+      return false;
     }
   }
 }

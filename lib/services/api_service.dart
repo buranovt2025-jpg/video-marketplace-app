@@ -583,6 +583,47 @@ class ApiService {
       throw ApiException(response.statusCode, 'Failed to delete comment');
     }
   }
+  
+  // Favorites endpoints
+  static Future<List<dynamic>> getFavorites() async {
+    final response = await client.get(
+      Uri.parse('$baseUrl/api/favorites'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return _decodeResponse(response);
+    } else {
+      throw ApiException(response.statusCode, 'Failed to get favorites');
+    }
+  }
+  
+  static Future<Map<String, dynamic>> toggleFavorite(int productId) async {
+    final response = await client.post(
+      Uri.parse('$baseUrl/api/favorites/$productId'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return _decodeResponse(response);
+    } else {
+      throw ApiException(response.statusCode, 'Failed to toggle favorite');
+    }
+  }
+  
+  static Future<bool> checkFavorite(int productId) async {
+    final response = await client.get(
+      Uri.parse('$baseUrl/api/favorites/check/$productId'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      final data = _decodeResponse(response);
+      return data['is_favorite'] ?? false;
+    } else {
+      throw ApiException(response.statusCode, 'Failed to check favorite');
+    }
+  }
 }
 
 class ApiException implements Exception {

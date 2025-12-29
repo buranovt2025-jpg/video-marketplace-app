@@ -132,18 +132,27 @@ async def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
-        await conn.execute('''
-            CREATE TABLE IF NOT EXISTS reviews (
-                id SERIAL PRIMARY KEY,
-                product_id INTEGER REFERENCES products(id),
-                user_id INTEGER REFERENCES users(id),
-                rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
-                comment TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE(product_id, user_id)
-            )
-        ''')
-        demo_users = [
+                await conn.execute('''
+                    CREATE TABLE IF NOT EXISTS reviews (
+                        id SERIAL PRIMARY KEY,
+                        product_id INTEGER REFERENCES products(id),
+                        user_id INTEGER REFERENCES users(id),
+                        rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+                        comment TEXT,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        UNIQUE(product_id, user_id)
+                    )
+                ''')
+                await conn.execute('''
+                    CREATE TABLE IF NOT EXISTS favorites (
+                        id SERIAL PRIMARY KEY,
+                        product_id INTEGER REFERENCES products(id),
+                        user_id INTEGER REFERENCES users(id),
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        UNIQUE(product_id, user_id)
+                    )
+                ''')
+                demo_users = [
             ('seller@demo.com', 'demo123', 'Demo Seller', 'seller'),
             ('buyer@demo.com', 'demo123', 'Demo Buyer', 'buyer'),
             ('courier@demo.com', 'demo123', 'Demo Courier', 'courier'),
@@ -685,6 +694,61 @@ async def delete_product_comment(comment_id: int, user: dict = Depends(get_curre
             raise HTTPException(status_code=403, detail="Not authorized")
         await conn.execute('DELETE FROM product_comments WHERE id = $1', comment_id)
         return {"status": "deleted"}
+
+# Favorites endpoints
+@app.get("/api/favorites")
+async def get_favorites(user: dict = Depends(get_current_user)):
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch('''
+            SELECT p.*, u.name as seller_name, f.created_at as favorited_at
+            FROM favorites f
+            JOIN products p ON f.product_id = p.id
+            JOIN users u ON p.seller_id = u.id
+            WHERE f.user_id = $1
+            ORDER BY f.created_at DESC
+        ''', user['id'])
+        return [dict(row) for row in rows]
+
+@app.post("/api/favorites/{product_id}")
+async def toggle_favorite(product_id: int, user: dict = Depends(get_current_user)):
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        # Check if product exists
+        product = await conn.fetchrow('SELECT id FROM products WHERE id = $1', product_id)
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found")
+        
+        # Check if already favorited
+        existing = await conn.fetchrow(
+            'SELECT id FROM favorites WHERE product_id = $1 AND user_id = $2',
+            product_id, user['id']
+        )
+        
+        if existing:
+            # Remove from favorites
+            await conn.execute(
+                'DELETE FROM favorites WHERE product_id = $1 AND user_id = $2',
+                product_id, user['id']
+            )
+            return {"status": "removed", "is_favorite": False}
+        else:
+            # Add to favorites
+            await conn.execute(
+                'INSERT INTO favorites (product_id, user_id) VALUES ($1, $2)',
+                product_id, user['id']
+            )
+            return {"status": "added", "is_favorite": True}
+
+@app.get("/api/favorites/check/{product_id}")
+async def check_favorite(product_id: int, user: dict = Depends(get_current_user)):
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        existing = await conn.fetchrow(
+            'SELECT id FROM favorites WHERE product_id = $1 AND user_id = $2',
+            product_id, user['id']
+        )
+        return {"is_favorite": existing is not None}
 
 if __name__ == "__main__":
     import uvicorn
