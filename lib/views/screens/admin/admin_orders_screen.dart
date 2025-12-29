@@ -574,12 +574,40 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
         'click': 'Click',
         'payme': 'Payme',
       };
+      final statusLabels = {
+        'created': 'Новый',
+        'pending': 'Ожидает',
+        'accepted': 'Принят',
+        'ready': 'Готов',
+        'picked_up': 'Забран',
+        'in_transit': 'В пути',
+        'delivered': 'Доставлен',
+        'completed': 'Завершён',
+        'cancelled': 'Отменён',
+      };
+      final statusColors = {
+        'created': Colors.blue,
+        'pending': Colors.blue,
+        'accepted': Colors.orange,
+        'ready': Colors.purple,
+        'picked_up': Colors.indigo,
+        'in_transit': Colors.cyan,
+        'delivered': Colors.green,
+        'completed': Colors.green,
+        'cancelled': Colors.red,
+      };
       final totalAmount = (order['total_amount'] ?? 0.0) is int 
           ? (order['total_amount'] as int).toDouble() 
           : (order['total_amount'] ?? 0.0);
+      final status = order['status'] ?? 'pending';
+      final orderId = order['id']?.toString() ?? '';
+      final commissionRate = order['commission_rate'] ?? 10.0;
+      final platformFee = totalAmount * (commissionRate / 100);
+      final sellerEarnings = totalAmount - platformFee;
     
       Get.bottomSheet(
         Container(
+          height: MediaQuery.of(Get.context!).size.height * 0.85,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: Colors.grey[900],
@@ -602,33 +630,76 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                 ),
                 const SizedBox(height: 20),
               
+                // Order header with status
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Заказ #${order['id']?.toString().substring(0, 8) ?? ''}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Детали заказа',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'ID: $orderId',
+                            style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                          ),
+                        ],
                       ),
                     ),
-                    if (order['created_at'] != null)
-                      Text(
-                        _formatDate(order['created_at']),
-                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: statusColors[status]?.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: statusColors[status] ?? Colors.grey),
                       ),
+                      child: Text(
+                        statusLabels[status] ?? status,
+                        style: TextStyle(
+                          color: statusColors[status],
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                   ],
+                ),
+                const SizedBox(height: 16),
+                
+                // Date and time
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[850],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.calendar_today, color: Colors.grey[400], size: 18),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Создан: ${_formatDate(order['created_at'])}',
+                        style: TextStyle(color: Colors.grey[300]),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 20),
               
                 // Participants section
                 const Text(
-                  'Участники сделки:',
+                  'Участники сделки',
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
-                    fontSize: 14,
+                    fontSize: 16,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -650,7 +721,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                   'Продавец',
                   order['seller_name'] ?? 'Не указан',
                   order['seller_email'],
-                  null,
+                  order['seller_phone'],
                   Colors.orange,
                 ),
                 const SizedBox(height: 8),
@@ -660,8 +731,8 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                   Icons.delivery_dining,
                   'Курьер',
                   order['courier_name'] ?? 'Не назначен',
-                  null,
-                  null,
+                  order['courier_email'],
+                  order['courier_phone'],
                   order['courier_name'] != null ? Colors.green : Colors.grey,
                 ),
               
@@ -669,9 +740,24 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                 const Divider(color: Colors.grey),
                 const SizedBox(height: 16),
               
-                // Delivery info
+                // Order info section
+                const Text(
+                  'Информация о заказе',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                
+                _buildDetailRow('Номер заказа', '#${orderId.length > 8 ? orderId.substring(0, 8) : orderId}'),
+                _buildDetailRow('Полный ID', orderId),
+                _buildDetailRow('Статус', statusLabels[status] ?? status),
                 _buildDetailRow('Адрес доставки', order['delivery_address'] ?? 'Не указан'),
                 _buildDetailRow('Способ оплаты', paymentLabels[order['payment_method']] ?? 'Наличные'),
+                if (order['notes'] != null && order['notes'].toString().isNotEmpty)
+                  _buildDetailRow('Примечание', order['notes']),
               
                 const SizedBox(height: 16),
                 const Divider(color: Colors.grey),
@@ -679,28 +765,61 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
               
                 // Items
                 const Text(
-                  'Товары:',
+                  'Товары в заказе',
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
+                    fontSize: 16,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
               
-                ...items.map((item) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
+                ...items.map((item) => Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[850],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      Container(
+                        width: 50,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[800],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: item['image_url'] != null
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.network(
+                                  item['image_url'],
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Icon(Icons.image, color: Colors.grey[600]),
+                                ),
+                              )
+                            : Icon(Icons.shopping_bag, color: Colors.grey[600]),
+                      ),
+                      const SizedBox(width: 12),
                       Expanded(
-                        child: Text(
-                          '${item['product_name'] ?? item['name'] ?? 'Товар'} x${item['quantity'] ?? 1}',
-                          style: const TextStyle(color: Colors.white),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item['product_name'] ?? item['name'] ?? 'Товар',
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                            ),
+                            Text(
+                              'Кол-во: ${item['quantity'] ?? 1} x ${_formatPrice((item['price'] ?? 0).toDouble())} сум',
+                              style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                            ),
+                          ],
                         ),
                       ),
                       Text(
                         '${_formatPrice(((item['price'] ?? 0) * (item['quantity'] ?? 1)).toDouble())} сум',
-                        style: TextStyle(color: Colors.grey[400]),
+                        style: TextStyle(color: Colors.green[400], fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
@@ -710,34 +829,83 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                 const Divider(color: Colors.grey),
                 const SizedBox(height: 16),
               
-                // Total
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Итого:',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
+                // Financial breakdown
+                const Text(
+                  'Финансовая информация',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[850],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    children: [
+                      _buildFinancialRow('Сумма заказа', totalAmount, Colors.white),
+                      const SizedBox(height: 8),
+                      _buildFinancialRow('Комиссия платформы ($commissionRate%)', platformFee, Colors.orange),
+                      const SizedBox(height: 8),
+                      _buildFinancialRow('Доход продавца', sellerEarnings, Colors.green),
+                      const SizedBox(height: 12),
+                      const Divider(color: Colors.grey),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'ИТОГО:',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
+                          Text(
+                            '${_formatPrice(totalAmount)} сум',
+                            style: TextStyle(
+                              color: Colors.green[400],
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    Text(
-                      '${_formatPrice(totalAmount)} сум',
-                      style: TextStyle(
-                        color: Colors.green[400],
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               
+                const SizedBox(height: 20),
+                
+                // Action buttons
+                if (status != 'completed' && status != 'cancelled')
+                  _buildStatusChangeButtons(order, status),
+                
                 const SizedBox(height: 20),
               ],
             ),
           ),
         ),
+        isScrollControlled: true,
+      );
+    }
+    
+    Widget _buildFinancialRow(String label, double amount, Color color) {
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyle(color: Colors.grey[400])),
+          Text(
+            '${_formatPrice(amount)} сум',
+            style: TextStyle(color: color, fontWeight: FontWeight.w500),
+          ),
+        ],
       );
     }
 
