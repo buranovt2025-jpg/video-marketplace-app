@@ -386,6 +386,7 @@ class MarketplaceController extends GetxController {
     required double deliveryLatitude,
     required double deliveryLongitude,
     String? notes,
+    String paymentMethod = 'cash',
   }) async {
     try {
       isLoading.value = true;
@@ -398,6 +399,7 @@ class MarketplaceController extends GetxController {
         deliveryLatitude: deliveryLatitude,
         deliveryLongitude: deliveryLongitude,
         notes: notes,
+        paymentMethod: paymentMethod,
       );
       
       orders.insert(0, order);

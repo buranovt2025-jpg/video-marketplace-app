@@ -14,8 +14,21 @@ class OrderHistoryScreen extends StatefulWidget {
 class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   final MarketplaceController _controller = Get.find<MarketplaceController>();
   String _selectedFilter = 'all';
+  bool _isLoading = true;
 
   final List<String> _filters = ['all', 'pending', 'accepted', 'in_delivery', 'delivered', 'cancelled'];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOrders();
+  }
+
+  Future<void> _loadOrders() async {
+    setState(() => _isLoading = true);
+    await _controller.fetchOrders();
+    setState(() => _isLoading = false);
+  }
 
   String _getFilterLabel(String filter) {
     switch (filter) {
@@ -204,34 +217,45 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
           
           // Orders list
           Expanded(
-            child: Obx(() {
-              final orders = _filteredOrders;
-              
-              if (orders.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.receipt_long, size: 80, color: Colors.grey[600]),
-                      const SizedBox(height: 16),
-                      Text(
-                        'no_results'.tr,
-                        style: TextStyle(color: Colors.grey[400], fontSize: 18),
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : Obx(() {
+                    final orders = _filteredOrders;
+                    
+                    if (orders.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.receipt_long, size: 80, color: Colors.grey[600]),
+                            const SizedBox(height: 16),
+                            Text(
+                              'no_results'.tr,
+                              style: TextStyle(color: Colors.grey[400], fontSize: 18),
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: _loadOrders,
+                              style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
+                              child: const Text('Обновить'),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                    
+                    return RefreshIndicator(
+                      onRefresh: _loadOrders,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: orders.length,
+                        itemBuilder: (context, index) {
+                          final order = orders[index];
+                          return _buildOrderCard(order);
+                        },
                       ),
-                    ],
-                  ),
-                );
-              }
-              
-              return ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: orders.length,
-                itemBuilder: (context, index) {
-                  final order = orders[index];
-                  return _buildOrderCard(order);
-                },
-              );
-            }),
+                    );
+                  }),
           ),
         ],
       ),
@@ -256,7 +280,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Заказ #${order['id']?.substring(0, 8) ?? ''}',
+                  'Заказ #${order['id'] ?? ''}',
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -284,7 +308,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               children: [
                 const SizedBox(height: 8),
                 Text(
-                  '${order['total']?.toStringAsFixed(0) ?? '0'} сум',
+                  '${(order['total_amount'] ?? order['total'] ?? 0).toStringAsFixed(0)} сум',
                   style: const TextStyle(
                     color: primaryColor,
                     fontSize: 18,

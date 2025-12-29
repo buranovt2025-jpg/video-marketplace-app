@@ -792,6 +792,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         deliveryLatitude: _latitude,
         deliveryLongitude: _longitude,
         notes: _notesController.text.isNotEmpty ? _notesController.text : null,
+        paymentMethod: _selectedPaymentMethod.name,
       );
 
       if (order != null) {

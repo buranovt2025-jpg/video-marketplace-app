@@ -343,24 +343,48 @@ class ApiService {
     required double deliveryLatitude,
     required double deliveryLongitude,
     String? notes,
+    String paymentMethod = 'cash',
   }) async {
+    // Convert sellerId to int for backend compatibility
+    final sellerIdInt = int.tryParse(sellerId) ?? 0;
+    if (sellerIdInt == 0) {
+      throw ApiException(400, 'Invalid seller ID');
+    }
+    
     final response = await client.post(
       Uri.parse('$baseUrl/api/orders'),
       headers: _headers,
       body: jsonEncode({
-        'seller_id': sellerId,
+        'seller_id': sellerIdInt,
         'items': items,
         'delivery_address': deliveryAddress,
         'delivery_latitude': deliveryLatitude,
         'delivery_longitude': deliveryLongitude,
         'notes': notes,
+        'payment_method': paymentMethod,
       }),
+    ).timeout(
+      const Duration(seconds: 30),
+      onTimeout: () {
+        throw ApiException(408, 'Request timeout - please try again');
+      },
     );
     
     if (response.statusCode == 200) {
       return _decodeResponse(response);
     } else {
-      throw ApiException(response.statusCode, 'Failed to create order');
+      final errorDetail = _tryDecodeError(response);
+      throw ApiException(response.statusCode, errorDetail ?? 'Failed to create order');
+    }
+  }
+  
+  // Helper to safely decode error responses
+  static String? _tryDecodeError(http.Response response) {
+    try {
+      final data = _decodeResponse(response);
+      return data['detail']?.toString();
+    } catch (_) {
+      return null;
     }
   }
   
