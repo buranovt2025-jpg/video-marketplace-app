@@ -1,8 +1,8 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, EmailStr
-from typing import Optional, List
+from typing import Optional, List, Dict
 from datetime import datetime, timedelta
 import os
 import jwt
@@ -11,6 +11,14 @@ from contextlib import asynccontextmanager
 import asyncpg
 import ssl
 import logging
+import uuid
+import shutil
+import json
+from pathlib import Path
+
+# Media upload directory
+MEDIA_DIR = Path("/var/www/gogomarket/media")
+MEDIA_DIR.mkdir(parents=True, exist_ok=True)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -1586,11 +1594,66 @@ async def auto_assign_courier(order_id: int, user: dict = Depends(get_current_us
         
         return {"status": "no_couriers", "message": "No suitable couriers found"}
 
-# ==================== REAL WEBSOCKET CHAT ====================
+# ==================== MEDIA UPLOAD ====================
 
-from fastapi import WebSocket, WebSocketDisconnect
-from typing import Dict
-import json
+@app.post("/api/upload/image")
+async def upload_image(file: UploadFile = File(...), user: dict = Depends(get_current_user)):
+    """Upload an image file and return public URL"""
+    if not file.content_type.startswith('image/'):
+        raise HTTPException(status_code=400, detail="File must be an image")
+    
+    # Generate unique filename
+    ext = file.filename.split('.')[-1] if '.' in file.filename else 'jpg'
+    filename = f"{uuid.uuid4()}.{ext}"
+    filepath = MEDIA_DIR / "images" / filename
+    filepath.parent.mkdir(parents=True, exist_ok=True)
+    
+    # Save file
+    with open(filepath, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    
+    # Return public URL
+    public_url = f"https://165.232.81.31/media/images/{filename}"
+    return {"url": public_url, "filename": filename}
+
+@app.post("/api/upload/video")
+async def upload_video(file: UploadFile = File(...), user: dict = Depends(get_current_user)):
+    """Upload a video file and return public URL"""
+    if not file.content_type.startswith('video/'):
+        raise HTTPException(status_code=400, detail="File must be a video")
+    
+    # Generate unique filename
+    ext = file.filename.split('.')[-1] if '.' in file.filename else 'mp4'
+    filename = f"{uuid.uuid4()}.{ext}"
+    filepath = MEDIA_DIR / "videos" / filename
+    filepath.parent.mkdir(parents=True, exist_ok=True)
+    
+    # Save file
+    with open(filepath, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    
+    # Return public URL
+    public_url = f"https://165.232.81.31/media/videos/{filename}"
+    return {"url": public_url, "filename": filename}
+
+@app.post("/api/upload/document")
+async def upload_document(file: UploadFile = File(...), user: dict = Depends(get_current_user)):
+    """Upload a document file (for verification) and return public URL"""
+    # Generate unique filename
+    ext = file.filename.split('.')[-1] if '.' in file.filename else 'pdf'
+    filename = f"{uuid.uuid4()}.{ext}"
+    filepath = MEDIA_DIR / "documents" / filename
+    filepath.parent.mkdir(parents=True, exist_ok=True)
+    
+    # Save file
+    with open(filepath, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    
+    # Return public URL
+    public_url = f"https://165.232.81.31/media/documents/{filename}"
+    return {"url": public_url, "filename": filename}
+
+# ==================== REAL WEBSOCKET CHAT ====================
 
 # Store active WebSocket connections
 active_connections: Dict[int, WebSocket] = {}

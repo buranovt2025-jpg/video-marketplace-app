@@ -702,8 +702,8 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                   onPressed: () {},
                 ),
                 const Spacer(),
-                // Buy button for reels with linked product
-                if (reel['product_id'] != null) ...[
+                // Buy button for reels with linked product (hidden for sellers)
+                if (reel['product_id'] != null && !_controller.isSeller) ...[
                   ElevatedButton.icon(
                     onPressed: () => _openProductFromReel(reel),
                     icon: const Icon(Icons.shopping_cart, size: 18),

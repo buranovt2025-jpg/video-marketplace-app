@@ -231,41 +231,43 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 ),
                 onPressed: _shareProduct,
               ),
-              Obx(() => Stack(
-                children: [
-                  IconButton(
-                    icon: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.5),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.shopping_cart, color: Colors.white),
-                    ),
-                    onPressed: () => Get.to(() => const CartScreen()),
-                  ),
-                  if (_cartController.itemCount > 0)
-                    Positioned(
-                      right: 4,
-                      top: 4,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
+              // Hide cart icon for sellers - they cannot purchase products
+              if (!_marketplaceController.isSeller)
+                Obx(() => Stack(
+                  children: [
+                    IconButton(
+                      icon: Container(
+                        padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: buttonColor,
+                          color: Colors.black.withOpacity(0.5),
                           shape: BoxShape.circle,
                         ),
-                        child: Text(
-                          '${_cartController.itemCount}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
+                        child: const Icon(Icons.shopping_cart, color: Colors.white),
+                      ),
+                      onPressed: () => Get.to(() => const CartScreen()),
+                    ),
+                    if (_cartController.itemCount > 0)
+                      Positioned(
+                        right: 4,
+                        top: 4,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: buttonColor,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            '${_cartController.itemCount}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                ],
-              )),
+                  ],
+                )),
             ],
             flexibleSpace: FlexibleSpaceBar(
               background: product['image_url'] != null
@@ -438,7 +440,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: inStock ? _buildBottomBar(product) : _buildOutOfStockBar(),
+      bottomNavigationBar: _marketplaceController.isSeller 
+          ? _buildSellerRestrictionBar() 
+          : (inStock ? _buildBottomBar(product) : _buildOutOfStockBar()),
     );
   }
   
@@ -1078,6 +1082,49 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           child: const Text(
             'Нет в наличии',
             style: TextStyle(color: Colors.grey),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSellerRestrictionBar() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey[900],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+          decoration: BoxDecoration(
+            color: Colors.orange.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.orange.withOpacity(0.5)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.info_outline, color: Colors.orange, size: 24),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Продавцы не могут покупать товары.\nВы можете только выставлять товары и следить за продажами.',
+                  style: TextStyle(
+                    color: Colors.orange,
+                    fontSize: 14,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
           ),
         ),
       ),
