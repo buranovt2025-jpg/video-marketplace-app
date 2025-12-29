@@ -6,6 +6,7 @@ import 'package:gogomarket/views/screens/admin/admin_users_screen.dart';
 import 'package:gogomarket/views/screens/admin/admin_orders_screen.dart';
 import 'package:gogomarket/views/screens/admin/admin_content_screen.dart';
 import 'package:gogomarket/views/screens/admin/admin_settings_screen.dart';
+import 'package:gogomarket/views/screens/admin/category_moderation_screen.dart';
 import 'package:gogomarket/views/screens/auth/marketplace_login_screen.dart';
 
 class AdminHomeScreen extends StatefulWidget {
@@ -361,24 +362,50 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
   }
 
   Widget _buildQuickActions() {
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          child: _buildActionButton(
-            'Создать рилс',
-            Icons.video_call,
-            Colors.purple,
-            () => setState(() => _currentIndex = 3),
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: _buildActionButton(
+                'Создать рилс',
+                Icons.video_call,
+                Colors.purple,
+                () => setState(() => _currentIndex = 3),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildActionButton(
+                'Создать историю',
+                Icons.add_photo_alternate,
+                Colors.orange,
+                () => setState(() => _currentIndex = 3),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildActionButton(
-            'Создать историю',
-            Icons.add_photo_alternate,
-            Colors.orange,
-            () => setState(() => _currentIndex = 3),
-          ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildActionButton(
+                'Категории',
+                Icons.category,
+                Colors.teal,
+                () => Get.to(() => const CategoryModerationScreen()),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildActionButton(
+                'Верификация',
+                Icons.verified_user,
+                Colors.blue,
+                () => setState(() => _currentIndex = 1),
+              ),
+            ),
+          ],
         ),
       ],
     );

@@ -1066,6 +1066,77 @@ class ApiService {
     }
   }
   
+  // ==================== CATEGORY MODERATION ====================
+  
+  // Get all approved categories
+  static Future<List<dynamic>> getCategories() async {
+    final response = await client.get(
+      Uri.parse('$baseUrl/api/categories'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as List;
+    } else {
+      throw ApiException(response.statusCode, 'Failed to get categories');
+    }
+  }
+
+  // Request a new category (seller only)
+  static Future<Map<String, dynamic>> requestCategory({
+    required String name,
+    required String nameRu,
+    String? description,
+  }) async {
+    final response = await client.post(
+      Uri.parse('$baseUrl/api/categories/request'),
+      headers: _headers,
+      body: jsonEncode({
+        'name': name,
+        'name_ru': nameRu,
+        'description': description,
+      }),
+    );
+    
+    if (response.statusCode == 200) {
+      return _decodeResponse(response);
+    } else {
+      throw ApiException(response.statusCode, 'Failed to request category');
+    }
+  }
+
+  // Get category requests (admin sees all, seller sees own)
+  static Future<List<dynamic>> getCategoryRequests({String? status}) async {
+    String url = '$baseUrl/api/categories/requests';
+    if (status != null) url += '?status=$status';
+    
+    final response = await client.get(
+      Uri.parse(url),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as List;
+    } else {
+      throw ApiException(response.statusCode, 'Failed to get category requests');
+    }
+  }
+
+  // Review category request (admin only)
+  static Future<void> reviewCategoryRequest(int requestId, String status, {String? notes}) async {
+    String url = '$baseUrl/api/admin/categories/$requestId?status=$status';
+    if (notes != null) url += '&notes=${Uri.encodeComponent(notes)}';
+    
+    final response = await client.put(
+      Uri.parse(url),
+      headers: _headers,
+    );
+    
+    if (response.statusCode != 200) {
+      throw ApiException(response.statusCode, 'Failed to review category request');
+    }
+  }
+
   // Comments endpoints
   static Future<List<dynamic>> getComments(String contentId) async {
     final response = await client.get(

@@ -736,6 +736,12 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Obx(() {
         final stories = _controller.stories;
+        final isLoading = _controller.isLoadingStories.value;
+        
+        // Show shimmer while loading
+        if (isLoading && stories.isEmpty) {
+          return const StoriesRowShimmer();
+        }
         
         return ListView.builder(
           scrollDirection: Axis.horizontal,
@@ -1048,10 +1054,16 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   }
 
     Widget _buildExploreTab() {
-      return CustomScrollView(
-        slivers: [
-          // Search bar
-          SliverAppBar(
+      return RefreshIndicator(
+        onRefresh: () async {
+          await _controller.fetchProducts();
+        },
+        color: primaryColor,
+        backgroundColor: Colors.grey[900],
+        child: CustomScrollView(
+          slivers: [
+            // Search bar
+            SliverAppBar(
             floating: true,
             backgroundColor: backgroundColor,
             title: Container(
@@ -1188,6 +1200,15 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
           SliverPadding(
             padding: const EdgeInsets.all(2),
             sliver: Obx(() {
+              final isLoading = _controller.isLoadingProducts.value;
+              
+              // Show shimmer while loading
+              if (isLoading && _controller.products.isEmpty) {
+                return SliverToBoxAdapter(
+                  child: ProductGridShimmer(itemCount: 6),
+                );
+              }
+              
               var products = _controller.products.toList();
             
               // Apply search filter
@@ -1300,6 +1321,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
             }),
           ),
         ],
+        ),
       );
     }
   

@@ -9,6 +9,12 @@ class MarketplaceController extends GetxController {
     final RxBool isLoading = false.obs;
     final RxString error = ''.obs;
     final RxBool isGuestMode = false.obs;
+    
+    // Specific loading states for UX
+    final RxBool isLoadingProducts = false.obs;
+    final RxBool isLoadingStories = false.obs;
+    final RxBool isLoadingReels = false.obs;
+    final RxBool isLoadingOrders = false.obs;
   
   // Products state
   final RxList<Map<String, dynamic>> products = <Map<String, dynamic>>[].obs;
@@ -161,6 +167,7 @@ class MarketplaceController extends GetxController {
   // Products methods
   Future<void> fetchProducts({String? sellerId, String? category, String? search}) async {
     try {
+      isLoadingProducts.value = true;
       final data = await ApiService.getProducts(
         sellerId: sellerId,
         category: category,
@@ -173,6 +180,8 @@ class MarketplaceController extends GetxController {
       }
     } catch (e) {
       error.value = e.toString();
+    } finally {
+      isLoadingProducts.value = false;
     }
   }
   
@@ -267,19 +276,25 @@ class MarketplaceController extends GetxController {
   // Content methods
   Future<void> fetchReels() async {
     try {
+      isLoadingReels.value = true;
       final data = await ApiService.getReels();
       reels.value = List<Map<String, dynamic>>.from(data);
     } catch (e) {
       error.value = e.toString();
+    } finally {
+      isLoadingReels.value = false;
     }
   }
   
   Future<void> fetchStories() async {
     try {
+      isLoadingStories.value = true;
       final data = await ApiService.getStories();
       stories.value = List<Map<String, dynamic>>.from(data);
     } catch (e) {
       error.value = e.toString();
+    } finally {
+      isLoadingStories.value = false;
     }
   }
   
@@ -354,10 +369,13 @@ class MarketplaceController extends GetxController {
   // Orders methods
   Future<void> fetchOrders() async {
     try {
+      isLoadingOrders.value = true;
       final data = await ApiService.getOrders();
       orders.value = List<Map<String, dynamic>>.from(data);
     } catch (e) {
       error.value = e.toString();
+    } finally {
+      isLoadingOrders.value = false;
     }
   }
   

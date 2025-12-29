@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:gogomarket/constants.dart';
 import 'package:gogomarket/controllers/marketplace_controller.dart';
+import 'package:gogomarket/services/api_service.dart';
 
 class CreateProductScreen extends StatefulWidget {
   const CreateProductScreen({Key? key}) : super(key: key);
@@ -437,22 +438,39 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
                   dropdownColor: Colors.grey[900],
                   icon: Icon(Icons.arrow_drop_down, color: Colors.grey[400]),
                   style: const TextStyle(color: Colors.white),
-                  items: _categories.map((category) {
-                    return DropdownMenuItem<String>(
-                      value: category['value'],
+                  items: [
+                    ..._categories.map((category) {
+                      return DropdownMenuItem<String>(
+                        value: category['value'],
+                        child: Row(
+                          children: [
+                            Icon(Icons.category, color: Colors.grey[400], size: 20),
+                            const SizedBox(width: 12),
+                            Text(category['label']!),
+                          ],
+                        ),
+                      );
+                    }),
+                    // Add "Request new category" option
+                    DropdownMenuItem<String>(
+                      value: '_request_new',
                       child: Row(
                         children: [
-                          Icon(Icons.category, color: Colors.grey[400], size: 20),
+                          Icon(Icons.add_circle_outline, color: buttonColor, size: 20),
                           const SizedBox(width: 12),
-                          Text(category['label']!),
+                          Text('Предложить новую категорию', style: TextStyle(color: buttonColor)),
                         ],
                       ),
-                    );
-                  }).toList(),
+                    ),
+                  ],
                   onChanged: (value) {
-                    setState(() {
-                      _selectedCategory = value!;
-                    });
+                    if (value == '_request_new') {
+                      _showRequestCategoryDialog();
+                    } else {
+                      setState(() {
+                        _selectedCategory = value!;
+                      });
+                    }
                   },
                 ),
               ),
@@ -521,6 +539,165 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
           style: TextStyle(color: Colors.grey[500]),
         ),
       ],
+    );
+  }
+
+  void _showRequestCategoryDialog() {
+    final nameController = TextEditingController();
+    final nameRuController = TextEditingController();
+    final descriptionController = TextEditingController();
+    bool isSubmitting = false;
+
+    Get.dialog(
+      StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            backgroundColor: Colors.grey[900],
+            title: const Text(
+              'Предложить новую категорию',
+              style: TextStyle(color: Colors.white),
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Ваша заявка будет рассмотрена администратором. После одобрения категория станет доступна для всех продавцов.',
+                    style: TextStyle(color: Colors.grey[400], fontSize: 13),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: nameController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      labelText: 'Название (латиницей)',
+                      hintText: 'например: handmade',
+                      labelStyle: TextStyle(color: Colors.grey[400]),
+                      hintStyle: TextStyle(color: Colors.grey[600]),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey[700]!),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: buttonColor!),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: nameRuController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      labelText: 'Название (на русском)',
+                      hintText: 'например: Ручная работа',
+                      labelStyle: TextStyle(color: Colors.grey[400]),
+                      hintStyle: TextStyle(color: Colors.grey[600]),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey[700]!),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: buttonColor!),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: descriptionController,
+                    style: const TextStyle(color: Colors.white),
+                    maxLines: 2,
+                    decoration: InputDecoration(
+                      labelText: 'Описание (необязательно)',
+                      hintText: 'Какие товары будут в этой категории?',
+                      labelStyle: TextStyle(color: Colors.grey[400]),
+                      hintStyle: TextStyle(color: Colors.grey[600]),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey[700]!),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: buttonColor!),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Get.back(),
+                child: Text('Отмена', style: TextStyle(color: Colors.grey[400])),
+              ),
+              ElevatedButton(
+                onPressed: isSubmitting
+                    ? null
+                    : () async {
+                        if (nameController.text.isEmpty || nameRuController.text.isEmpty) {
+                          Get.snackbar(
+                            'Ошибка',
+                            'Заполните оба названия категории',
+                            snackPosition: SnackPosition.BOTTOM,
+                            backgroundColor: Colors.red,
+                            colorText: Colors.white,
+                          );
+                          return;
+                        }
+
+                        setDialogState(() => isSubmitting = true);
+
+                        try {
+                          await ApiService.requestCategory(
+                            name: nameController.text.trim(),
+                            nameRu: nameRuController.text.trim(),
+                            description: descriptionController.text.trim().isNotEmpty
+                                ? descriptionController.text.trim()
+                                : null,
+                          );
+
+                          Get.back();
+                          Get.snackbar(
+                            'Заявка отправлена',
+                            'Администратор рассмотрит вашу заявку на новую категорию',
+                            snackPosition: SnackPosition.BOTTOM,
+                            backgroundColor: Colors.green,
+                            colorText: Colors.white,
+                          );
+                        } catch (e) {
+                          setDialogState(() => isSubmitting = false);
+                          Get.snackbar(
+                            'Ошибка',
+                            e.toString().contains('already exists')
+                                ? 'Такая категория уже существует'
+                                : e.toString().contains('already pending')
+                                    ? 'Заявка на эту категорию уже на рассмотрении'
+                                    : 'Не удалось отправить заявку',
+                            snackPosition: SnackPosition.BOTTOM,
+                            backgroundColor: Colors.red,
+                            colorText: Colors.white,
+                          );
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: buttonColor,
+                ),
+                child: isSubmitting
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text('Отправить'),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }

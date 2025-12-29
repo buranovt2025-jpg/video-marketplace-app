@@ -267,6 +267,51 @@ async def init_db():
                 reviewed_at TIMESTAMP
             )
         ''')
+        # Category requests for moderation
+        await conn.execute('''
+            CREATE TABLE IF NOT EXISTS category_requests (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(100) NOT NULL,
+                name_ru VARCHAR(100) NOT NULL,
+                description TEXT,
+                requested_by INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                status VARCHAR(50) DEFAULT 'pending',
+                admin_notes TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                reviewed_at TIMESTAMP,
+                reviewed_by INTEGER REFERENCES users(id)
+            )
+        ''')
+        # Approved categories table
+        await conn.execute('''
+            CREATE TABLE IF NOT EXISTS categories (
+                id SERIAL PRIMARY KEY,
+                value VARCHAR(100) UNIQUE NOT NULL,
+                label VARCHAR(100) NOT NULL,
+                is_active BOOLEAN DEFAULT TRUE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        # Insert default categories
+        default_categories = [
+            ('electronics', 'Электроника'),
+            ('clothing', 'Одежда'),
+            ('food', 'Еда'),
+            ('home', 'Дом и сад'),
+            ('beauty', 'Красота'),
+            ('sports', 'Спорт'),
+            ('toys', 'Игрушки'),
+            ('books', 'Книги'),
+            ('auto', 'Авто'),
+            ('services', 'Услуги'),
+        ]
+        for value, label in default_categories:
+            exists = await conn.fetchval('SELECT id FROM categories WHERE value = $1', value)
+            if not exists:
+                await conn.execute(
+                    'INSERT INTO categories (value, label) VALUES ($1, $2)',
+                    value, label
+                )
         # Insert default platform settings
         default_settings = [
             ('platform_commission', '10', 'Platform commission percentage from each sale'),
@@ -1775,6 +1820,133 @@ async def review_verification(verification_id: int, status: str, notes: Optional
             )
         
         return {"status": status}
+
+# ==================== CATEGORY MODERATION ====================
+
+class CategoryRequest(BaseModel):
+    name: str
+    name_ru: str
+    description: Optional[str] = None
+
+@app.get("/api/categories")
+async def get_categories():
+    """Get all approved categories"""
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        categories = await conn.fetch('SELECT * FROM categories WHERE is_active = TRUE ORDER BY label')
+        return [dict(c) for c in categories]
+
+@app.post("/api/categories/request")
+async def request_category(data: CategoryRequest, user: dict = Depends(get_current_user)):
+    """Request a new category (seller only)"""
+    if user['role'] not in ['seller', 'admin']:
+        raise HTTPException(status_code=403, detail="Only sellers can request new categories")
+    
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        # Check if category already exists
+        existing = await conn.fetchrow('SELECT id FROM categories WHERE value = $1', data.name.lower())
+        if existing:
+            raise HTTPException(status_code=400, detail="Category already exists")
+        
+        # Check if there's already a pending request for this category
+        pending = await conn.fetchrow(
+            'SELECT id FROM category_requests WHERE name = $1 AND status = $2',
+            data.name.lower(), 'pending'
+        )
+        if pending:
+            raise HTTPException(status_code=400, detail="Category request already pending")
+        
+        # Create request
+        request_id = await conn.fetchval('''
+            INSERT INTO category_requests (name, name_ru, description, requested_by)
+            VALUES ($1, $2, $3, $4)
+            RETURNING id
+        ''', data.name.lower(), data.name_ru, data.description, user['id'])
+        
+        return {"id": request_id, "message": "Category request submitted for admin review"}
+
+@app.get("/api/categories/requests")
+async def get_category_requests(status: Optional[str] = None, user: dict = Depends(get_current_user)):
+    """Get category requests (admin sees all, seller sees own)"""
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        if user['role'] == 'admin':
+            if status:
+                requests = await conn.fetch('''
+                    SELECT cr.*, u.name as requester_name, u.email as requester_email
+                    FROM category_requests cr
+                    JOIN users u ON cr.requested_by = u.id
+                    WHERE cr.status = $1
+                    ORDER BY cr.created_at DESC
+                ''', status)
+            else:
+                requests = await conn.fetch('''
+                    SELECT cr.*, u.name as requester_name, u.email as requester_email
+                    FROM category_requests cr
+                    JOIN users u ON cr.requested_by = u.id
+                    ORDER BY cr.created_at DESC
+                ''')
+        else:
+            requests = await conn.fetch('''
+                SELECT * FROM category_requests WHERE requested_by = $1 ORDER BY created_at DESC
+            ''', user['id'])
+        
+        return [dict(r) for r in requests]
+
+@app.put("/api/admin/categories/{request_id}")
+async def review_category_request(request_id: int, status: str, notes: Optional[str] = None, user: dict = Depends(get_current_user)):
+    """Approve or reject category request (admin only)"""
+    if user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    if status not in ['approved', 'rejected']:
+        raise HTTPException(status_code=400, detail="Status must be 'approved' or 'rejected'")
+    
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        request = await conn.fetchrow('SELECT * FROM category_requests WHERE id = $1', request_id)
+        if not request:
+            raise HTTPException(status_code=404, detail="Category request not found")
+        
+        await conn.execute('''
+            UPDATE category_requests 
+            SET status = $1, admin_notes = $2, reviewed_at = CURRENT_TIMESTAMP, reviewed_by = $3
+            WHERE id = $4
+        ''', status, notes, user['id'], request_id)
+        
+        # If approved, add to categories table
+        if status == 'approved':
+            await conn.execute('''
+                INSERT INTO categories (value, label) VALUES ($1, $2)
+                ON CONFLICT (value) DO NOTHING
+            ''', request['name'], request['name_ru'])
+            
+            # Notify requester
+            await send_push_notification(
+                request['requested_by'],
+                'Категория одобрена!',
+                f'Ваша категория "{request["name_ru"]}" теперь доступна для использования.'
+            )
+        else:
+            await send_push_notification(
+                request['requested_by'],
+                'Категория отклонена',
+                notes or f'Категория "{request["name_ru"]}" не была одобрена.'
+            )
+        
+        return {"status": status}
+
+@app.delete("/api/admin/categories/{category_id}")
+async def delete_category(category_id: int, user: dict = Depends(get_current_user)):
+    """Deactivate a category (admin only)"""
+    if user['role'] != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        await conn.execute('UPDATE categories SET is_active = FALSE WHERE id = $1', category_id)
+        return {"message": "Category deactivated"}
 
 # ==================== DELIVERY FEE CALCULATION ====================
 
