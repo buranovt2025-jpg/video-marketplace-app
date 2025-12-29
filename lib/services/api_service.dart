@@ -464,6 +464,125 @@ class ApiService {
       throw ApiException(response.statusCode, 'Failed to delete content');
     }
   }
+  
+  // Reviews endpoints
+  static Future<Map<String, dynamic>> getProductReviews(int productId) async {
+    final response = await client.get(
+      Uri.parse('$baseUrl/api/reviews/$productId'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return _decodeResponse(response);
+    } else {
+      throw ApiException(response.statusCode, 'Failed to get reviews');
+    }
+  }
+  
+  static Future<Map<String, dynamic>> createReview({
+    required int productId,
+    required int rating,
+    String? comment,
+  }) async {
+    final response = await client.post(
+      Uri.parse('$baseUrl/api/reviews'),
+      headers: _headers,
+      body: jsonEncode({
+        'product_id': productId,
+        'rating': rating,
+        'comment': comment,
+      }),
+    );
+    
+    if (response.statusCode == 200) {
+      return _decodeResponse(response);
+    } else {
+      throw ApiException(response.statusCode, 'Failed to create review');
+    }
+  }
+  
+  static Future<void> deleteReview(int reviewId) async {
+    final response = await client.delete(
+      Uri.parse('$baseUrl/api/reviews/$reviewId'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode != 200) {
+      throw ApiException(response.statusCode, 'Failed to delete review');
+    }
+  }
+  
+  // Product Likes endpoints
+  static Future<Map<String, dynamic>> likeProduct(int productId) async {
+    final response = await client.post(
+      Uri.parse('$baseUrl/api/products/$productId/like'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return _decodeResponse(response);
+    } else {
+      throw ApiException(response.statusCode, 'Failed to like product');
+    }
+  }
+  
+  static Future<Map<String, dynamic>> getProductLikes(int productId) async {
+    final response = await client.get(
+      Uri.parse('$baseUrl/api/products/$productId/likes'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return _decodeResponse(response);
+    } else {
+      throw ApiException(response.statusCode, 'Failed to get product likes');
+    }
+  }
+  
+  // Product Comments endpoints
+  static Future<List<dynamic>> getProductComments(int productId) async {
+    final response = await client.get(
+      Uri.parse('$baseUrl/api/products/$productId/comments'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return _decodeResponse(response);
+    } else {
+      throw ApiException(response.statusCode, 'Failed to get comments');
+    }
+  }
+  
+  static Future<Map<String, dynamic>> createProductComment({
+    required int productId,
+    required String content,
+  }) async {
+    final response = await client.post(
+      Uri.parse('$baseUrl/api/products/$productId/comments'),
+      headers: _headers,
+      body: jsonEncode({
+        'product_id': productId,
+        'content': content,
+      }),
+    );
+    
+    if (response.statusCode == 200) {
+      return _decodeResponse(response);
+    } else {
+      throw ApiException(response.statusCode, 'Failed to create comment');
+    }
+  }
+  
+  static Future<void> deleteProductComment(int commentId) async {
+    final response = await client.delete(
+      Uri.parse('$baseUrl/api/products/comments/$commentId'),
+      headers: _headers,
+    );
+    
+    if (response.statusCode != 200) {
+      throw ApiException(response.statusCode, 'Failed to delete comment');
+    }
+  }
 }
 
 class ApiException implements Exception {

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/cart_controller.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/services/api_service.dart';
 import 'package:tiktok_tutorial/utils/responsive_helper.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/cart_screen.dart';
 import 'package:tiktok_tutorial/views/screens/chat/chat_screen.dart';
@@ -20,6 +22,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   final MarketplaceController _marketplaceController = Get.find<MarketplaceController>();
   late CartController _cartController;
   int _quantity = 1;
+  
+  // Social features state
+  bool _isLiked = false;
+  int _likesCount = 0;
+  List<dynamic> _comments = [];
+  List<dynamic> _reviews = [];
+  double _averageRating = 0.0;
+  int _reviewsCount = 0;
+  bool _isLoadingSocial = true;
+  
+  final TextEditingController _commentController = TextEditingController();
+  final TextEditingController _reviewController = TextEditingController();
+  int _selectedRating = 5;
 
   @override
   void initState() {
@@ -28,6 +43,147 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       Get.put(CartController());
     }
     _cartController = Get.find<CartController>();
+    _loadSocialData();
+  }
+  
+  @override
+  void dispose() {
+    _commentController.dispose();
+    _reviewController.dispose();
+    super.dispose();
+  }
+  
+  Future<void> _loadSocialData() async {
+    final productId = widget.product['id'];
+    if (productId == null) {
+      setState(() => _isLoadingSocial = false);
+      return;
+    }
+    
+    try {
+      final results = await Future.wait([
+        ApiService.getProductLikes(productId),
+        ApiService.getProductComments(productId),
+        ApiService.getProductReviews(productId),
+      ]);
+      
+      setState(() {
+        final likesData = results[0] as Map<String, dynamic>;
+        _likesCount = likesData['likes_count'] ?? 0;
+        _isLiked = likesData['user_liked'] ?? false;
+        
+        _comments = results[1] as List<dynamic>;
+        
+        final reviewsData = results[2] as Map<String, dynamic>;
+        _reviews = reviewsData['reviews'] ?? [];
+        _averageRating = (reviewsData['stats']?['average'] ?? 0.0).toDouble();
+        _reviewsCount = reviewsData['stats']?['count'] ?? 0;
+        
+        _isLoadingSocial = false;
+      });
+    } catch (e) {
+      setState(() => _isLoadingSocial = false);
+    }
+  }
+  
+  Future<void> _toggleLike() async {
+    if (!ApiService.isLoggedIn) {
+      Get.snackbar('Ошибка', 'Войдите чтобы поставить лайк',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+    
+    try {
+      final result = await ApiService.likeProduct(widget.product['id']);
+      setState(() {
+        _isLiked = result['liked'];
+        _likesCount = result['likes_count'];
+      });
+    } catch (e) {
+      Get.snackbar('Ошибка', 'Не удалось поставить лайк',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+  
+  Future<void> _addComment() async {
+    if (!ApiService.isLoggedIn) {
+      Get.snackbar('Ошибка', 'Войдите чтобы оставить комментарий',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+    
+    final content = _commentController.text.trim();
+    if (content.isEmpty) return;
+    
+    try {
+      final comment = await ApiService.createProductComment(
+        productId: widget.product['id'],
+        content: content,
+      );
+      setState(() {
+        _comments.insert(0, comment);
+        _commentController.clear();
+      });
+      Get.snackbar('Успешно', 'Комментарий добавлен',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      Get.snackbar('Ошибка', 'Не удалось добавить комментарий',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+  
+  Future<void> _addReview() async {
+    if (!ApiService.isLoggedIn) {
+      Get.snackbar('Ошибка', 'Войдите чтобы оставить отзыв',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+    
+    try {
+      final review = await ApiService.createReview(
+        productId: widget.product['id'],
+        rating: _selectedRating,
+        comment: _reviewController.text.trim().isNotEmpty ? _reviewController.text.trim() : null,
+      );
+      await _loadSocialData();
+      _reviewController.clear();
+      Get.back();
+      Get.snackbar('Успешно', 'Отзыв добавлен',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      Get.snackbar('Ошибка', 'Не удалось добавить отзыв',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+  
+  void _shareProduct() {
+    final product = widget.product;
+    final text = '${product['name']}\n${_formatPrice(product['price'])} сум\n\nСмотри на GoGoMarket!';
+    Share.share(text);
   }
 
   @override
@@ -73,7 +229,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   ),
                   child: const Icon(Icons.share, color: Colors.white),
                 ),
-                onPressed: () {},
+                onPressed: _shareProduct,
               ),
               Obx(() => Stack(
                 children: [
@@ -191,6 +347,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 16),
+                  
+                  // Social bar (likes, comments, reviews, share)
+                  _buildSocialBar(),
                   const SizedBox(height: 24),
 
                   // Seller info
@@ -264,6 +424,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       ),
                     ),
 
+                  // Reviews section
+                  _buildReviewsSection(),
+                  const SizedBox(height: 24),
+                  
+                  // Comments section
+                  _buildCommentsSection(),
+
                   const SizedBox(height: 100), // Space for bottom buttons
                 ],
               ),
@@ -273,6 +440,462 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       ),
       bottomNavigationBar: inStock ? _buildBottomBar(product) : _buildOutOfStockBar(),
     );
+  }
+  
+  Widget _buildSocialBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.grey[900],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          // Like button
+          InkWell(
+            onTap: _toggleLike,
+            child: Row(
+              children: [
+                Icon(
+                  _isLiked ? Icons.favorite : Icons.favorite_border,
+                  color: _isLiked ? Colors.red : Colors.white,
+                  size: 24,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  '$_likesCount',
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                ),
+              ],
+            ),
+          ),
+          
+          // Comments button
+          InkWell(
+            onTap: () => _showCommentsSheet(),
+            child: Row(
+              children: [
+                const Icon(Icons.comment_outlined, color: Colors.white, size: 24),
+                const SizedBox(width: 6),
+                Text(
+                  '${_comments.length}',
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                ),
+              ],
+            ),
+          ),
+          
+          // Reviews button
+          InkWell(
+            onTap: () => _showReviewDialog(),
+            child: Row(
+              children: [
+                const Icon(Icons.star_border, color: Colors.amber, size: 24),
+                const SizedBox(width: 6),
+                Text(
+                  _averageRating.toStringAsFixed(1),
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                ),
+                Text(
+                  ' ($_reviewsCount)',
+                  style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          
+          // Share button
+          InkWell(
+            onTap: _shareProduct,
+            child: const Icon(Icons.share_outlined, color: Colors.white, size: 24),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildReviewsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Отзывы',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            TextButton.icon(
+              onPressed: () => _showReviewDialog(),
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('Написать'),
+              style: TextButton.styleFrom(foregroundColor: buttonColor),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        
+        // Rating summary
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.grey[900],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Column(
+                children: [
+                  Text(
+                    _averageRating.toStringAsFixed(1),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 36,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Row(
+                    children: List.generate(5, (index) {
+                      return Icon(
+                        index < _averageRating.round() ? Icons.star : Icons.star_border,
+                        color: Colors.amber,
+                        size: 16,
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '$_reviewsCount отзывов',
+                    style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 24),
+              Expanded(
+                child: _reviews.isEmpty
+                    ? Text(
+                        'Пока нет отзывов.\nБудьте первым!',
+                        style: TextStyle(color: Colors.grey[500], fontSize: 14),
+                      )
+                    : Column(
+                        children: _reviews.take(2).map((review) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Row(
+                              children: [
+                                Row(
+                                  children: List.generate(5, (index) {
+                                    return Icon(
+                                      index < (review['rating'] ?? 0) ? Icons.star : Icons.star_border,
+                                      color: Colors.amber,
+                                      size: 12,
+                                    );
+                                  }),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    review['user_name'] ?? 'Пользователь',
+                                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildCommentsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Комментарии (${_comments.length})',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            TextButton(
+              onPressed: () => _showCommentsSheet(),
+              child: Text('Все', style: TextStyle(color: buttonColor)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        
+        // Comment input
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.grey[900],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _commentController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: 'Написать комментарий...',
+                    hintStyle: TextStyle(color: Colors.grey[600]),
+                    border: InputBorder.none,
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: _addComment,
+                icon: Icon(Icons.send, color: buttonColor),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        
+        // Recent comments
+        if (_comments.isEmpty)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                'Пока нет комментариев',
+                style: TextStyle(color: Colors.grey[500]),
+              ),
+            ),
+          )
+        else
+          ...(_comments.take(3).map((comment) => _buildCommentItem(comment)).toList()),
+      ],
+    );
+  }
+  
+  Widget _buildCommentItem(Map<String, dynamic> comment) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey[900],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 14,
+                backgroundColor: Colors.grey[800],
+                backgroundImage: comment['user_avatar'] != null
+                    ? NetworkImage(comment['user_avatar'])
+                    : null,
+                child: comment['user_avatar'] == null
+                    ? const Icon(Icons.person, size: 14, color: Colors.white)
+                    : null,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                comment['user_name'] ?? 'Пользователь',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                _formatDate(comment['created_at']),
+                style: TextStyle(color: Colors.grey[600], fontSize: 11),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            comment['content'] ?? '',
+            style: TextStyle(color: Colors.grey[300], fontSize: 13),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  void _showCommentsSheet() {
+    Get.bottomSheet(
+      Container(
+        height: MediaQuery.of(context).size.height * 0.7,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[600],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Комментарии (${_comments.length})',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: _comments.isEmpty
+                  ? Center(
+                      child: Text(
+                        'Пока нет комментариев',
+                        style: TextStyle(color: Colors.grey[500]),
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: _comments.length,
+                      itemBuilder: (context, index) => _buildCommentItem(_comments[index]),
+                    ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.grey[900],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _commentController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        hintText: 'Написать комментарий...',
+                        hintStyle: TextStyle(color: Colors.grey[600]),
+                        border: InputBorder.none,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      _addComment();
+                      Get.back();
+                    },
+                    icon: Icon(Icons.send, color: buttonColor),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      isScrollControlled: true,
+    );
+  }
+  
+  void _showReviewDialog() {
+    _selectedRating = 5;
+    _reviewController.clear();
+    
+    Get.dialog(
+      AlertDialog(
+        backgroundColor: Colors.grey[900],
+        title: const Text(
+          'Оставить отзыв',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            StatefulBuilder(
+              builder: (context, setDialogState) {
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(5, (index) {
+                    return IconButton(
+                      onPressed: () {
+                        setDialogState(() => _selectedRating = index + 1);
+                      },
+                      icon: Icon(
+                        index < _selectedRating ? Icons.star : Icons.star_border,
+                        color: Colors.amber,
+                        size: 32,
+                      ),
+                    );
+                  }),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _reviewController,
+              style: const TextStyle(color: Colors.white),
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: 'Ваш отзыв (необязательно)',
+                hintStyle: TextStyle(color: Colors.grey[600]),
+                filled: true,
+                fillColor: Colors.grey[800],
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text('Отмена', style: TextStyle(color: Colors.grey[500])),
+          ),
+          ElevatedButton(
+            onPressed: _addReview,
+            style: ElevatedButton.styleFrom(backgroundColor: buttonColor),
+            child: const Text('Отправить'),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  String _formatDate(String? dateStr) {
+    if (dateStr == null) return '';
+    try {
+      final date = DateTime.parse(dateStr);
+      final now = DateTime.now();
+      final diff = now.difference(date);
+      
+      if (diff.inMinutes < 1) return 'сейчас';
+      if (diff.inMinutes < 60) return '${diff.inMinutes} мин';
+      if (diff.inHours < 24) return '${diff.inHours} ч';
+      if (diff.inDays < 7) return '${diff.inDays} дн';
+      return '${date.day}.${date.month}.${date.year}';
+    } catch (e) {
+      return '';
+    }
   }
 
   Widget _buildPlaceholderImage() {

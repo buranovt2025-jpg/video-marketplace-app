@@ -114,6 +114,35 @@ async def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
+        await conn.execute('''
+            CREATE TABLE IF NOT EXISTS product_likes (
+                id SERIAL PRIMARY KEY,
+                product_id INTEGER REFERENCES products(id),
+                user_id INTEGER REFERENCES users(id),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(product_id, user_id)
+            )
+        ''')
+        await conn.execute('''
+            CREATE TABLE IF NOT EXISTS product_comments (
+                id SERIAL PRIMARY KEY,
+                product_id INTEGER REFERENCES products(id),
+                user_id INTEGER REFERENCES users(id),
+                content TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        await conn.execute('''
+            CREATE TABLE IF NOT EXISTS reviews (
+                id SERIAL PRIMARY KEY,
+                product_id INTEGER REFERENCES products(id),
+                user_id INTEGER REFERENCES users(id),
+                rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+                comment TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(product_id, user_id)
+            )
+        ''')
         demo_users = [
             ('seller@demo.com', 'demo123', 'Demo Seller', 'seller'),
             ('buyer@demo.com', 'demo123', 'Demo Buyer', 'buyer'),
@@ -186,6 +215,15 @@ class ContentCreate(BaseModel):
 class MessageCreate(BaseModel):
     receiver_id: int
     content: str
+
+class ProductCommentCreate(BaseModel):
+    product_id: int
+    content: str
+
+class ReviewCreate(BaseModel):
+    product_id: int
+    rating: int
+    comment: Optional[str] = None
 
 def create_token(user_id: int) -> str:
     payload = {"user_id": user_id, "exp": datetime.utcnow() + timedelta(days=30)}
@@ -492,6 +530,161 @@ async def get_users(user: dict = Depends(get_current_user)):
     async with pool.acquire() as conn:
         rows = await conn.fetch('SELECT * FROM users ORDER BY created_at DESC')
         return [dict(row) for row in rows]
+
+@app.get("/api/reviews/{product_id}")
+async def get_product_reviews(product_id: int):
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            '''SELECT r.*, u.name as user_name, u.avatar_url as user_avatar
+               FROM reviews r 
+               JOIN users u ON r.user_id = u.id 
+               WHERE r.product_id = $1 
+               ORDER BY r.created_at DESC''',
+            product_id
+        )
+        stats = await conn.fetchrow(
+            '''SELECT COUNT(*) as count, COALESCE(AVG(rating), 0) as average
+               FROM reviews WHERE product_id = $1''',
+            product_id
+        )
+        return {
+            "reviews": [dict(row) for row in rows],
+            "stats": {
+                "count": stats['count'],
+                "average": round(float(stats['average']), 1)
+            }
+        }
+
+@app.post("/api/reviews")
+async def create_review(review: ReviewCreate, user: dict = Depends(get_current_user)):
+    if review.rating < 1 or review.rating > 5:
+        raise HTTPException(status_code=400, detail="Rating must be between 1 and 5")
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        existing = await conn.fetchrow(
+            'SELECT id FROM reviews WHERE product_id = $1 AND user_id = $2',
+            review.product_id, user['id']
+        )
+        if existing:
+            await conn.execute(
+                'UPDATE reviews SET rating = $1, comment = $2 WHERE product_id = $3 AND user_id = $4',
+                review.rating, review.comment, review.product_id, user['id']
+            )
+        else:
+            await conn.execute(
+                'INSERT INTO reviews (product_id, user_id, rating, comment) VALUES ($1, $2, $3, $4)',
+                review.product_id, user['id'], review.rating, review.comment
+            )
+        row = await conn.fetchrow(
+            '''SELECT r.*, u.name as user_name FROM reviews r 
+               JOIN users u ON r.user_id = u.id 
+               WHERE r.product_id = $1 AND r.user_id = $2''',
+            review.product_id, user['id']
+        )
+        return dict(row)
+
+@app.delete("/api/reviews/{review_id}")
+async def delete_review(review_id: int, user: dict = Depends(get_current_user)):
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        review = await conn.fetchrow('SELECT * FROM reviews WHERE id = $1', review_id)
+        if not review:
+            raise HTTPException(status_code=404, detail="Review not found")
+        if review['user_id'] != user['id'] and user['role'] != 'admin':
+            raise HTTPException(status_code=403, detail="Not authorized")
+        await conn.execute('DELETE FROM reviews WHERE id = $1', review_id)
+        return {"status": "deleted"}
+
+# Product Likes endpoints
+@app.post("/api/products/{product_id}/like")
+async def like_product(product_id: int, user: dict = Depends(get_current_user)):
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        existing = await conn.fetchrow(
+            'SELECT id FROM product_likes WHERE product_id = $1 AND user_id = $2',
+            product_id, user['id']
+        )
+        if existing:
+            await conn.execute(
+                'DELETE FROM product_likes WHERE product_id = $1 AND user_id = $2',
+                product_id, user['id']
+            )
+            liked = False
+        else:
+            await conn.execute(
+                'INSERT INTO product_likes (product_id, user_id) VALUES ($1, $2)',
+                product_id, user['id']
+            )
+            liked = True
+        count = await conn.fetchval(
+            'SELECT COUNT(*) FROM product_likes WHERE product_id = $1',
+            product_id
+        )
+        return {"liked": liked, "likes_count": count}
+
+@app.get("/api/products/{product_id}/likes")
+async def get_product_likes(product_id: int, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        count = await conn.fetchval(
+            'SELECT COUNT(*) FROM product_likes WHERE product_id = $1',
+            product_id
+        )
+        user_liked = False
+        if credentials:
+            user_id = verify_token(credentials.credentials)
+            if user_id:
+                existing = await conn.fetchrow(
+                    'SELECT id FROM product_likes WHERE product_id = $1 AND user_id = $2',
+                    product_id, user_id
+                )
+                user_liked = existing is not None
+        return {"likes_count": count, "user_liked": user_liked}
+
+# Product Comments endpoints
+@app.get("/api/products/{product_id}/comments")
+async def get_product_comments(product_id: int):
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            '''SELECT c.*, u.name as user_name, u.avatar_url as user_avatar
+               FROM product_comments c 
+               JOIN users u ON c.user_id = u.id 
+               WHERE c.product_id = $1 
+               ORDER BY c.created_at DESC''',
+            product_id
+        )
+        return [dict(row) for row in rows]
+
+@app.post("/api/products/{product_id}/comments")
+async def create_product_comment(product_id: int, comment: ProductCommentCreate, user: dict = Depends(get_current_user)):
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        comment_id = await conn.fetchval(
+            'INSERT INTO product_comments (product_id, user_id, content) VALUES ($1, $2, $3) RETURNING id',
+            product_id, user['id'], comment.content
+        )
+        row = await conn.fetchrow(
+            '''SELECT c.*, u.name as user_name, u.avatar_url as user_avatar
+               FROM product_comments c 
+               JOIN users u ON c.user_id = u.id 
+               WHERE c.id = $1''',
+            comment_id
+        )
+        return dict(row)
+
+@app.delete("/api/products/comments/{comment_id}")
+async def delete_product_comment(comment_id: int, user: dict = Depends(get_current_user)):
+    pool = await get_db()
+    async with pool.acquire() as conn:
+        comment = await conn.fetchrow('SELECT * FROM product_comments WHERE id = $1', comment_id)
+        if not comment:
+            raise HTTPException(status_code=404, detail="Comment not found")
+        if comment['user_id'] != user['id'] and user['role'] != 'admin':
+            raise HTTPException(status_code=403, detail="Not authorized")
+        await conn.execute('DELETE FROM product_comments WHERE id = $1', comment_id)
+        return {"status": "deleted"}
 
 if __name__ == "__main__":
     import uvicorn
