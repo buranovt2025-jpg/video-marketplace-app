@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
@@ -18,23 +20,88 @@ import 'package:tiktok_tutorial/l10n/app_translations.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // TEMP (hotfix): accept self-signed certificates (e.g. https://165.232.81.31)
-  // for all HTTP(S) requests on mobile/desktop. This is unsafe for production.
-  installInsecureHttpOverrides();
-  
-  // Initialize API service and check for existing token
-  await ApiService.init();
-  
-  // Initialize services
-  await Get.putAsync(() => NotificationService().init());
-  await Get.putAsync(() => LocationService().init());
-  
-  // Initialize controllers
-  Get.put(MarketplaceController());
-  Get.put(CartController());
-  Get.put(FavoritesController());
-  
-  runApp(const MyApp());
+  // Show a visible error screen instead of silent white page on web release.
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    return _BootErrorScreen(
+      title: 'App startup error',
+      message: details.exceptionAsString(),
+    );
+  };
+
+  runZonedGuarded(() async {
+    // TEMP (hotfix): accept self-signed certificates (e.g. https://165.232.81.31)
+    // for all HTTP(S) requests on mobile/desktop. This is unsafe for production.
+    installInsecureHttpOverrides();
+
+    // Initialize API service and check for existing token
+    await ApiService.init();
+
+    // Initialize services
+    await Get.putAsync(() => NotificationService().init());
+    await Get.putAsync(() => LocationService().init());
+
+    // Initialize controllers
+    Get.put(MarketplaceController());
+    Get.put(CartController());
+    Get.put(FavoritesController());
+
+    runApp(const MyApp());
+  }, (error, stack) {
+    // Fallback: show a readable error message in UI.
+    runApp(_BootErrorApp(error: error));
+  });
+}
+
+class _BootErrorApp extends StatelessWidget {
+  final Object error;
+  const _BootErrorApp({required this.error});
+
+  @override
+  Widget build(BuildContext context) {
+    return const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: _BootErrorScreen(
+        title: 'App failed to start',
+        message: 'Check browser console / logs.',
+      ),
+    );
+  }
+}
+
+class _BootErrorScreen extends StatelessWidget {
+  final String title;
+  final String message;
+  const _BootErrorScreen({required this.title, required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, color: Colors.red, size: 72),
+              const SizedBox(height: 16),
+              Text(
+                title,
+                style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                message,
+                style: const TextStyle(color: Colors.white70),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class MyApp extends StatelessWidget {
