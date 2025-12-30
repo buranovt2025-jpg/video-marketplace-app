@@ -54,6 +54,12 @@ dev_dependencies:
     sdk: flutter
 
 dependency_overrides:
+  # Web build compatibility (Flutter 3.38.5 / Dart 3.10.4):
+  # Some older transitive versions (especially `web` and `http`) break `flutter build web`
+  # with errors like "JSObject can't be used as supertype" / missing members.
+  web: ^1.1.1
+  http: ^1.6.0
+  image_picker_platform_interface: ^2.11.1
   win32: ^5.0.0
   file: ^7.0.0
 
