@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/services/recent_searches_service.dart';
+import 'package:tiktok_tutorial/utils/product_search.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/product_detail_screen.dart';
 
 class SmartSearchScreen extends StatefulWidget {
@@ -13,12 +15,18 @@ class SmartSearchScreen extends StatefulWidget {
 
 class _SmartSearchScreenState extends State<SmartSearchScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _minPriceController = TextEditingController();
+  final TextEditingController _maxPriceController = TextEditingController();
   final MarketplaceController _controller = Get.find<MarketplaceController>();
   final FocusNode _focusNode = FocusNode();
   
   String _selectedCategory = 'all';
+  ProductSort _sort = ProductSort.relevance;
+  double? _minPrice;
+  double? _maxPrice;
   List<Map<String, dynamic>> _searchResults = [];
   List<String> _suggestions = [];
+  List<String> _recentQueries = [];
   bool _isSearching = false;
   bool _showSuggestions = false;
 
@@ -40,6 +48,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
   @override
   void initState() {
     super.initState();
+    _loadRecentQueries();
     _focusNode.addListener(() {
       setState(() {
         _showSuggestions = _focusNode.hasFocus && _suggestions.isNotEmpty;
@@ -47,9 +56,22 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
     });
   }
 
+  Future<void> _loadRecentQueries() async {
+    final recent = await RecentSearchesService.load();
+    if (!mounted) return;
+    setState(() {
+      _recentQueries = recent;
+      if (_searchController.text.isEmpty) {
+        _suggestions = recent;
+      }
+    });
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
+    _minPriceController.dispose();
+    _maxPriceController.dispose();
     _focusNode.dispose();
     super.dispose();
   }
@@ -57,8 +79,8 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
   void _onSearchChanged(String query) {
     if (query.isEmpty) {
       setState(() {
-        _suggestions = [];
-        _showSuggestions = false;
+        _suggestions = _recentQueries;
+        _showSuggestions = _focusNode.hasFocus && _suggestions.isNotEmpty;
       });
       return;
     }
@@ -99,40 +121,38 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
     return cat['label']!.tr;
   }
 
+  Future<void> _rememberQuery(String query) async {
+    if (query.trim().isEmpty) return;
+    final next = await RecentSearchesService.addQuery(query);
+    if (!mounted) return;
+    setState(() {
+      _recentQueries = next;
+    });
+  }
+
   void _performSearch() {
-    final query = _searchController.text.trim().toLowerCase();
+    final query = _searchController.text.trim();
     setState(() {
       _isSearching = true;
       _showSuggestions = false;
     });
 
-    final products = _controller.products;
-    final results = products.where((product) {
-      // Category filter
-      if (_selectedCategory != 'all' && product['category'] != _selectedCategory) {
-        return false;
-      }
-
-      // Search query filter
-      if (query.isNotEmpty) {
-        final name = product['name']?.toString().toLowerCase() ?? '';
-        final description = product['description']?.toString().toLowerCase() ?? '';
-        final category = product['category']?.toString().toLowerCase() ?? '';
-        final sellerName = product['seller_name']?.toString().toLowerCase() ?? '';
-        
-        return name.contains(query) ||
-               description.contains(query) ||
-               category.contains(query) ||
-               sellerName.contains(query);
-      }
-
-      return true;
-    }).toList();
+    final results = filterAndSortProducts(
+      products: _controller.products,
+      query: query,
+      selectedCategory: _selectedCategory,
+      minPrice: _minPrice,
+      maxPrice: _maxPrice,
+      sort: _sort,
+    );
 
     setState(() {
       _searchResults = results;
       _isSearching = false;
     });
+
+    // Fire-and-forget persistence
+    _rememberQuery(query);
   }
 
   void _selectSuggestion(String suggestion) {
@@ -146,6 +166,173 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
       _selectedCategory = category;
     });
     _performSearch();
+  }
+
+  void _openFilters() {
+    _minPriceController.text = _minPrice?.toStringAsFixed(0) ?? '';
+    _maxPriceController.text = _maxPrice?.toStringAsFixed(0) ?? '';
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.grey[900],
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 16,
+            bottom: 16 + MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    'filters'.tr,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: () async {
+                      await RecentSearchesService.clear();
+                      if (!mounted) return;
+                      setState(() {
+                        _recentQueries = [];
+                        if (_searchController.text.isEmpty) {
+                          _suggestions = [];
+                          _showSuggestions = false;
+                        }
+                      });
+                      if (mounted) Navigator.of(context).pop();
+                    },
+                    child: Text('clear_history'.tr),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              Text('sort_by'.tr, style: TextStyle(color: Colors.grey[400])),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<ProductSort>(
+                initialValue: _sort,
+                dropdownColor: Colors.grey[900],
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.grey[850],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                items: [
+                  DropdownMenuItem(
+                    value: ProductSort.relevance,
+                    child: Text('sort_by'.tr, style: const TextStyle(color: Colors.white)),
+                  ),
+                  DropdownMenuItem(
+                    value: ProductSort.priceLowToHigh,
+                    child: Text('price_low_to_high'.tr, style: const TextStyle(color: Colors.white)),
+                  ),
+                  DropdownMenuItem(
+                    value: ProductSort.priceHighToLow,
+                    child: Text('price_high_to_low'.tr, style: const TextStyle(color: Colors.white)),
+                  ),
+                ],
+                onChanged: (v) {
+                  if (v == null) return;
+                  setState(() => _sort = v);
+                },
+              ),
+
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _minPriceController,
+                      keyboardType: TextInputType.number,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: 'price_from'.tr,
+                        labelStyle: TextStyle(color: Colors.grey[400]),
+                        filled: true,
+                        fillColor: Colors.grey[850],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      controller: _maxPriceController,
+                      keyboardType: TextInputType.number,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: 'price_to'.tr,
+                        labelStyle: TextStyle(color: Colors.grey[400]),
+                        filled: true,
+                        fillColor: Colors.grey[850],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        setState(() {
+                          _minPrice = null;
+                          _maxPrice = null;
+                          _sort = ProductSort.relevance;
+                        });
+                        Navigator.of(context).pop();
+                        _performSearch();
+                      },
+                      child: Text('reset_filters'.tr),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
+                      onPressed: () {
+                        setState(() {
+                          _minPrice = tryParsePrice(_minPriceController.text);
+                          _maxPrice = tryParsePrice(_maxPriceController.text);
+                        });
+                        Navigator.of(context).pop();
+                        _performSearch();
+                      },
+                      child: Text('apply_filters'.tr),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   IconData _getCategoryIcon(String iconName) {
@@ -201,12 +388,16 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                             onPressed: () {
                               _searchController.clear();
                               setState(() {
-                                _suggestions = [];
+                                _suggestions = _recentQueries;
                                 _searchResults = [];
+                                _showSuggestions = _focusNode.hasFocus && _suggestions.isNotEmpty;
                               });
                             },
                           )
-                        : null,
+                        : IconButton(
+                            icon: Icon(Icons.tune, color: Colors.grey[400]),
+                            onPressed: _openFilters,
+                          ),
                     filled: true,
                     fillColor: Colors.grey[900],
                     border: OutlineInputBorder(
@@ -235,7 +426,11 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                     child: Column(
                       children: _suggestions.map((suggestion) {
                         return ListTile(
-                          leading: Icon(Icons.search, color: Colors.grey[500], size: 20),
+                          leading: Icon(
+                            _recentQueries.contains(suggestion) ? Icons.history : Icons.search,
+                            color: Colors.grey[500],
+                            size: 20,
+                          ),
                           title: Text(
                             suggestion,
                             style: const TextStyle(color: Colors.white),

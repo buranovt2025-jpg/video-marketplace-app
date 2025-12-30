@@ -31,6 +31,10 @@
     - `withOpacity(x)` → `withValues(alpha: x)` (чтобы убрать deprecation и избежать потери точности)
     - `VideoPlayerController.network(...)` → `VideoPlayerController.networkUrl(Uri.parse(...))`
   - Почистили остаточные проблемы анализатора до состояния **0 issues** (включая `must_be_immutable`, `use_build_context_synchronously`, `unused_*`, и совместимость типов `Timestamp`).
+  - Улучшили “умный поиск” товаров:
+    - Добавили фильтры по цене (min/max) и сортировку по цене
+    - Добавили историю последних запросов (с сохранением в `SharedPreferences`)
+    - Вынесли фильтрацию/сортировку в чистую функцию + добавили тесты
 
 ### Принятые решения (почему так)
 - **Не меняли поведение**, только повысили стабильность: заменили force-unwrap на безопасные проверки `null`.
