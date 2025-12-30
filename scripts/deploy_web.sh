@@ -40,6 +40,16 @@ if [ ! -x "$FLUTTER_BIN" ]; then
   fi
 fi
 
+SUDO=""
+if [ "$(id -u)" -ne 0 ]; then
+  if command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
+    SUDO="sudo -n"
+  else
+    echo "ERROR: Need passwordless sudo (non-interactive) or run as root." >&2
+    exit 1
+  fi
+fi
+
 echo "== Flutter clean/pub get =="
 "$FLUTTER_BIN" clean
 "$FLUTTER_BIN" pub get
@@ -116,23 +126,21 @@ fi
 echo "== Build web =="
 # Self-signed HTTPS breaks Service Worker registration in browsers, which can lead
 # to confusing blank pages and aggressive caching issues. For this environment
-# we disable PWA/service worker and prefer HTML renderer to avoid WebGL issues.
+# we disable PWA/service worker.
 #
 # You can override these defaults via env vars:
 #   PWA_STRATEGY=none|offline-first
-#   WEB_RENDERER=html|canvaskit
 PWA_STRATEGY="${PWA_STRATEGY:-none}"
-WEB_RENDERER="${WEB_RENDERER:-html}"
-"$FLUTTER_BIN" build web --release --pwa-strategy="$PWA_STRATEGY" --web-renderer="$WEB_RENDERER"
+"$FLUTTER_BIN" build web --release --pwa-strategy="$PWA_STRATEGY"
 
-sudo mkdir -p "$WEB_ROOT"
-sudo rsync -av --delete build/web/ "$WEB_ROOT/"
-echo "$(git rev-parse HEAD)" | sudo tee "$WEB_ROOT/.last_build_id" >/dev/null
-sudo systemctl reload nginx || true
+$SUDO mkdir -p "$WEB_ROOT"
+$SUDO rsync -av --delete build/web/ "$WEB_ROOT/"
+echo "$(git rev-parse HEAD)" | $SUDO tee "$WEB_ROOT/.last_build_id" >/dev/null
+$SUDO systemctl reload nginx || true
 
 echo "== Done =="
 if [ -f "$WEB_ROOT/version.json" ]; then
-  sudo cat "$WEB_ROOT/version.json" || true
+  $SUDO cat "$WEB_ROOT/version.json" || true
 fi
-echo "DEPLOYED_COMMIT=$(sudo cat "$WEB_ROOT/.last_build_id" 2>/dev/null || true)"
+echo "DEPLOYED_COMMIT=$($SUDO cat "$WEB_ROOT/.last_build_id" 2>/dev/null || true)"
 
