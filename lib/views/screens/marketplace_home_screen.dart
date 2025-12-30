@@ -24,6 +24,7 @@ import 'package:tiktok_tutorial/views/screens/cabinets/buyer_cabinet_screen.dart
 import 'package:tiktok_tutorial/views/screens/buyer/nearby_sellers_screen.dart';
 import 'package:tiktok_tutorial/views/screens/common/delete_account_screen.dart';
 import 'package:tiktok_tutorial/views/screens/admin/seller_verification_screen.dart';
+import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
 
 class MarketplaceHomeScreen extends StatefulWidget {
   final bool isGuestMode;
@@ -841,20 +842,14 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            if (product['image_url'] != null)
-              Image.network(
-                product['image_url'],
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  color: Colors.grey[800],
-                  child: Icon(Icons.image, color: Colors.grey[600]),
-                ),
-              )
-            else
-              Container(
+            AppNetworkImage(
+              url: product['image_url']?.toString(),
+              fit: BoxFit.cover,
+              errorWidget: Container(
                 color: Colors.grey[800],
                 child: Icon(Icons.inventory_2, color: Colors.grey[600]),
               ),
+            ),
             
             // Price tag
             Positioned(

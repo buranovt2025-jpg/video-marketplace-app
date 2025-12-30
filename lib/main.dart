@@ -215,8 +215,39 @@ class AppRouter extends StatelessWidget {
       }
 
       if (controller.currentUser.value == null) {
-        return const Scaffold(
-          body: Center(child: CircularProgressIndicator()),
+        return Scaffold(
+          backgroundColor: backgroundColor,
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Загружаем профиль…',
+                    style: TextStyle(color: Colors.white),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Если загрузка не заканчивается — выйдите и войдите снова.',
+                    style: TextStyle(color: Colors.grey[400]),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  OutlinedButton(
+                    onPressed: () async {
+                      await controller.logout();
+                      Get.offAll(() => const MarketplaceLoginScreen());
+                    },
+                    child: const Text('Выйти'),
+                  ),
+                ],
+              ),
+            ),
+          ),
         );
       }
       

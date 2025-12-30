@@ -6,6 +6,7 @@ import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/utils/responsive_helper.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/cart_screen.dart';
 import 'package:tiktok_tutorial/views/screens/chat/chat_screen.dart';
+import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final Map<String, dynamic> product;
@@ -112,13 +113,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               )),
             ],
             flexibleSpace: FlexibleSpaceBar(
-              background: product['image_url'] != null
-                  ? Image.network(
-                      product['image_url'],
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _buildPlaceholderImage(),
-                    )
-                  : _buildPlaceholderImage(),
+              background: AppNetworkImage(
+                url: product['image_url']?.toString(),
+                fit: BoxFit.cover,
+                errorWidget: _buildPlaceholderImage(),
+              ),
             ),
           ),
 

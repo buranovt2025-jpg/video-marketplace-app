@@ -7,6 +7,35 @@ class ApiService {
   static String? _token;
   static const Duration _defaultTimeout = Duration(seconds: 30);
   
+  static Map<String, dynamic>? _tryDecodeJsonObject(String body) {
+    try {
+      final decoded = jsonDecode(body);
+      return decoded is Map<String, dynamic> ? decoded : null;
+    } catch (_) {
+      return null;
+    }
+  }
+  
+  static String _extractErrorMessage(http.Response response, String fallback) {
+    final obj = _tryDecodeJsonObject(response.body);
+    final detail = obj?['detail'];
+    if (detail is String && detail.trim().isNotEmpty) return detail;
+    final message = obj?['message'];
+    if (message is String && message.trim().isNotEmpty) return message;
+    if (response.reasonPhrase != null && response.reasonPhrase!.trim().isNotEmpty) {
+      return response.reasonPhrase!;
+    }
+    return fallback;
+  }
+  
+  static Future<Never> _throwApi(http.Response response, {required String fallbackMessage}) async {
+    // Treat 401 as "not logged in" and drop the token to unblock UI.
+    if (response.statusCode == 401) {
+      await clearToken();
+    }
+    throw ApiException(response.statusCode, _extractErrorMessage(response, fallbackMessage));
+  }
+  
   static Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     _token = prefs.getString('auth_token');
@@ -43,11 +72,14 @@ class ApiService {
         .timeout(_defaultTimeout);
     
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      await setToken(data['access_token']);
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final token = data['access_token'];
+      if (token is String && token.isNotEmpty) {
+        await setToken(token);
+      }
       return data;
     } else {
-      throw ApiException(response.statusCode, jsonDecode(response.body)['detail'] ?? 'Login failed');
+      return await _throwApi(response, fallbackMessage: 'Login failed');
     }
   }
   
@@ -79,11 +111,14 @@ class ApiService {
         .timeout(_defaultTimeout);
     
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      await setToken(data['access_token']);
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final token = data['access_token'];
+      if (token is String && token.isNotEmpty) {
+        await setToken(token);
+      }
       return data;
     } else {
-      throw ApiException(response.statusCode, jsonDecode(response.body)['detail'] ?? 'Registration failed');
+      return await _throwApi(response, fallbackMessage: 'Registration failed');
     }
   }
   
@@ -96,9 +131,9 @@ class ApiService {
         .timeout(_defaultTimeout);
     
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return jsonDecode(response.body) as Map<String, dynamic>;
     } else {
-      throw ApiException(response.statusCode, 'Failed to get user');
+      return await _throwApi(response, fallbackMessage: 'Failed to get user');
     }
   }
   
@@ -112,9 +147,9 @@ class ApiService {
         .timeout(_defaultTimeout);
     
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return jsonDecode(response.body) as Map<String, dynamic>;
     } else {
-      throw ApiException(response.statusCode, 'Failed to update user');
+      return await _throwApi(response, fallbackMessage: 'Failed to update user');
     }
   }
   
@@ -131,7 +166,7 @@ class ApiService {
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      throw ApiException(response.statusCode, 'Failed to get products');
+      return await _throwApi(response, fallbackMessage: 'Failed to get products');
     }
   }
   
@@ -144,9 +179,9 @@ class ApiService {
         .timeout(_defaultTimeout);
     
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return jsonDecode(response.body) as Map<String, dynamic>;
     } else {
-      throw ApiException(response.statusCode, 'Failed to get product');
+      return await _throwApi(response, fallbackMessage: 'Failed to get product');
     }
   }
   
@@ -176,9 +211,9 @@ class ApiService {
         .timeout(_defaultTimeout);
     
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return jsonDecode(response.body) as Map<String, dynamic>;
     } else {
-      throw ApiException(response.statusCode, 'Failed to create product');
+      return await _throwApi(response, fallbackMessage: 'Failed to create product');
     }
   }
   
@@ -192,9 +227,9 @@ class ApiService {
         .timeout(_defaultTimeout);
     
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return jsonDecode(response.body) as Map<String, dynamic>;
     } else {
-      throw ApiException(response.statusCode, 'Failed to update product');
+      return await _throwApi(response, fallbackMessage: 'Failed to update product');
     }
   }
   
@@ -207,7 +242,7 @@ class ApiService {
         .timeout(_defaultTimeout);
     
     if (response.statusCode != 200) {
-      throw ApiException(response.statusCode, 'Failed to delete product');
+      await _throwApi(response, fallbackMessage: 'Failed to delete product');
     }
   }
   
@@ -223,7 +258,7 @@ class ApiService {
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      throw ApiException(response.statusCode, 'Failed to get reels');
+      return await _throwApi(response, fallbackMessage: 'Failed to get reels');
     }
   }
   
@@ -238,7 +273,7 @@ class ApiService {
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      throw ApiException(response.statusCode, 'Failed to get stories');
+      return await _throwApi(response, fallbackMessage: 'Failed to get stories');
     }
   }
   
@@ -264,9 +299,9 @@ class ApiService {
         .timeout(_defaultTimeout);
     
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return jsonDecode(response.body) as Map<String, dynamic>;
     } else {
-      throw ApiException(response.statusCode, 'Failed to create content');
+      return await _throwApi(response, fallbackMessage: 'Failed to create content');
     }
   }
   
@@ -288,9 +323,9 @@ class ApiService {
         .timeout(_defaultTimeout);
     
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return jsonDecode(response.body) as Map<String, dynamic>;
     } else {
-      throw ApiException(response.statusCode, 'Failed to like content');
+      return await _throwApi(response, fallbackMessage: 'Failed to like content');
     }
   }
   
@@ -306,7 +341,7 @@ class ApiService {
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      throw ApiException(response.statusCode, 'Failed to get orders');
+      return await _throwApi(response, fallbackMessage: 'Failed to get orders');
     }
   }
   
@@ -335,9 +370,9 @@ class ApiService {
         .timeout(_defaultTimeout);
     
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return jsonDecode(response.body) as Map<String, dynamic>;
     } else {
-      throw ApiException(response.statusCode, 'Failed to create order');
+      return await _throwApi(response, fallbackMessage: 'Failed to create order');
     }
   }
   
@@ -351,9 +386,9 @@ class ApiService {
         .timeout(_defaultTimeout);
     
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return jsonDecode(response.body) as Map<String, dynamic>;
     } else {
-      throw ApiException(response.statusCode, 'Failed to update order status');
+      return await _throwApi(response, fallbackMessage: 'Failed to update order status');
     }
   }
   
@@ -369,7 +404,7 @@ class ApiService {
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      throw ApiException(response.statusCode, 'Failed to get conversations');
+      return await _throwApi(response, fallbackMessage: 'Failed to get conversations');
     }
   }
   
@@ -384,7 +419,7 @@ class ApiService {
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      throw ApiException(response.statusCode, 'Failed to get messages');
+      return await _throwApi(response, fallbackMessage: 'Failed to get messages');
     }
   }
   
@@ -402,9 +437,9 @@ class ApiService {
         .timeout(_defaultTimeout);
     
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return jsonDecode(response.body) as Map<String, dynamic>;
     } else {
-      throw ApiException(response.statusCode, 'Failed to send message');
+      return await _throwApi(response, fallbackMessage: 'Failed to send message');
     }
   }
   
@@ -417,9 +452,10 @@ class ApiService {
         .timeout(_defaultTimeout);
     
     if (response.statusCode == 200) {
-      return jsonDecode(response.body)['unread_count'];
+      final obj = jsonDecode(response.body) as Map<String, dynamic>;
+      return obj['unread_count'] as int;
     } else {
-      throw ApiException(response.statusCode, 'Failed to get unread count');
+      return await _throwApi(response, fallbackMessage: 'Failed to get unread count');
     }
   }
   
@@ -432,9 +468,9 @@ class ApiService {
     final response = await http.get(uri, headers: _headers).timeout(_defaultTimeout);
     
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return jsonDecode(response.body) as Map<String, dynamic>;
     } else {
-      throw ApiException(response.statusCode, 'Failed to search');
+      return await _throwApi(response, fallbackMessage: 'Failed to search');
     }
   }
   
@@ -447,9 +483,9 @@ class ApiService {
         .timeout(_defaultTimeout);
     
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return jsonDecode(response.body) as Map<String, dynamic>;
     } else {
-      throw ApiException(response.statusCode, 'Failed to get explore');
+      return await _throwApi(response, fallbackMessage: 'Failed to get explore');
     }
   }
   
@@ -464,7 +500,7 @@ class ApiService {
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      throw ApiException(response.statusCode, 'Failed to get sellers');
+      return await _throwApi(response, fallbackMessage: 'Failed to get sellers');
     }
   }
   
@@ -480,7 +516,7 @@ class ApiService {
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      throw ApiException(response.statusCode, 'Failed to get users');
+      return await _throwApi(response, fallbackMessage: 'Failed to get users');
     }
   }
   
@@ -493,7 +529,7 @@ class ApiService {
         .timeout(_defaultTimeout);
     
     if (response.statusCode != 200) {
-      throw ApiException(response.statusCode, 'Failed to delete content');
+      await _throwApi(response, fallbackMessage: 'Failed to delete content');
     }
   }
 }
