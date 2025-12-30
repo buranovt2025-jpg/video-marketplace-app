@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/cart_controller.dart';
+import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/checkout_screen.dart';
 
 class CartScreen extends StatefulWidget {
@@ -206,13 +207,10 @@ class _CartScreenState extends State<CartScreen> {
             child: item.imageUrl != null
                 ? ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      item.imageUrl!,
+                    child: AppNetworkImage(
+                      url: item.imageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Icon(
-                        Icons.inventory_2,
-                        color: Colors.grey[600],
-                      ),
+                      errorWidget: Icon(Icons.inventory_2, color: Colors.grey[600]),
                     ),
                   )
                 : Icon(

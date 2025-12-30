@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
 
 class StoryViewerScreen extends StatefulWidget {
   final List<Map<String, dynamic>> stories;
@@ -263,34 +264,23 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
       color: Colors.black,
       child: Center(
         child: imageUrl != null
-            ? Image.network(
-                imageUrl,
+            ? AppNetworkImage(
+                url: imageUrl?.toString(),
                 fit: BoxFit.contain,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Center(
-                    child: CircularProgressIndicator(
-                      value: loadingProgress.expectedTotalBytes != null
-                          ? loadingProgress.cumulativeBytesLoaded /
-                              loadingProgress.expectedTotalBytes!
-                          : null,
-                      color: Colors.white,
+                placeholder: const Center(
+                  child: CircularProgressIndicator(color: Colors.white),
+                ),
+                errorWidget: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.broken_image, size: 64, color: Colors.grey[600]),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Не удалось загрузить изображение',
+                      style: TextStyle(color: Colors.grey[500]),
                     ),
-                  );
-                },
-                errorBuilder: (context, error, stackTrace) {
-                  return Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.broken_image, size: 64, color: Colors.grey[600]),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Не удалось загрузить изображение',
-                        style: TextStyle(color: Colors.grey[500]),
-                      ),
-                    ],
-                  );
-                },
+                  ],
+                ),
               )
             : videoUrl != null
                 ? Column(

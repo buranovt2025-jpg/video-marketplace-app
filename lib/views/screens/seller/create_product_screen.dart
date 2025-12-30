@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
 
 class CreateProductScreen extends StatefulWidget {
   const CreateProductScreen({Key? key}) : super(key: key);
@@ -316,10 +317,10 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
                     : _imageUrlController.text.isNotEmpty
                         ? ClipRRect(
                             borderRadius: BorderRadius.circular(16),
-                            child: Image.network(
-                              _imageUrlController.text,
+                            child: AppNetworkImage(
+                              url: _imageUrlController.text,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => _buildImagePlaceholder(),
+                              errorWidget: _buildImagePlaceholder(),
                             ),
                           )
                         : _buildImagePlaceholder(),

@@ -453,7 +453,11 @@ class ApiService {
     
     if (response.statusCode == 200) {
       final obj = jsonDecode(response.body) as Map<String, dynamic>;
-      return obj['unread_count'] as int;
+      final v = obj['unread_count'];
+      if (v is int) return v;
+      if (v is num) return v.toInt();
+      if (v is String) return int.tryParse(v) ?? 0;
+      return 0;
     } else {
       return await _throwApi(response, fallbackMessage: 'Failed to get unread count');
     }

@@ -7,6 +7,7 @@ import 'package:tiktok_tutorial/services/notification_service.dart';
 import 'package:tiktok_tutorial/views/screens/chat/chat_screen.dart';
 import 'package:tiktok_tutorial/views/screens/common/qr_code_screen.dart';
 import 'package:tiktok_tutorial/views/screens/common/qr_scanner_export.dart';
+import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
 
 class CourierOrderDetailScreen extends StatefulWidget {
   final Map<String, dynamic> order;
@@ -520,14 +521,10 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
                   child: item['image_url'] != null
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          item['image_url'],
+                        child: AppNetworkImage(
+                          url: item['image_url']?.toString(),
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Icon(
-                            Icons.inventory_2,
-                            color: Colors.grey[600],
-                            size: 20,
-                          ),
+                          errorWidget: Icon(Icons.inventory_2, color: Colors.grey[600], size: 20),
                         ),
                       )
                     : Icon(Icons.inventory_2, color: Colors.grey[600], size: 20),

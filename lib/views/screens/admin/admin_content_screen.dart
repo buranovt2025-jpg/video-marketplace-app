@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
 import 'package:tiktok_tutorial/views/screens/seller/create_reel_screen.dart';
 import 'package:tiktok_tutorial/views/screens/seller/create_story_screen.dart';
 
@@ -195,11 +196,11 @@ class _AdminContentScreenState extends State<AdminContentScreen> with SingleTick
                     if (reel['thumbnail_url'] != null)
                       ClipRRect(
                         borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                        child: Image.network(
-                          reel['thumbnail_url'],
+                        child: AppNetworkImage(
+                          url: reel['thumbnail_url']?.toString(),
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Center(
-                            child: Icon(Icons.video_library, color: Colors.grey[600], size: 40),
+                          errorWidget: const Center(
+                            child: Icon(Icons.video_library, color: Colors.grey, size: 40),
                           ),
                         ),
                       )
@@ -285,11 +286,11 @@ class _AdminContentScreenState extends State<AdminContentScreen> with SingleTick
             if (story['media_url'] != null)
               ClipRRect(
                 borderRadius: BorderRadius.circular(10),
-                child: Image.network(
-                  story['media_url'],
+                child: AppNetworkImage(
+                  url: story['media_url']?.toString(),
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Center(
-                    child: Icon(Icons.image, color: Colors.grey[600], size: 32),
+                  errorWidget: const Center(
+                    child: Icon(Icons.image, color: Colors.grey, size: 32),
                   ),
                 ),
               )

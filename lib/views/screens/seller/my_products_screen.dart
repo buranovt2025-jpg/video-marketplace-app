@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
 import 'package:tiktok_tutorial/views/screens/seller/create_product_screen.dart';
 
 class MyProductsScreen extends StatefulWidget {
@@ -127,10 +128,10 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
               width: double.infinity,
               color: Colors.grey[800],
               child: product['image_url'] != null
-                  ? Image.network(
-                      product['image_url'],
+                  ? AppNetworkImage(
+                      url: product['image_url']?.toString(),
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _buildImagePlaceholder(),
+                      errorWidget: _buildImagePlaceholder(),
                     )
                   : _buildImagePlaceholder(),
             ),

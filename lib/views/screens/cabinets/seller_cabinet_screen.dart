@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
 import 'package:tiktok_tutorial/views/screens/seller/my_products_screen.dart';
 import 'package:tiktok_tutorial/views/screens/common/qr_code_screen.dart';
 import 'package:tiktok_tutorial/views/screens/seller/seller_analytics_screen.dart';
@@ -585,13 +586,10 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
                   child: product['image_url'] != null
                       ? ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            product['image_url'],
+                          child: AppNetworkImage(
+                            url: product['image_url']?.toString(),
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Icon(
-                              Icons.inventory_2,
-                              color: Colors.grey[600],
-                            ),
+                            errorWidget: Icon(Icons.inventory_2, color: Colors.grey[600]),
                           ),
                         )
                       : Icon(Icons.inventory_2, color: Colors.grey[600]),
@@ -696,13 +694,10 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
               child: product['image_url'] != null
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        product['image_url'],
+                      child: AppNetworkImage(
+                        url: product['image_url']?.toString(),
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Icon(
-                          Icons.inventory_2,
-                          color: Colors.grey[600],
-                        ),
+                        errorWidget: Icon(Icons.inventory_2, color: Colors.grey[600]),
                       ),
                     )
                   : Icon(Icons.inventory_2, color: Colors.grey[600]),
