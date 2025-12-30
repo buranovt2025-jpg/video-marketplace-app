@@ -114,7 +114,16 @@ else
 fi
 
 echo "== Build web =="
-"$FLUTTER_BIN" build web --release
+# Self-signed HTTPS breaks Service Worker registration in browsers, which can lead
+# to confusing blank pages and aggressive caching issues. For this environment
+# we disable PWA/service worker and prefer HTML renderer to avoid WebGL issues.
+#
+# You can override these defaults via env vars:
+#   PWA_STRATEGY=none|offline-first
+#   WEB_RENDERER=html|canvaskit
+PWA_STRATEGY="${PWA_STRATEGY:-none}"
+WEB_RENDERER="${WEB_RENDERER:-html}"
+"$FLUTTER_BIN" build web --release --pwa-strategy="$PWA_STRATEGY" --web-renderer="$WEB_RENDERER"
 
 sudo mkdir -p "$WEB_ROOT"
 sudo rsync -av --delete build/web/ "$WEB_ROOT/"

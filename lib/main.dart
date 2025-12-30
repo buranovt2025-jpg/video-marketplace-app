@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
@@ -20,6 +21,16 @@ import 'package:tiktok_tutorial/l10n/app_translations.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Make sure errors are visible in browser console.
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.dumpErrorToConsole(details);
+  };
+  PlatformDispatcher.instance.onError = (error, stack) {
+    debugPrint('Uncaught async error: $error');
+    debugPrint('$stack');
+    return true;
+  };
+
   // Show a visible error screen instead of silent white page on web release.
   ErrorWidget.builder = (FlutterErrorDetails details) {
     return _BootErrorScreen(
@@ -33,12 +44,41 @@ void main() async {
     // for all HTTP(S) requests on mobile/desktop. This is unsafe for production.
     installInsecureHttpOverrides();
 
-    // Initialize API service and check for existing token
-    await ApiService.init();
+    debugPrint('=== GoGoMarket starting ===');
 
-    // Initialize services
-    await Get.putAsync(() => NotificationService().init());
-    await Get.putAsync(() => LocationService().init());
+    // Initialize API service and check for existing token
+    try {
+      await ApiService.init();
+      debugPrint('ApiService.init OK (isLoggedIn=${ApiService.isLoggedIn})');
+    } catch (e, st) {
+      debugPrint('ApiService.init FAILED: $e');
+      debugPrint('$st');
+      // Don't block startup; app can still render guest mode.
+    }
+
+    // Initialize services (non-blocking on web; plugins may be unavailable)
+    final notificationService = Get.put(NotificationService(), permanent: true);
+    final locationService = Get.put(LocationService(), permanent: true);
+
+    if (!kIsWeb) {
+      try {
+        await notificationService.init();
+        debugPrint('NotificationService.init OK');
+      } catch (e, st) {
+        debugPrint('NotificationService.init FAILED: $e');
+        debugPrint('$st');
+      }
+
+      try {
+        await locationService.init();
+        debugPrint('LocationService.init OK');
+      } catch (e, st) {
+        debugPrint('LocationService.init FAILED: $e');
+        debugPrint('$st');
+      }
+    } else {
+      debugPrint('Web: skipping NotificationService/LocationService init');
+    }
 
     // Initialize controllers
     Get.put(MarketplaceController());
@@ -47,22 +87,31 @@ void main() async {
 
     runApp(const MyApp());
   }, (error, stack) {
+    debugPrint('Zoned startup error: $error');
+    debugPrint('$stack');
     // Fallback: show a readable error message in UI.
-    runApp(_BootErrorApp(error: error));
+    runApp(_BootErrorApp(error: error, stack: stack));
   });
 }
 
 class _BootErrorApp extends StatelessWidget {
   final Object error;
-  const _BootErrorApp({required this.error});
+  final StackTrace? stack;
+  const _BootErrorApp({required this.error, this.stack});
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    final msg = [
+      error.toString(),
+      if (stack != null) '',
+      if (stack != null) stack.toString(),
+    ].join('\n');
+
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: _BootErrorScreen(
         title: 'App failed to start',
-        message: 'Check browser console / logs.',
+        message: msg.isEmpty ? 'Check browser console / logs.' : msg,
       ),
     );
   }
