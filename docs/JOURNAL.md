@@ -350,3 +350,51 @@ git checkout cursor/what-has-been-done-5e03
 git pull origin cursor/what-has-been-done-5e03
 bash scripts/deploy_web.sh
 ```
+
+---
+
+## Сессия 30 декабря 2025 (Devin) — Деплой Service Worker fix + обнаружение 401 API ошибки
+
+### Контекст
+- Cursor запушил фиксы для белого экрана (коммиты `257ddbd`, `6bde5ed`, `77356b2`).
+- Devin задеплоил на сервер.
+
+### Что сделано (Devin)
+
+1. **Деплой коммита `77356b2`:**
+   - `flutter clean && flutter pub get && flutter build web --release` — успех (89 секунд).
+   - `rsync` в `/var/www/gogomarket/` — успех.
+   - Примечание: `--web-renderer` флаг не поддерживается в Flutter 3.38.5, использован стандартный билд.
+
+2. **Результат после деплоя:**
+   - **Было:** белый экран
+   - **Стало:** чёрный экран с оранжевым loading spinner
+
+### Новая проблема: 401 от backend API
+
+В консоли браузера обнаружена ошибка:
+```
+Failed to load resource: the server responded with a status of 401 ()
+GET https://app-owphiuvd.fly.dev/api/auth/me
+```
+
+**Анализ:**
+- Приложение успешно запускается (видим loading spinner).
+- Приложение пытается обратиться к backend на `app-owphiuvd.fly.dev`.
+- Backend возвращает 401 (Unauthorized).
+- Приложение застревает на экране загрузки.
+
+**Возможные причины:**
+1. Backend на Fly.io не работает или не настроен.
+2. Неправильный URL API в коде.
+3. Требуется авторизация для `/api/auth/me`.
+
+### Следующие шаги (для Cursor)
+1. Проверить, работает ли backend на `app-owphiuvd.fly.dev`.
+2. Проверить URL API в коде (`lib/constants.dart` или аналогичный файл).
+3. Добавить обработку 401 ошибки — показывать экран логина вместо бесконечной загрузки.
+
+### Технические детали
+- Задеплоенный коммит: `77356b26f6a2a238b24f4c51ed437d42ec664d9b`
+- Backend URL: `https://app-owphiuvd.fly.dev`
+- Ошибка: `401 Unauthorized` на `/api/auth/me`
