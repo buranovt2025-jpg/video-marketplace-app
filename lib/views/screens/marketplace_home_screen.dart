@@ -1083,6 +1083,10 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     
       final status = order['status'] ?? 'created';
     
+      final orderIdStr = (order['id'] ?? '').toString();
+      final orderIdShort = orderIdStr.length > 8 ? orderIdStr.substring(0, 8) : orderIdStr;
+      final totalAmountNum = (order['total_amount'] is num) ? (order['total_amount'] as num) : 0;
+
       return GestureDetector(
         onTap: () => Get.to(() => OrderTrackingScreen(order: order)),
         child: Container(
@@ -1099,7 +1103,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Заказ #${order['id']?.substring(0, 8) ?? ''}',
+                    'Заказ #$orderIdShort',
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -1124,7 +1128,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Сумма: ${order['total_amount']?.toStringAsFixed(0) ?? '0'} сум',
+                'Сумма: ${totalAmountNum.toStringAsFixed(0)} сум',
                 style: TextStyle(color: Colors.grey[400]),
               ),
               if (order['delivery_address'] != null) ...[

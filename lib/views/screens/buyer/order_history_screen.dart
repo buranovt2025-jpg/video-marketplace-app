@@ -270,6 +270,9 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   Widget _buildOrderCard(Map<String, dynamic> order) {
     final status = order['status'] ?? 'pending';
     final canCancel = status == 'pending' || status == 'accepted';
+    final orderIdStr = (order['id'] ?? '').toString();
+    final orderIdShort = orderIdStr.length > 8 ? orderIdStr.substring(0, 8) : orderIdStr;
+    final totalNum = (order['total'] is num) ? (order['total'] as num) : (order['total_amount'] is num) ? (order['total_amount'] as num) : 0;
     
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -285,7 +288,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Заказ #${order['id']?.substring(0, 8) ?? ''}',
+                  'Заказ #$orderIdShort',
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -313,7 +316,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               children: [
                 const SizedBox(height: 8),
                 Text(
-                  '${order['total']?.toStringAsFixed(0) ?? '0'} сум',
+                  '${totalNum.toStringAsFixed(0)} сум',
                   style: const TextStyle(
                     color: primaryColor,
                     fontSize: 18,
