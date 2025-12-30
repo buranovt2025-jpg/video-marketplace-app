@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
@@ -45,6 +46,18 @@ void main() async {
     installInsecureHttpOverrides();
 
     debugPrint('=== GoGoMarket starting ===');
+
+    // Firebase init:
+    // - Mobile/desktop: can use native config (google-services.json / GoogleService-Info.plist).
+    // - Web: requires explicit FirebaseOptions (flutterfire configure). If missing, we log and
+    //   continue so marketplace mode (FastAPI backend) can still work.
+    try {
+      await Firebase.initializeApp();
+      debugPrint('Firebase.initializeApp OK');
+    } catch (e, st) {
+      debugPrint('Firebase.initializeApp FAILED (continuing): $e');
+      debugPrint('$st');
+    }
 
     // Initialize API service and check for existing token
     try {
