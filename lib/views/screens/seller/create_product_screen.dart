@@ -450,8 +450,9 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
                     );
                   }).toList(),
                   onChanged: (value) {
+                    if (value == null) return;
                     setState(() {
-                      _selectedCategory = value!;
+                      _selectedCategory = value;
                     });
                   },
                 ),

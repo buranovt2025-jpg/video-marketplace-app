@@ -31,14 +31,19 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.initialAddress != null) {
-      _addressController.text = widget.initialAddress!;
+    final initialAddress = widget.initialAddress;
+    if (initialAddress != null) {
+      _addressController.text = initialAddress;
     }
-    if (widget.initialLatitude != null) {
-      _latitude = widget.initialLatitude!;
+
+    final initialLatitude = widget.initialLatitude;
+    if (initialLatitude != null) {
+      _latitude = initialLatitude;
     }
-    if (widget.initialLongitude != null) {
-      _longitude = widget.initialLongitude!;
+
+    final initialLongitude = widget.initialLongitude;
+    if (initialLongitude != null) {
+      _longitude = initialLongitude;
     }
   }
 
