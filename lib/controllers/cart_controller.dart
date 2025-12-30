@@ -22,7 +22,9 @@ class CartItem {
   double get total => price * quantity;
 
   Map<String, dynamic> toOrderItem() => {
-    'product_id': productId,
+    // Backend может ожидать int, но в UI ID часто хранится как String.
+    // Отправляем int, если строка числовая, иначе отправляем как есть.
+    'product_id': int.tryParse(productId) ?? productId,
     'quantity': quantity,
     'price': price,
   };
@@ -60,11 +62,11 @@ class CartController extends GetxController {
       items.refresh();
     } else {
       items.add(CartItem(
-        productId: product['id'],
+        productId: product['id'].toString(),
         productName: product['name'],
         price: (product['price'] as num).toDouble(),
         imageUrl: product['image_url'],
-        sellerId: product['seller_id'],
+        sellerId: product['seller_id'].toString(),
         sellerName: product['seller_name'] ?? 'Продавец',
         quantity: quantity,
       ));

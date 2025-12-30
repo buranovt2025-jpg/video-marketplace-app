@@ -17,6 +17,18 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
 
   final List<String> _filters = ['all', 'pending', 'accepted', 'in_delivery', 'delivered', 'cancelled'];
 
+  @override
+  void initState() {
+    super.initState();
+    // Важно: этот экран не гарантирует, что orders уже загружены.
+    // Подгружаем после первой отрисовки, чтобы избежать серого/пустого экрана.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (_controller.isLoggedIn) {
+        await _controller.fetchOrders();
+      }
+    });
+  }
+
   String _getFilterLabel(String filter) {
     switch (filter) {
       case 'all':
@@ -218,18 +230,35 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                         'no_results'.tr,
                         style: TextStyle(color: Colors.grey[400], fontSize: 18),
                       ),
+                      const SizedBox(height: 16),
+                      OutlinedButton.icon(
+                        onPressed: _controller.isLoggedIn ? _controller.fetchOrders : null,
+                        icon: const Icon(Icons.refresh),
+                        label: Text('Обновить'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: BorderSide(color: Colors.grey[700]!),
+                        ),
+                      ),
                     ],
                   ),
                 );
               }
               
-              return ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: orders.length,
-                itemBuilder: (context, index) {
-                  final order = orders[index];
-                  return _buildOrderCard(order);
+              return RefreshIndicator(
+                onRefresh: () async {
+                  if (_controller.isLoggedIn) {
+                    await _controller.fetchOrders();
+                  }
                 },
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: orders.length,
+                  itemBuilder: (context, index) {
+                    final order = orders[index];
+                    return _buildOrderCard(order);
+                  },
+                ),
               );
             }),
           ),

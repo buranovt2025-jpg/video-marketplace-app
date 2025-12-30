@@ -735,9 +735,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (order != null) {
         // Clear items from this seller
         _cartController.clearSellerItems(widget.sellerId);
-        
-        // Navigate to success screen
-        Get.off(() => OrderSuccessScreen(order: order));
+
+        // Сначала снимаем loading (чтобы не оставаться в "зависшем" состоянии),
+        // затем уходим на success и чистим стек, чтобы не вернуться на checkout с loader'ом.
+        if (mounted) setState(() => _isLoading = false);
+        Get.offAll(() => OrderSuccessScreen(order: order));
       } else {
         Get.snackbar(
           'Ошибка',
@@ -749,8 +751,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           colorText: Colors.white,
         );
       }
+    } catch (e) {
+      Get.snackbar(
+        'Ошибка',
+        e.toString(),
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

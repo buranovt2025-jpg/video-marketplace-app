@@ -156,6 +156,16 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               setState(() {
                 _currentIndex = index;
               });
+
+              // Критично для прода: когда пользователь впервые открывает вкладку "Заказы",
+              // список может быть пустым, если fetchOrders не вызывался/не успел.
+              // Подтягиваем заказы при входе на вкладку.
+              final isOrdersTab = _isSeller ? index == 3 : index == 2;
+              if (isOrdersTab && _controller.isLoggedIn) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  _controller.fetchOrders();
+                });
+              }
             },
             type: BottomNavigationBarType.fixed,
             backgroundColor: Colors.black,
@@ -975,13 +985,20 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   Widget _buildOrdersTab() {
     return CustomScrollView(
       slivers: [
-        const SliverAppBar(
+        SliverAppBar(
           floating: true,
           backgroundColor: backgroundColor,
-          title: Text(
+          title: const Text(
             'Заказы',
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh, color: Colors.white),
+              onPressed: _controller.isLoggedIn ? _controller.fetchOrders : null,
+              tooltip: 'Обновить',
+            ),
+          ],
         ),
         
         Obx(() {
@@ -1001,6 +1018,16 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                         'Пока нет заказов',
                         style: TextStyle(color: Colors.grey[500], fontSize: 16),
                       ),
+                      const SizedBox(height: 16),
+                      OutlinedButton.icon(
+                        onPressed: _controller.isLoggedIn ? _controller.fetchOrders : null,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Обновить'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: BorderSide(color: Colors.grey[700]!),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -1008,13 +1035,22 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
             );
           }
           
-          return SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final order = orders[index];
-                return _buildOrderCard(order);
+          return SliverToBoxAdapter(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                if (_controller.isLoggedIn) {
+                  await _controller.fetchOrders();
+                }
               },
-              childCount: orders.length,
+              child: ListView.builder(
+                shrinkWrap: true,
+                physics: const AlwaysScrollableScrollPhysics(),
+                itemCount: orders.length,
+                itemBuilder: (context, index) {
+                  final order = orders[index];
+                  return _buildOrderCard(order);
+                },
+              ),
             ),
           );
         }),
