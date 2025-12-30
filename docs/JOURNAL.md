@@ -160,8 +160,22 @@
 - Деплоим **минимальный hotfix** и подтверждаем его попадание на прод (через build stamp/commit hash в UI).
 
 ### Дополнительно (чтобы деплой был “в 1 команду”)
-- Добавлен `scripts/deploy_web.sh`: сборка Flutter Web + rsync в `/var/www/gogomarket` + reload nginx.
-- Добавлен `scripts/build_apk.sh`: сборка release APK.
+- Добавлены скрипты:
+  - `scripts/deploy_web.sh`: `flutter pub get` → `flutter build web --release` → rsync в `/var/www/gogomarket` → `nginx reload`, запись `.last_build_id`.
+  - `scripts/build_apk.sh`: сборка release APK и вывод пути к артефактам.
 - Добавлен web-build фикс для QR/`mobile_scanner`:
-  - локальный override на `packages/mobile_scanner` (web platform disabled в pubspec),
-  - `qr_scanner_export.dart` + web stub, чтобы QR-сканер не ломал web-сборку.
+  - `lib/views/screens/common/qr_scanner_export.dart` + `qr_scanner_screen_stub.dart` (на web используется заглушка, на mobile — реальный экран),
+  - `CourierOrderDetailScreen` импортирует `qr_scanner_export.dart`,
+  - в `deploy_web.sh` делается временный патч *pub-cache* `mobile_scanner` (отключается `platforms.web` в `pubspec.yaml`) только на время сборки web, чтобы избежать конфликта `ImageCapture` в `dart:html`.
+
+### Что подтвердили на сервере (DigitalOcean droplet)
+- Nginx раздаёт Flutter Web статику из: `/var/www/gogomarket` (git-репы там нет).
+- API роуты `/api`, `/ws`, `/healthz` проксируются на `127.0.0.1:8000`.
+- Для быстрой проверки деплоя используется:
+  - `/var/www/gogomarket/version.json`
+  - `/var/www/gogomarket/.last_build_id`
+
+### Операционные решения/“фишки”
+- Чтобы не “копировать простыни команд”, выбрали подход: **1 команда на сервере** через `scripts/deploy_web.sh` / `scripts/build_apk.sh`.
+- SSH для пользователя `deploy` включали по паролю (test env) через `PasswordAuthentication yes` в `/etc/ssh/sshd_config.d/50-cloud-init.conf` и `60-cloudimg-settings.conf`.
+- В процессе выяснили, что попытки “чинить web сборку” через хаотичные `dependency_overrides` и ручные правки на сервере приводят к кругам; правильный путь — фиксировать проблему в репозитории и деплоить повторяемым скриптом.
