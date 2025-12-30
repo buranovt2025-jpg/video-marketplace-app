@@ -40,6 +40,8 @@ if [ ! -x "$FLUTTER_BIN" ]; then
   fi
 fi
 
+echo "== Flutter clean/pub get =="
+"$FLUTTER_BIN" clean
 "$FLUTTER_BIN" pub get
 
 # Web build fix:

@@ -38,7 +38,7 @@ dependencies:
   flutter_local_notifications: ^17.0.0
   geolocator: ^10.1.0
   get: ^4.6.6
-  http: ^1.2.0
+  http: ^1.6.0
   image_picker: ^1.0.7
   mobile_scanner: ^4.0.1
   qr_flutter: ^4.1.0
@@ -58,7 +58,6 @@ dependency_overrides:
   # Some older transitive versions (especially `web` and `http`) break `flutter build web`
   # with errors like "JSObject can't be used as supertype" / missing members.
   web: ^1.1.1
-  http: ^1.6.0
   image_picker_platform_interface: ^2.11.1
   win32: ^5.0.0
   file: ^7.0.0
