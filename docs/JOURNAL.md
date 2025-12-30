@@ -202,7 +202,7 @@
 
 ### Что сделано (Devin)
 1. **Подключение к серверу:**
-   - Использован DO API токен для сброса пароля root.
+   - Использован DigitalOcean API для сброса пароля root (секреты не храним в репозитории).
    - SSH доступ получен успешно.
 
 2. **Исправлен mobile_scanner конфликт:**
@@ -256,7 +256,7 @@ bash scripts/deploy_web.sh
 1. **Апгрейд сервера:**
    - Пользователь увеличил RAM дроплета с 2GB до 4GB (s-2vcpu-4gb).
    - Сервер был выключен после resize — включён через DO API.
-   - Новый пароль установлен: `GoGoMarket2025!Secure`.
+   - Новый пароль установлен: `[REDACTED]` (секреты не коммитим).
 
 2. **Подготовка mobile_scanner:**
    - Получен патченный `packages/mobile_scanner` из ветки `devin/1766935961-postgresql-backend`.
@@ -297,7 +297,7 @@ bash scripts/deploy_web.sh
 ### Технические детали сервера
 - IP: `165.232.81.31`
 - RAM: 4GB (s-2vcpu-4gb)
-- Пароль root: `GoGoMarket2025!Secure`
+- Пароль root: `[REDACTED]`
 - Web root: `/var/www/gogomarket`
 - Проект: `/root/projects/video-marketplace-app`
 - Ветка: `cursor/what-has-been-done-5e03`
