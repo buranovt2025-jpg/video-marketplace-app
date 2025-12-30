@@ -241,3 +241,63 @@ git pull origin cursor/what-has-been-done-5e03
 flutter clean && flutter pub get && flutter build web --release
 bash scripts/deploy_web.sh
 ```
+
+---
+
+## Сессия 30 декабря 2025 (Devin) — Успешный деплой web-билда
+
+### Контекст
+- Cursor обновил Firebase пакеты до совместимых версий.
+- Пользователь увеличил RAM сервера с 2GB до 4GB.
+- Devin продолжил деплой после получения нового пароля.
+
+### Что сделано (Devin)
+
+1. **Апгрейд сервера:**
+   - Пользователь увеличил RAM дроплета с 2GB до 4GB (s-2vcpu-4gb).
+   - Сервер был выключен после resize — включён через DO API.
+   - Новый пароль установлен: `GoGoMarket2025!Secure`.
+
+2. **Подготовка mobile_scanner:**
+   - Получен патченный `packages/mobile_scanner` из ветки `devin/1766935961-postgresql-backend`.
+   - Добавлен `mobile_scanner: path: packages/mobile_scanner` в `dependency_overrides`.
+   - Убраны все native platform declarations из `packages/mobile_scanner/pubspec.yaml`.
+
+3. **Успешная сборка web:**
+   - `flutter clean && flutter pub get && flutter build web --release` — **успех** (90 секунд).
+   - Никаких ошибок компиляции.
+   - Предупреждения о WASM несовместимости (dart:html) — не критичны для JS build.
+
+4. **Деплой на nginx:**
+   - `bash scripts/deploy_web.sh` — **успех**.
+   - Файлы синхронизированы в `/var/www/gogomarket/`.
+   - Коммит: `a8dd586e6a48f7ed68b7225df028b56cadfedb25`.
+
+### Результат
+- **Web билд задеплоен успешно.**
+- HTTP 200 при обращении к https://165.232.81.31/.
+- `.last_build_id` содержит правильный коммит.
+
+### Проблема: белый экран
+После деплоя приложение показывает белый экран. В консоли браузера:
+- SSL certificate error для service worker (ожидаемо для self-signed cert).
+- Fallback на plain `<script>` tag работает.
+- Нет явных JavaScript ошибок.
+
+**Возможные причины:**
+1. Firebase не инициализируется (неправильный `firebase_options.dart` или отсутствие Firebase проекта).
+2. Ошибка в коде приложения при старте (не отлавливается).
+
+### Следующие шаги (для Cursor)
+1. Добавить error boundary / try-catch в `main()` для отлова ошибок инициализации.
+2. Проверить Firebase конфигурацию для web (`firebase_options.dart`).
+3. Добавить логирование в консоль при старте приложения.
+4. Протестировать локально в браузере.
+
+### Технические детали сервера
+- IP: `165.232.81.31`
+- RAM: 4GB (s-2vcpu-4gb)
+- Пароль root: `GoGoMarket2025!Secure`
+- Web root: `/var/www/gogomarket`
+- Проект: `/root/projects/video-marketplace-app`
+- Ветка: `cursor/what-has-been-done-5e03`
