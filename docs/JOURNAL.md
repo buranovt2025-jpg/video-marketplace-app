@@ -301,3 +301,52 @@ bash scripts/deploy_web.sh
 - Web root: `/var/www/gogomarket`
 - Проект: `/root/projects/video-marketplace-app`
 - Ветка: `cursor/what-has-been-done-5e03`
+
+---
+
+## Сессия 30 декабря 2025 (Cursor) — Белый экран на web: диагностика + отключение Service Worker
+
+### Симптом (prod)
+- После успешного деплоя web-статики приложение отображает **белый экран** (иногда видно текст вида `165.232.81.31:50` в центре).
+- В консоли браузера: **SSL certificate error** при регистрации `flutter_service_worker.js` (self-signed сертификат), далее идёт fallback на plain `<script>`.
+
+### Цель
+Сделать проблему “белого экрана” **наблюдаемой** (ошибка должна проявляться в UI/консоли), и убрать влияние Service Worker/PWA на запуск при self-signed SSL.
+
+### Что сделано (Cursor)
+1. **Усилена диагностика старта приложения (чтобы не было silent-fail):**
+   - В `lib/main.dart` добавлены:
+     - обработчики `FlutterError.onError` и `PlatformDispatcher.instance.onError` (лог в консоль),
+     - `runZonedGuarded` уже использовался — теперь пишет ошибку/stack и показывает экран с текстом ошибки.
+   - Инициализация сервисов сделана “мягкой” для web:
+     - на web пропускаем `NotificationService` и `LocationService` (плагины часто не работают на web и могут валить старт).
+   - Коммит: `257ddbd` (ветка `cursor/what-has-been-done-5e03`).
+
+2. **Отключение PWA/service worker на уровне сборки и деплоя:**
+   - В `scripts/deploy_web.sh` build web по умолчанию запускается с:
+     - `--pwa-strategy=none` (отключить service worker/PWA),
+     - `--web-renderer=html` (минимизировать проблемы WebGL/CanvasKit на слабых/нестандартных окружениях).
+   - Коммит: `257ddbd`.
+
+3. **Отключение регистрации Service Worker в `web/index.html`:**
+   - Полностью убран блок `navigator.serviceWorker.register(...)`, всегда загружаем `main.dart.js` через plain `<script>`.
+   - Это обход self-signed SSL проблемы для SW и убирает “странные” эффекты кэша.
+   - Коммит: `6bde5ed`.
+
+4. **Firebase init с try/catch (не блокируем запуск, если web-конфиг не задан):**
+   - В `lib/main.dart` добавлен `Firebase.initializeApp()` внутри `try/catch`.
+   - Важно: на web без `firebase_options.dart` (flutterfire configure) `Firebase.initializeApp()` может падать — теперь это **не валит** весь app, а логируется.
+   - Коммит: `6bde5ed`.
+
+### Что ожидаем после деплоя
+- Если причина в SW/PWA кэше/SSL — приложение должно начать рендериться стабильно (без участия SW).
+- Если причина — runtime crash в Flutter/Dart — вместо белого экрана появится **чёрный экран с текстом ошибки** + лог в консоли (что именно упало).
+
+### Команды деплоя (на сервере)
+```bash
+cd /root/projects/video-marketplace-app
+git fetch origin
+git checkout cursor/what-has-been-done-5e03
+git pull origin cursor/what-has-been-done-5e03
+bash scripts/deploy_web.sh
+```
