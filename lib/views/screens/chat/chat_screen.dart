@@ -8,10 +8,10 @@ class ChatScreen extends StatefulWidget {
   final String userName;
 
   const ChatScreen({
-    Key? key,
+    super.key,
     required this.userId,
     required this.userName,
-  }) : super(key: key);
+  });
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -239,7 +239,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   Text(
                     _formatTime(message['created_at']),
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.6),
+                      color: Colors.white.withValues(alpha: 0.6),
                       fontSize: 10,
                     ),
                   ),
@@ -268,7 +268,7 @@ class _ChatScreenState extends State<ChatScreen> {
         color: Colors.grey[900],
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 10,
             offset: const Offset(0, -5),
           ),

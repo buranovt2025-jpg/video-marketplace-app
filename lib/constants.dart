@@ -15,14 +15,14 @@ List get pages => [
   SearchScreen(),
   const AddVideoScreen(),
   const Text('Messages Screen'),
-  ProfileScreen(uid: DEMO_MODE ? DEMO_USER_ID : (authController.user?.uid ?? '')),
+  ProfileScreen(uid: demoMode ? demoUserId : (authController.user?.uid ?? '')),
 ];
 
 // COLORS - Orange/White/Black theme
 const backgroundColor = Colors.black;
 const primaryColor = Color(0xFFFF6B00); // Orange
 const accentColor = Color(0xFFFF8C00); // Light orange
-var buttonColor = Color(0xFFFF6B00); // Orange (was red)
+var buttonColor = const Color(0xFFFF6B00); // Orange (was red)
 const borderColor = Colors.grey;
 const textPrimaryColor = Colors.white;
 const textSecondaryColor = Color(0xFFB0B0B0);

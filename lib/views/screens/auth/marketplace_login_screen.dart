@@ -10,7 +10,7 @@ import 'package:tiktok_tutorial/views/screens/courier/courier_home_screen.dart';
 import 'package:tiktok_tutorial/views/screens/admin/admin_home_screen.dart';
 
 class MarketplaceLoginScreen extends StatefulWidget {
-  const MarketplaceLoginScreen({Key? key}) : super(key: key);
+  const MarketplaceLoginScreen({super.key});
 
   @override
   State<MarketplaceLoginScreen> createState() => _MarketplaceLoginScreenState();

@@ -89,7 +89,7 @@ class CommentController extends GetxController {
       Comment comment = Comment(
         username: userData['name'] ?? 'Unknown',
         comment: commentText.trim(),
-        datePublished: DateTime.now(),
+        datePublished: Timestamp.now(),
         likes: [],
         profilePhoto: userData['profilePhoto'] ?? '',
         uid: uid,

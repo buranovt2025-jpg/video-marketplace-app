@@ -5,7 +5,7 @@ import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/views/screens/seller/create_product_screen.dart';
 
 class MyProductsScreen extends StatefulWidget {
-  const MyProductsScreen({Key? key}) : super(key: key);
+  const MyProductsScreen({super.key});
 
   @override
   State<MyProductsScreen> createState() => _MyProductsScreenState();
@@ -163,8 +163,8 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                       ),
                       decoration: BoxDecoration(
                         color: inStock
-                            ? Colors.green.withOpacity(0.2)
-                            : Colors.red.withOpacity(0.2),
+                            ? Colors.green.withValues(alpha: 0.2)
+                            : Colors.red.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(

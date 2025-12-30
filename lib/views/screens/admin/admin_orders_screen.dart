@@ -4,7 +4,7 @@ import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 
 class AdminOrdersScreen extends StatefulWidget {
-  const AdminOrdersScreen({Key? key}) : super(key: key);
+  const AdminOrdersScreen({super.key});
 
   @override
   State<AdminOrdersScreen> createState() => _AdminOrdersScreenState();
@@ -195,7 +195,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: statusColors[status]?.withOpacity(0.2),
+                    color: statusColors[status]?.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -411,7 +411,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                     ),
                   ],
                 ),
-              )).toList(),
+              )),
               
               const SizedBox(height: 16),
               const Divider(color: Colors.grey),

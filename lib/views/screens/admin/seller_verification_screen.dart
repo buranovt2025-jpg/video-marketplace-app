@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 
 class SellerVerificationScreen extends StatefulWidget {
-  const SellerVerificationScreen({Key? key}) : super(key: key);
+  const SellerVerificationScreen({super.key});
 
   @override
   State<SellerVerificationScreen> createState() => _SellerVerificationScreenState();
@@ -331,7 +331,7 @@ class _SellerVerificationScreenState extends State<SellerVerificationScreen> {
       decoration: BoxDecoration(
         color: Colors.grey[900],
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: statusColor.withOpacity(0.3)),
+        border: Border.all(color: statusColor.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -340,7 +340,7 @@ class _SellerVerificationScreenState extends State<SellerVerificationScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.1),
+              color: statusColor.withValues(alpha: 0.1),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
             ),
             child: Row(
@@ -372,7 +372,7 @@ class _SellerVerificationScreenState extends State<SellerVerificationScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.2),
+                    color: statusColor.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(

@@ -6,7 +6,7 @@ import 'package:tiktok_tutorial/services/api_service.dart';
 import 'package:tiktok_tutorial/views/screens/auth/marketplace_login_screen.dart';
 
 class DeleteAccountScreen extends StatefulWidget {
-  const DeleteAccountScreen({Key? key}) : super(key: key);
+  const DeleteAccountScreen({super.key});
 
   @override
   State<DeleteAccountScreen> createState() => _DeleteAccountScreenState();
@@ -146,7 +146,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
               child: Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
+                  color: Colors.red.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(

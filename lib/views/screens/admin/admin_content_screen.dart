@@ -6,7 +6,7 @@ import 'package:tiktok_tutorial/views/screens/seller/create_reel_screen.dart';
 import 'package:tiktok_tutorial/views/screens/seller/create_story_screen.dart';
 
 class AdminContentScreen extends StatefulWidget {
-  const AdminContentScreen({Key? key}) : super(key: key);
+  const AdminContentScreen({super.key});
 
   @override
   State<AdminContentScreen> createState() => _AdminContentScreenState();
@@ -212,7 +212,7 @@ class _AdminContentScreenState extends State<AdminContentScreen> with SingleTick
                     Center(
                       child: Container(
                         padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
+                        decoration: const BoxDecoration(
                           color: Colors.black54,
                           shape: BoxShape.circle,
                         ),
@@ -305,13 +305,13 @@ class _AdminContentScreenState extends State<AdminContentScreen> with SingleTick
               right: 0,
               child: Container(
                 padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.bottomCenter,
                     end: Alignment.topCenter,
                     colors: [Colors.black87, Colors.transparent],
                   ),
-                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(10)),
+                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(10)),
                 ),
                 child: Text(
                   story['author_name'] ?? 'Автор',
@@ -363,7 +363,7 @@ class _AdminContentScreenState extends State<AdminContentScreen> with SingleTick
               leading: Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.purple.withOpacity(0.2),
+                  color: Colors.purple.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.video_call, color: Colors.purple),
@@ -383,7 +383,7 @@ class _AdminContentScreenState extends State<AdminContentScreen> with SingleTick
               leading: Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.2),
+                  color: Colors.orange.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.add_photo_alternate, color: Colors.orange),

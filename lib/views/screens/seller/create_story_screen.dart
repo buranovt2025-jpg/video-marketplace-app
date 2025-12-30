@@ -4,7 +4,7 @@ import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 
 class CreateStoryScreen extends StatefulWidget {
-  const CreateStoryScreen({Key? key}) : super(key: key);
+  const CreateStoryScreen({super.key});
 
   @override
   State<CreateStoryScreen> createState() => _CreateStoryScreenState();
@@ -131,7 +131,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
-                        color: !_isVideo ? buttonColor.withOpacity(0.2) : Colors.grey[900],
+                        color: !_isVideo ? buttonColor.withValues(alpha: 0.2) : Colors.grey[900],
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: !_isVideo ? buttonColor : Colors.grey[800]!,
@@ -164,7 +164,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
-                        color: _isVideo ? buttonColor.withOpacity(0.2) : Colors.grey[900],
+                        color: _isVideo ? buttonColor.withValues(alpha: 0.2) : Colors.grey[900],
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: _isVideo ? buttonColor : Colors.grey[800]!,
@@ -388,7 +388,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                             ],
                           ),
                         );
-                      }).toList(),
+                      }),
                     ],
                     onChanged: (value) {
                       setState(() {
@@ -406,9 +406,9 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
+                color: Colors.orange.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [

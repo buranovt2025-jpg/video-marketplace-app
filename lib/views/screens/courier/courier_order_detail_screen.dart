@@ -10,7 +10,7 @@ import 'package:tiktok_tutorial/views/screens/common/qr_scanner_screen.dart';
 class CourierOrderDetailScreen extends StatefulWidget {
   final Map<String, dynamic> order;
 
-  const CourierOrderDetailScreen({Key? key, required this.order}) : super(key: key);
+  const CourierOrderDetailScreen({super.key, required this.order});
 
   @override
   State<CourierOrderDetailScreen> createState() => _CourierOrderDetailScreenState();
@@ -258,9 +258,9 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: statusColors[status]?.withOpacity(0.15),
+        color: statusColors[status]?.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: statusColors[status]?.withOpacity(0.5) ?? Colors.grey),
+        border: Border.all(color: statusColors[status]?.withValues(alpha: 0.5) ?? Colors.grey),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -342,7 +342,7 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
         color: Colors.grey[900],
         borderRadius: BorderRadius.circular(12),
         border: showNavigation 
-          ? Border.all(color: iconColor.withOpacity(0.5), width: 2)
+          ? Border.all(color: iconColor.withValues(alpha: 0.5), width: 2)
           : null,
       ),
       child: Column(
@@ -389,7 +389,7 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: iconColor.withOpacity(0.2),
+                    color: iconColor.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
@@ -447,7 +447,7 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
                     style: TextStyle(color: iconColor),
                   ),
                   style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: iconColor.withOpacity(0.5)),
+                    side: BorderSide(color: iconColor.withValues(alpha: 0.5)),
                     padding: const EdgeInsets.symmetric(vertical: 10),
                   ),
                 ),
@@ -549,7 +549,7 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
                 ),
               ],
             ),
-          )).toList(),
+          )),
         ],
       ),
     );
@@ -559,9 +559,9 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.green.withOpacity(0.15),
+        color: Colors.green.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.green.withOpacity(0.5)),
+        border: Border.all(color: Colors.green.withValues(alpha: 0.5)),
       ),
       child: Row(
         children: [
@@ -646,7 +646,7 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                   )
                 : const Icon(Icons.qr_code_scanner),
-              label: Text('scan_qr'.tr + ' - ' + 'confirm_pickup'.tr),
+              label: Text('${'scan_qr'.tr} - ${'confirm_pickup'.tr}'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.purple,
                 foregroundColor: Colors.white,
@@ -691,7 +691,7 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
             child: ElevatedButton.icon(
               onPressed: _showDeliveryQR,
               icon: const Icon(Icons.qr_code),
-              label: Text('show_qr'.tr + ' - ' + 'confirm_delivery'.tr),
+              label: Text('${'show_qr'.tr} - ${'confirm_delivery'.tr}'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
                 foregroundColor: Colors.white,
@@ -720,7 +720,7 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
                 style: TextStyle(color: Colors.green[400]),
               ),
               style: OutlinedButton.styleFrom(
-                side: BorderSide(color: Colors.green.withOpacity(0.5)),
+                side: BorderSide(color: Colors.green.withValues(alpha: 0.5)),
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),

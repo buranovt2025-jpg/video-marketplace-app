@@ -6,7 +6,7 @@ import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 
 class CreateProductScreen extends StatefulWidget {
-  const CreateProductScreen({Key? key}) : super(key: key);
+  const CreateProductScreen({super.key});
 
   @override
   State<CreateProductScreen> createState() => _CreateProductScreenState();
@@ -101,9 +101,9 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            Text(
+            const Text(
               'Выберите источник',
-              style: const TextStyle(
+              style: TextStyle(
                 color: Colors.white,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -114,10 +114,10 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
               leading: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(0.2),
+                  color: primaryColor.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(Icons.photo_library, color: primaryColor),
+                child: const Icon(Icons.photo_library, color: primaryColor),
               ),
               title: const Text('Галерея', style: TextStyle(color: Colors.white)),
               subtitle: Text('Выбрать из галереи', style: TextStyle(color: Colors.grey[500])),
@@ -131,7 +131,7 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
               leading: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.2),
+                  color: Colors.blue.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(Icons.camera_alt, color: Colors.blue),
@@ -488,9 +488,9 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
+                color: Colors.blue.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [

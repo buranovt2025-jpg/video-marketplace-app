@@ -27,6 +27,10 @@
   - `lib/controllers/upload_video_controller.dart` — убрали бессмысленную проверку `thumbnail == null` (анализатор показал `unnecessary_null_comparison`)
   - `lib/main.dart` и `lib/views/screens/marketplace_home_screen.dart` — сделали GetX-инициализацию устойчивее в тестах/при прямом `pumpWidget(MyApp())` (fallback `Get.put` если контроллер не зарегистрирован)
   - `test/widget_test.dart` — заменили шаблонный “counter test” на корректный smoke-тест для текущего приложения + mock для `SharedPreferences`
+  - Массово обновили UI-код под новые API Flutter:
+    - `withOpacity(x)` → `withValues(alpha: x)` (чтобы убрать deprecation и избежать потери точности)
+    - `VideoPlayerController.network(...)` → `VideoPlayerController.networkUrl(Uri.parse(...))`
+  - Почистили остаточные проблемы анализатора до состояния **0 issues** (включая `must_be_immutable`, `use_build_context_synchronously`, `unused_*`, и совместимость типов `Timestamp`).
 
 ### Принятые решения (почему так)
 - **Не меняли поведение**, только повысили стабильность: заменили force-unwrap на безопасные проверки `null`.
@@ -41,9 +45,7 @@
 
 ### Результат проверки
 - `flutter test` — ✅ PASS
-- `flutter analyze`:
-  - ✅ исправлены все warning-уровня проблемы, которые ломали проверку
-  - остаются info-уровня lint’ы (стиль/депрекейты), которые можно чистить постепенно
+- `flutter analyze` — ✅ **0 issues**
 
 ## Сессия 28 декабря 2024
 

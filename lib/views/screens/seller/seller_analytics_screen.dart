@@ -4,7 +4,7 @@ import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 
 class SellerAnalyticsScreen extends StatefulWidget {
-  const SellerAnalyticsScreen({Key? key}) : super(key: key);
+  const SellerAnalyticsScreen({super.key});
 
   @override
   State<SellerAnalyticsScreen> createState() => _SellerAnalyticsScreenState();
@@ -284,7 +284,7 @@ class _SellerAnalyticsScreenState extends State<SellerAnalyticsScreen> {
       decoration: BoxDecoration(
         color: Colors.grey[900],
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

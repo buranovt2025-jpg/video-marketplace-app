@@ -5,7 +5,7 @@ import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/views/screens/marketplace_home_screen.dart';
 
 class MarketplaceRegisterScreen extends StatefulWidget {
-  const MarketplaceRegisterScreen({Key? key}) : super(key: key);
+  const MarketplaceRegisterScreen({super.key});
 
   @override
   State<MarketplaceRegisterScreen> createState() => _MarketplaceRegisterScreenState();
@@ -149,7 +149,7 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
                     margin: const EdgeInsets.only(bottom: 8),
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: isSelected ? buttonColor.withOpacity(0.2) : Colors.grey[900],
+                      color: isSelected ? buttonColor.withValues(alpha: 0.2) : Colors.grey[900],
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isSelected ? buttonColor : Colors.grey[800]!,

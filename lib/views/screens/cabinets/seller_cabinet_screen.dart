@@ -8,7 +8,7 @@ import 'package:tiktok_tutorial/views/screens/common/qr_code_screen.dart';
 import 'package:tiktok_tutorial/views/screens/seller/seller_analytics_screen.dart';
 
 class SellerCabinetScreen extends StatefulWidget {
-  const SellerCabinetScreen({Key? key}) : super(key: key);
+  const SellerCabinetScreen({super.key});
 
   @override
   State<SellerCabinetScreen> createState() => _SellerCabinetScreenState();
@@ -105,7 +105,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
           tabs: [
             Tab(text: 'orders'.tr),
             Tab(text: 'statistics'.tr),
-            Tab(text: 'Товары'),
+            const Tab(text: 'Товары'),
           ],
         ),
       ),
@@ -218,7 +218,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.2),
+                    color: statusColor.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -295,7 +295,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
                 child: ElevatedButton.icon(
                   onPressed: () => _showPickupQR(orderId),
                   icon: const Icon(Icons.qr_code),
-                  label: Text('show_qr'.tr + ' - ' + 'pickup_qr'.tr),
+                  label: Text('${'show_qr'.tr} - ${'pickup_qr'.tr}'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.purple,
                     foregroundColor: Colors.white,
@@ -316,7 +316,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: isUrgent ? Colors.red.withOpacity(0.2) : primaryColor.withOpacity(0.2),
+        color: isUrgent ? Colors.red.withValues(alpha: 0.2) : primaryColor.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: isUrgent ? Colors.red : primaryColor,
@@ -733,7 +733,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: isLowStock ? Colors.red.withOpacity(0.2) : Colors.green.withOpacity(0.2),
+                    color: isLowStock ? Colors.red.withValues(alpha: 0.2) : Colors.green.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(

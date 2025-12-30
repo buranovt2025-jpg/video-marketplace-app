@@ -7,7 +7,7 @@ class ProfileController extends GetxController {
   final Rx<Map<String, dynamic>> _user = Rx<Map<String, dynamic>>({});
   Map<String, dynamic> get user => _user.value;
 
-  Rx<String> _uid = "".obs;
+  final Rx<String> _uid = "".obs;
   var isLoading = false.obs;
 
   updateUserId(String uid) {
@@ -16,7 +16,7 @@ class ProfileController extends GetxController {
   }
 
   getUserData() async {
-    if (DEMO_MODE) {
+    if (demoMode) {
       _loadDemoUserData();
       return;
     }
@@ -153,8 +153,8 @@ class ProfileController extends GetxController {
       'following': '48',
       'isFollowing': false,
       'likes': likes.toString(),
-      'profilePhoto': userData?['profilePhoto'] ?? DEMO_USER_PHOTO,
-      'name': userData?['name'] ?? DEMO_USER_NAME,
+      'profilePhoto': userData?['profilePhoto'] ?? demoUserPhoto,
+      'name': userData?['name'] ?? demoUserName,
       'thumbnails': thumbnails,
     };
     
@@ -163,7 +163,7 @@ class ProfileController extends GetxController {
   }
 
   followUser() async {
-    if (DEMO_MODE) {
+    if (demoMode) {
       // Demo mode - toggle follow locally
       bool isFollowing = _user.value['isFollowing'] ?? false;
       int followers = int.parse(_user.value['followers'] ?? '0');

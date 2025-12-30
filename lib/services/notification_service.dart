@@ -59,7 +59,7 @@ class NotificationService extends GetxService {
       orderId.hashCode,
       'Новый заказ!',
       'От $buyerName на ${amount.toStringAsFixed(0)} сум',
-      NotificationDetails(
+      const NotificationDetails(
         android: AndroidNotificationDetails(
           'orders_channel',
           'Заказы',
@@ -70,7 +70,7 @@ class NotificationService extends GetxService {
           enableVibration: true,
           icon: '@mipmap/ic_launcher',
         ),
-        iOS: const DarwinNotificationDetails(
+        iOS: DarwinNotificationDetails(
           presentAlert: true,
           presentBadge: true,
           presentSound: true,
@@ -118,7 +118,7 @@ class NotificationService extends GetxService {
       orderId.hashCode,
       title,
       body,
-      NotificationDetails(
+      const NotificationDetails(
         android: AndroidNotificationDetails(
           'order_updates_channel',
           'Обновления заказов',
@@ -128,7 +128,7 @@ class NotificationService extends GetxService {
           playSound: true,
           icon: '@mipmap/ic_launcher',
         ),
-        iOS: const DarwinNotificationDetails(
+        iOS: DarwinNotificationDetails(
           presentAlert: true,
           presentBadge: true,
           presentSound: true,
@@ -147,7 +147,7 @@ class NotificationService extends GetxService {
       orderId.hashCode,
       'Новая доставка!',
       'Адрес: $address',
-      NotificationDetails(
+      const NotificationDetails(
         android: AndroidNotificationDetails(
           'courier_channel',
           'Доставки',
@@ -158,7 +158,7 @@ class NotificationService extends GetxService {
           enableVibration: true,
           icon: '@mipmap/ic_launcher',
         ),
-        iOS: const DarwinNotificationDetails(
+        iOS: DarwinNotificationDetails(
           presentAlert: true,
           presentBadge: true,
           presentSound: true,
@@ -177,7 +177,7 @@ class NotificationService extends GetxService {
       'timer_$orderId'.hashCode,
       'Время истекает!',
       'Осталось $minutesLeft мин. на принятие заказа',
-      NotificationDetails(
+      const NotificationDetails(
         android: AndroidNotificationDetails(
           'timer_channel',
           'Таймеры',
@@ -188,7 +188,7 @@ class NotificationService extends GetxService {
           enableVibration: true,
           icon: '@mipmap/ic_launcher',
         ),
-        iOS: const DarwinNotificationDetails(
+        iOS: DarwinNotificationDetails(
           presentAlert: true,
           presentBadge: true,
           presentSound: true,

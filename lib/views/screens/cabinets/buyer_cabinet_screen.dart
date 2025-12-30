@@ -5,10 +5,9 @@ import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/controllers/favorites_controller.dart';
 import 'package:tiktok_tutorial/controllers/cart_controller.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/order_tracking_screen.dart';
-import 'package:tiktok_tutorial/views/screens/common/location_picker_screen.dart';
 
 class BuyerCabinetScreen extends StatefulWidget {
-  const BuyerCabinetScreen({Key? key}) : super(key: key);
+  const BuyerCabinetScreen({super.key});
 
   @override
   State<BuyerCabinetScreen> createState() => _BuyerCabinetScreenState();
@@ -354,7 +353,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
                     child: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.5),
+                        color: Colors.black.withValues(alpha: 0.5),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.favorite, color: Colors.red, size: 20),
@@ -377,7 +376,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
                     },
                     child: Container(
                       padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color: primaryColor,
                         shape: BoxShape.circle,
                       ),
@@ -405,7 +404,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
                 const SizedBox(height: 4),
                 Text(
                   '${product['price']?.toStringAsFixed(0) ?? '0'} сум',
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: primaryColor,
                     fontWeight: FontWeight.bold,
                   ),
@@ -467,7 +466,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: isDefault ? primaryColor.withOpacity(0.2) : Colors.grey[800],
+                color: isDefault ? primaryColor.withValues(alpha: 0.2) : Colors.grey[800],
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -495,10 +494,10 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: primaryColor.withOpacity(0.2),
+                            color: primaryColor.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(4),
                           ),
-                          child: Text(
+                          child: const Text(
                             'Основной',
                             style: TextStyle(color: primaryColor, fontSize: 10),
                           ),
@@ -580,7 +579,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
                 enabledBorder: OutlineInputBorder(
                   borderSide: BorderSide(color: Colors.grey[700]!),
                 ),
-                focusedBorder: OutlineInputBorder(
+                focusedBorder: const OutlineInputBorder(
                   borderSide: BorderSide(color: primaryColor),
                 ),
               ),
@@ -596,7 +595,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
                 enabledBorder: OutlineInputBorder(
                   borderSide: BorderSide(color: Colors.grey[700]!),
                 ),
-                focusedBorder: OutlineInputBorder(
+                focusedBorder: const OutlineInputBorder(
                   borderSide: BorderSide(color: primaryColor),
                 ),
               ),
@@ -672,7 +671,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
                 enabledBorder: OutlineInputBorder(
                   borderSide: BorderSide(color: Colors.grey[700]!),
                 ),
-                focusedBorder: OutlineInputBorder(
+                focusedBorder: const OutlineInputBorder(
                   borderSide: BorderSide(color: primaryColor),
                 ),
               ),
@@ -688,7 +687,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
                 enabledBorder: OutlineInputBorder(
                   borderSide: BorderSide(color: Colors.grey[700]!),
                 ),
-                focusedBorder: OutlineInputBorder(
+                focusedBorder: const OutlineInputBorder(
                   borderSide: BorderSide(color: primaryColor),
                 ),
               ),

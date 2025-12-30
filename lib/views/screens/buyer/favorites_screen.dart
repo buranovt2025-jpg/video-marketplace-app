@@ -6,7 +6,7 @@ import 'package:tiktok_tutorial/controllers/favorites_controller.dart';
 import 'package:tiktok_tutorial/controllers/cart_controller.dart';
 
 class FavoritesScreen extends StatelessWidget {
-  const FavoritesScreen({Key? key}) : super(key: key);
+  const FavoritesScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -158,7 +158,7 @@ class FavoritesScreen extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     '${_formatPrice(product['price']?.toDouble() ?? 0)} сум',
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: primaryColor,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -179,7 +179,7 @@ class FavoritesScreen extends StatelessWidget {
               ),
               // Add to cart
               IconButton(
-                icon: Icon(Icons.add_shopping_cart, color: primaryColor),
+                icon: const Icon(Icons.add_shopping_cart, color: primaryColor),
                 onPressed: () {
                   cartController.addToCart(product);
                   Get.snackbar(

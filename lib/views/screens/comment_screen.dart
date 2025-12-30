@@ -4,20 +4,36 @@ import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/comment_controller.dart';
 import 'package:timeago/timeago.dart' as tago;
 
-class CommentScreen extends StatelessWidget {
+class CommentScreen extends StatefulWidget {
   final String id;
-  CommentScreen({
-    Key? key,
+  const CommentScreen({
+    super.key,
     required this.id,
-  }) : super(key: key);
+  });
 
+  @override
+  State<CommentScreen> createState() => _CommentScreenState();
+}
+
+class _CommentScreenState extends State<CommentScreen> {
   final TextEditingController _commentController = TextEditingController();
-  CommentController commentController = Get.put(CommentController());
+  final CommentController commentController = Get.put(CommentController());
+
+  @override
+  void initState() {
+    super.initState();
+    commentController.updatePostId(widget.id);
+  }
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    commentController.updatePostId(id);
 
     return Scaffold(
       body: SingleChildScrollView(

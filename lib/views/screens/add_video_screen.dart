@@ -6,10 +6,11 @@ import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/views/screens/confirm_screen.dart';
 
 class AddVideoScreen extends StatelessWidget {
-  const AddVideoScreen({Key? key}) : super(key: key);
+  const AddVideoScreen({super.key});
 
   pickVideo(ImageSource src, BuildContext context) async {
     final video = await ImagePicker().pickVideo(source: src);
+    if (!context.mounted) return;
     if (video != null) {
       Navigator.of(context).push(
         MaterialPageRoute(
@@ -29,8 +30,8 @@ class AddVideoScreen extends StatelessWidget {
         children: [
           SimpleDialogOption(
             onPressed: () => pickVideo(ImageSource.gallery, context),
-            child: Row(
-              children: const [
+            child: const Row(
+              children: [
                 Icon(Icons.image),
                 Padding(
                   padding: EdgeInsets.all(7.0),
@@ -44,8 +45,8 @@ class AddVideoScreen extends StatelessWidget {
           ),
           SimpleDialogOption(
             onPressed: () => pickVideo(ImageSource.camera, context),
-            child: Row(
-              children: const [
+            child: const Row(
+              children: [
                 Icon(Icons.camera_alt),
                 Padding(
                   padding: EdgeInsets.all(7.0),
@@ -59,8 +60,8 @@ class AddVideoScreen extends StatelessWidget {
           ),
           SimpleDialogOption(
             onPressed: () => Navigator.of(context).pop(),
-            child: Row(
-              children: const [
+            child: const Row(
+              children: [
                 Icon(Icons.cancel),
                 Padding(
                   padding: EdgeInsets.all(7.0),

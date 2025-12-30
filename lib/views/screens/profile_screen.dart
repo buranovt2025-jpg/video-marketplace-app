@@ -8,9 +8,9 @@ import 'package:tiktok_tutorial/controllers/profile_controller.dart';
 class ProfileScreen extends StatefulWidget {
   final String uid;
   const ProfileScreen({
-    Key? key,
+    super.key,
     required this.uid,
-  }) : super(key: key);
+  });
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();

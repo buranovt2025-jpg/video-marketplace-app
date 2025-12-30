@@ -5,7 +5,7 @@ import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/order_tracking_screen.dart';
 
 class OrderHistoryScreen extends StatefulWidget {
-  const OrderHistoryScreen({Key? key}) : super(key: key);
+  const OrderHistoryScreen({super.key});
 
   @override
   State<OrderHistoryScreen> createState() => _OrderHistoryScreenState();
@@ -265,7 +265,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    color: _getStatusColor(status).withOpacity(0.2),
+                    color: _getStatusColor(status).withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -315,7 +315,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                       foregroundColor: Colors.white,
                       side: BorderSide(color: Colors.grey[700]!),
                     ),
-                    child: Text('Подробнее'),
+                    child: const Text('Подробнее'),
                   ),
                 ),
                 if (canCancel) ...[

@@ -7,7 +7,7 @@ import 'package:tiktok_tutorial/views/screens/marketplace_home_screen.dart';
 class OrderSuccessScreen extends StatelessWidget {
   final Map<String, dynamic> order;
 
-  const OrderSuccessScreen({Key? key, required this.order}) : super(key: key);
+  const OrderSuccessScreen({super.key, required this.order});
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +24,7 @@ class OrderSuccessScreen extends StatelessWidget {
                 width: 120,
                 height: 120,
                 decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.2),
+                  color: Colors.green.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -96,9 +96,9 @@ class OrderSuccessScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: buttonColor.withOpacity(0.1),
+                  color: buttonColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: buttonColor.withOpacity(0.3)),
+                  border: Border.all(color: buttonColor.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   children: [

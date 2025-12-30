@@ -9,7 +9,7 @@ import 'package:tiktok_tutorial/views/screens/common/location_picker_screen.dart
 class CheckoutScreen extends StatefulWidget {
   final String sellerId;
 
-  const CheckoutScreen({Key? key, required this.sellerId}) : super(key: key);
+  const CheckoutScreen({super.key, required this.sellerId});
 
   @override
   State<CheckoutScreen> createState() => _CheckoutScreenState();
@@ -317,13 +317,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           width: double.infinity,
           child: OutlinedButton.icon(
             onPressed: _openLocationPicker,
-            icon: Icon(Icons.map, color: primaryColor),
+            icon: const Icon(Icons.map, color: primaryColor),
             label: Text(
               'select_location'.tr,
-              style: TextStyle(color: primaryColor),
+              style: const TextStyle(color: primaryColor),
             ),
             style: OutlinedButton.styleFrom(
-              side: BorderSide(color: primaryColor.withOpacity(0.5)),
+              side: BorderSide(color: primaryColor.withValues(alpha: 0.5)),
               padding: const EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -409,7 +409,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: buttonColor.withOpacity(0.2),
+              color: buttonColor.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(Icons.money, color: buttonColor),
@@ -468,7 +468,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.2),
+                    color: Colors.blue.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(Icons.local_shipping, color: Colors.blue),
@@ -502,8 +502,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
                 ),
                 if (_selectedTariff == 'standard')
-                  Padding(
-                    padding: const EdgeInsets.only(left: 8),
+                  const Padding(
+                    padding: EdgeInsets.only(left: 8),
                     child: Icon(Icons.check_circle, color: primaryColor),
                   ),
               ],
@@ -531,10 +531,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: primaryColor.withOpacity(0.2),
+                    color: primaryColor.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(Icons.flash_on, color: primaryColor),
+                  child: const Icon(Icons.flash_on, color: primaryColor),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -565,8 +565,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
                 ),
                 if (_selectedTariff == 'express')
-                  Padding(
-                    padding: const EdgeInsets.only(left: 8),
+                  const Padding(
+                    padding: EdgeInsets.only(left: 8),
                     child: Icon(Icons.check_circle, color: primaryColor),
                   ),
               ],
@@ -581,9 +581,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.1),
+                color: Colors.green.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.green.withOpacity(0.3)),
+                border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
@@ -676,7 +676,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         color: Colors.grey[900],
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 10,
             offset: const Offset(0, -5),
           ),

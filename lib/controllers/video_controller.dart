@@ -13,7 +13,7 @@ class VideoController extends GetxController {
   void onInit() {
     super.onInit();
     
-    if (DEMO_MODE) {
+    if (demoMode) {
       // Load demo videos
       _loadDemoVideos();
     } else {
@@ -50,16 +50,16 @@ class VideoController extends GetxController {
   }
 
   likeVideo(String id) async {
-    if (DEMO_MODE) {
+    if (demoMode) {
       // Demo mode - toggle like locally
       int index = _videoList.value.indexWhere((v) => v.id == id);
       if (index != -1) {
         Video video = _videoList.value[index];
         List<String> likes = List<String>.from(video.likes);
-        if (likes.contains(DEMO_USER_ID)) {
-          likes.remove(DEMO_USER_ID);
+        if (likes.contains(demoUserId)) {
+          likes.remove(demoUserId);
         } else {
-          likes.add(DEMO_USER_ID);
+          likes.add(demoUserId);
         }
         // Create updated video
         _videoList.value[index] = Video(

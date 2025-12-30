@@ -4,7 +4,7 @@ import 'package:tiktok_tutorial/views/screens/auth/signup_screen.dart';
 import 'package:tiktok_tutorial/views/widgets/text_input_field.dart';
 
 class LoginScreen extends StatelessWidget {
-  LoginScreen({Key? key}) : super(key: key);
+  LoginScreen({super.key});
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();

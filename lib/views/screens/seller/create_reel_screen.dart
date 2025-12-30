@@ -4,7 +4,7 @@ import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 
 class CreateReelScreen extends StatefulWidget {
-  const CreateReelScreen({Key? key}) : super(key: key);
+  const CreateReelScreen({super.key});
 
   @override
   State<CreateReelScreen> createState() => _CreateReelScreenState();
@@ -282,7 +282,7 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
                             ],
                           ),
                         );
-                      }).toList(),
+                      }),
                     ],
                     onChanged: (value) {
                       setState(() {
@@ -300,9 +300,9 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.purple.withOpacity(0.1),
+                color: Colors.purple.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.purple.withOpacity(0.3)),
+                border: Border.all(color: Colors.purple.withValues(alpha: 0.3)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

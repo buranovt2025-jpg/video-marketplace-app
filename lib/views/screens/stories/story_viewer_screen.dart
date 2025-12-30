@@ -6,10 +6,10 @@ class StoryViewerScreen extends StatefulWidget {
   final int initialIndex;
 
   const StoryViewerScreen({
-    Key? key,
+    super.key,
     required this.stories,
     this.initialIndex = 0,
-  }) : super(key: key);
+  });
 
   @override
   State<StoryViewerScreen> createState() => _StoryViewerScreenState();

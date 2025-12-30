@@ -3,7 +3,7 @@ import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/views/widgets/custom_icon.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();

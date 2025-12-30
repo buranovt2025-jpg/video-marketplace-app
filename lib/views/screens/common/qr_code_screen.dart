@@ -10,12 +10,12 @@ class QRCodeScreen extends StatelessWidget {
   final String subtitle;
 
   const QRCodeScreen({
-    Key? key,
+    super.key,
     required this.orderId,
     required this.type,
     required this.title,
     required this.subtitle,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +49,7 @@ class QRCodeScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: primaryColor.withOpacity(0.3),
+                      color: primaryColor.withValues(alpha: 0.3),
                       blurRadius: 20,
                       spreadRadius: 5,
                     ),
@@ -60,11 +60,11 @@ class QRCodeScreen extends StatelessWidget {
                   version: QrVersions.auto,
                   size: 250,
                   backgroundColor: Colors.white,
-                  eyeStyle: QrEyeStyle(
+                  eyeStyle: const QrEyeStyle(
                     eyeShape: QrEyeShape.square,
                     color: primaryColor,
                   ),
-                  dataModuleStyle: QrDataModuleStyle(
+                  dataModuleStyle: const QrDataModuleStyle(
                     dataModuleShape: QrDataModuleShape.square,
                     color: Colors.black87,
                   ),
@@ -107,8 +107,8 @@ class QRCodeScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
                   color: type == 'pickup' 
-                      ? Colors.blue.withOpacity(0.2) 
-                      : Colors.green.withOpacity(0.2),
+                      ? Colors.blue.withValues(alpha: 0.2) 
+                      : Colors.green.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: type == 'pickup' ? Colors.blue : Colors.green,
@@ -139,18 +139,18 @@ class QRCodeScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(0.1),
+                  color: primaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: primaryColor.withOpacity(0.3)),
+                  border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.info_outline, color: primaryColor, size: 24),
+                    const Icon(Icons.info_outline, color: primaryColor, size: 24),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         'qr_scan_instruction'.tr,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: primaryColor,
                           fontSize: 14,
                         ),

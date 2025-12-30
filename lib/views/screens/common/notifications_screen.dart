@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 
 class NotificationsScreen extends StatefulWidget {
-  const NotificationsScreen({Key? key}) : super(key: key);
+  const NotificationsScreen({super.key});
 
   @override
   State<NotificationsScreen> createState() => _NotificationsScreenState();
@@ -136,7 +136,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       decoration: BoxDecoration(
         color: isRead ? Colors.grey[900] : Colors.grey[850],
         borderRadius: BorderRadius.circular(12),
-        border: isRead ? null : Border.all(color: primaryColor.withOpacity(0.3)),
+        border: isRead ? null : Border.all(color: primaryColor.withValues(alpha: 0.3)),
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.all(12),
@@ -144,7 +144,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: _getNotificationColor(notification['type']).withOpacity(0.2),
+            color: _getNotificationColor(notification['type']).withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(

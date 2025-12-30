@@ -149,11 +149,11 @@ class ResponsiveWrapper extends StatelessWidget {
   final Widget? desktop;
 
   const ResponsiveWrapper({
-    Key? key,
+    super.key,
     required this.mobile,
     this.tablet,
     this.desktop,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -173,11 +173,11 @@ class CenteredContent extends StatelessWidget {
   final EdgeInsets? padding;
 
   const CenteredContent({
-    Key? key,
+    super.key,
     required this.child,
     this.maxWidth,
     this.padding,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -203,12 +203,12 @@ class ResponsiveGridView extends StatelessWidget {
   final int? columns;
 
   const ResponsiveGridView({
-    Key? key,
+    super.key,
     required this.children,
     this.spacing = 12,
     this.runSpacing = 12,
     this.columns,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

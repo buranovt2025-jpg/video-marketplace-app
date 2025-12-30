@@ -21,7 +21,7 @@ import 'package:tiktok_tutorial/views/screens/admin/seller_verification_screen.d
 class MarketplaceHomeScreen extends StatefulWidget {
   final bool isGuestMode;
   
-  const MarketplaceHomeScreen({Key? key, this.isGuestMode = false}) : super(key: key);
+  const MarketplaceHomeScreen({super.key, this.isGuestMode = false});
 
   @override
   State<MarketplaceHomeScreen> createState() => _MarketplaceHomeScreenState();
@@ -267,9 +267,9 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               child: Icon(Icons.person_outline, size: 60, color: Colors.grey[600]),
             ),
             const SizedBox(height: 24),
-            Text(
+            const Text(
               'Добро пожаловать!',
-              style: const TextStyle(
+              style: TextStyle(
                 color: Colors.white,
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -444,7 +444,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
             Container(
               width: 70,
               height: 70,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
                   colors: [
@@ -458,7 +458,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               ),
               padding: const EdgeInsets.all(3),
               child: Container(
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   shape: BoxShape.circle,
                   color: backgroundColor,
                 ),
@@ -498,7 +498,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
       final reels = _controller.reels;
       
       if (reels.isEmpty) {
-        return Container(
+        return SizedBox(
           height: 300,
           child: Center(
             child: Column(
@@ -706,7 +706,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
             
             if (products.isEmpty) {
               return SliverToBoxAdapter(
-                child: Container(
+                child: SizedBox(
                   height: 300,
                   child: Center(
                     child: Column(
@@ -785,7 +785,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.7),
+                  color: Colors.black.withValues(alpha: 0.7),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
@@ -912,7 +912,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: buttonColor.withOpacity(0.2),
+                color: buttonColor.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: buttonColor, size: 28),
@@ -962,7 +962,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
           
           if (orders.isEmpty) {
             return SliverToBoxAdapter(
-              child: Container(
+              child: SizedBox(
                 height: 400,
                 child: Center(
                   child: Column(
@@ -1045,7 +1045,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: statusColors[status]?.withOpacity(0.2),
+                      color: statusColors[status]?.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -1145,7 +1145,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
-                      color: buttonColor.withOpacity(0.2),
+                      color: buttonColor.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Text(

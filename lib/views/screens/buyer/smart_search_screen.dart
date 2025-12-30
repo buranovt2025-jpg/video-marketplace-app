@@ -5,7 +5,7 @@ import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/product_detail_screen.dart';
 
 class SmartSearchScreen extends StatefulWidget {
-  const SmartSearchScreen({Key? key}) : super(key: key);
+  const SmartSearchScreen({super.key});
 
   @override
   State<SmartSearchScreen> createState() => _SmartSearchScreenState();
@@ -69,7 +69,6 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
     
     for (var product in products) {
       final name = product['name']?.toString().toLowerCase() ?? '';
-      final description = product['description']?.toString().toLowerCase() ?? '';
       final category = product['category']?.toString().toLowerCase() ?? '';
       final sellerName = product['seller_name']?.toString().toLowerCase() ?? '';
       final queryLower = query.toLowerCase();
@@ -227,7 +226,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.3),
+                          color: Colors.black.withValues(alpha: 0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 4),
                         ),
@@ -373,9 +372,9 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                   if (!inStock)
                     Positioned.fill(
                       child: Container(
-                        decoration: BoxDecoration(
+                        decoration: const BoxDecoration(
                           color: Colors.black54,
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                          borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
                         ),
                         child: Center(
                           child: Container(
@@ -399,7 +398,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: primaryColor.withOpacity(0.9),
+                        color: primaryColor.withValues(alpha: 0.9),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
@@ -432,7 +431,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                     const SizedBox(height: 4),
                     Text(
                       '${_formatPrice(product['price'])} сум',
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: primaryColor,
                         fontWeight: FontWeight.bold,
                         fontSize: 13,

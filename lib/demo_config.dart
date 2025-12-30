@@ -1,12 +1,12 @@
 // Demo Mode Configuration
 // Set to true to run app with mock data (no Firebase required)
-const bool DEMO_MODE = true;
+const bool demoMode = true;
 
 // Demo user data
-const String DEMO_USER_ID = 'demo_user_123';
-const String DEMO_USER_NAME = 'Demo User';
-const String DEMO_USER_EMAIL = 'demo@example.com';
-const String DEMO_USER_PHOTO = 'https://i.pravatar.cc/150?img=3';
+const String demoUserId = 'demo_user_123';
+const String demoUserName = 'Demo User';
+const String demoUserEmail = 'demo@example.com';
+const String demoUserPhoto = 'https://i.pravatar.cc/150?img=3';
 
 // Demo videos data
 final List<Map<String, dynamic>> demoVideos = [
@@ -79,7 +79,7 @@ final List<Map<String, dynamic>> demoComments = [
     'id': 'comment_1',
     'username': 'Test Creator',
     'comment': 'Отличное видео!',
-    'datePublished': DateTime.now().subtract(Duration(hours: 2)),
+    'datePublished': DateTime.now().subtract(const Duration(hours: 2)),
     'likes': ['user1', 'user2'],
     'profilePhoto': 'https://i.pravatar.cc/150?img=5',
     'uid': 'user_456',
@@ -88,7 +88,7 @@ final List<Map<String, dynamic>> demoComments = [
     'id': 'comment_2',
     'username': 'Sample User',
     'comment': 'Круто! 🔥',
-    'datePublished': DateTime.now().subtract(Duration(minutes: 30)),
+    'datePublished': DateTime.now().subtract(const Duration(minutes: 30)),
     'likes': [],
     'profilePhoto': 'https://i.pravatar.cc/150?img=8',
     'uid': 'user_789',

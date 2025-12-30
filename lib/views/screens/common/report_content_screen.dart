@@ -7,10 +7,10 @@ class ReportContentScreen extends StatefulWidget {
   final String contentType; // 'reel', 'product', 'user'
   
   const ReportContentScreen({
-    Key? key,
+    super.key,
     required this.contentId,
     required this.contentType,
-  }) : super(key: key);
+  });
 
   @override
   State<ReportContentScreen> createState() => _ReportContentScreenState();
@@ -145,9 +145,9 @@ class _ReportContentScreenState extends State<ReportContentScreen> {
                           color: Colors.white,
                         ),
                       )
-                    : Text(
+                    : const Text(
                         'Отправить жалобу',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),

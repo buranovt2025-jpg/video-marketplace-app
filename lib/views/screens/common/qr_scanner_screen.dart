@@ -9,11 +9,11 @@ class QRScannerScreen extends StatefulWidget {
   final Function(String orderId, String type) onScanned;
 
   const QRScannerScreen({
-    Key? key,
+    super.key,
     required this.expectedType,
     this.expectedOrderId,
     required this.onScanned,
-  }) : super(key: key);
+  });
 
   @override
   State<QRScannerScreen> createState() => _QRScannerScreenState();
@@ -191,7 +191,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
           end: Alignment.bottomCenter,
           colors: [
             Colors.transparent,
-            Colors.black.withOpacity(0.8),
+            Colors.black.withValues(alpha: 0.8),
             Colors.black,
           ],
         ),
@@ -205,7 +205,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.2),
+                  color: Colors.red.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: Colors.red),
                 ),
@@ -247,8 +247,8 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: widget.expectedType == 'pickup' 
-                    ? Colors.blue.withOpacity(0.2) 
-                    : Colors.green.withOpacity(0.2),
+                    ? Colors.blue.withValues(alpha: 0.2) 
+                    : Colors.green.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: widget.expectedType == 'pickup' ? Colors.blue : Colors.green,
@@ -281,7 +281,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
 
   Widget _buildSuccessOverlay() {
     return Container(
-      color: Colors.black.withOpacity(0.7),
+      color: Colors.black.withValues(alpha: 0.7),
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -293,7 +293,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.green.withOpacity(0.5),
+                    color: Colors.green.withValues(alpha: 0.5),
                     blurRadius: 30,
                     spreadRadius: 10,
                   ),

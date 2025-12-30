@@ -9,11 +9,11 @@ class LocationPickerScreen extends StatefulWidget {
   final double? initialLongitude;
 
   const LocationPickerScreen({
-    Key? key,
+    super.key,
     this.initialAddress,
     this.initialLatitude,
     this.initialLongitude,
-  }) : super(key: key);
+  });
 
   @override
   State<LocationPickerScreen> createState() => _LocationPickerScreenState();
@@ -210,7 +210,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
+                const Icon(
                   Icons.location_on,
                   color: primaryColor,
                   size: 48,
@@ -219,7 +219,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                   width: 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: primaryColor.withOpacity(0.5),
+                    color: primaryColor.withValues(alpha: 0.5),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -233,7 +233,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.7),
+                color: Colors.black.withValues(alpha: 0.7),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
@@ -293,7 +293,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.pin_drop, color: primaryColor, size: 20),
+              const Icon(Icons.pin_drop, color: primaryColor, size: 20),
               const SizedBox(width: 8),
               Text(
                 'coordinates'.tr,
@@ -387,8 +387,8 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
-        prefixIcon: Padding(
-          padding: const EdgeInsets.only(left: 12, bottom: 40),
+        prefixIcon: const Padding(
+          padding: EdgeInsets.only(left: 12, bottom: 40),
           child: Icon(Icons.home, color: primaryColor),
         ),
       ),
@@ -399,18 +399,18 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: primaryColor.withOpacity(0.1),
+        color: primaryColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: primaryColor.withOpacity(0.3)),
+        border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
-          Icon(Icons.info_outline, color: primaryColor, size: 20),
+          const Icon(Icons.info_outline, color: primaryColor, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               'location_info'.tr,
-              style: TextStyle(
+              style: const TextStyle(
                 color: primaryColor,
                 fontSize: 12,
               ),
@@ -444,7 +444,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
         color: Colors.grey[900],
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 10,
             offset: const Offset(0, -5),
           ),
@@ -482,7 +482,7 @@ class GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.grey[800]!.withOpacity(0.3)
+      ..color = Colors.grey[800]!.withValues(alpha: 0.3)
       ..strokeWidth = 1;
 
     const spacing = 30.0;

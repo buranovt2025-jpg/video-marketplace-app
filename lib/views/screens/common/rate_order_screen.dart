@@ -7,10 +7,10 @@ class RateOrderScreen extends StatefulWidget {
   final String rateType; // 'seller' or 'courier'
   
   const RateOrderScreen({
-    Key? key,
+    super.key,
     required this.order,
     required this.rateType,
-  }) : super(key: key);
+  });
 
   @override
   State<RateOrderScreen> createState() => _RateOrderScreenState();

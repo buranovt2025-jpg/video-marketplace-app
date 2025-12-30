@@ -7,7 +7,7 @@ import 'package:tiktok_tutorial/views/widgets/video_player_iten.dart';
 import 'package:get/get.dart';
 
 class VideoScreen extends StatelessWidget {
-  VideoScreen({Key? key}) : super(key: key);
+  VideoScreen({super.key});
 
   final VideoController videoController = Get.put(VideoController());
 
@@ -46,7 +46,7 @@ class VideoScreen extends StatelessWidget {
       child: Column(
         children: [
           Container(
-              padding: EdgeInsets.all(11),
+              padding: const EdgeInsets.all(11),
               height: 50,
               width: 50,
               decoration: BoxDecoration(

@@ -4,7 +4,7 @@ import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/services/api_service.dart';
 
 class AdminUsersScreen extends StatefulWidget {
-  const AdminUsersScreen({Key? key}) : super(key: key);
+  const AdminUsersScreen({super.key});
 
   @override
   State<AdminUsersScreen> createState() => _AdminUsersScreenState();
@@ -187,7 +187,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
               // Avatar
               CircleAvatar(
                 radius: 24,
-                backgroundColor: roleColors[role]?.withOpacity(0.2),
+                backgroundColor: roleColors[role]?.withValues(alpha: 0.2),
                 backgroundImage: user['avatar'] != null && user['avatar'].toString().isNotEmpty
                     ? NetworkImage(user['avatar'])
                     : null,
@@ -222,7 +222,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: roleColors[role]?.withOpacity(0.2),
+                  color: roleColors[role]?.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(

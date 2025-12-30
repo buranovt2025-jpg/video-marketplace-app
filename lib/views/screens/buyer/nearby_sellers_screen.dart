@@ -6,7 +6,7 @@ import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/services/location_service.dart';
 
 class NearbySellersScreen extends StatefulWidget {
-  const NearbySellersScreen({Key? key}) : super(key: key);
+  const NearbySellersScreen({super.key});
 
   @override
   State<NearbySellersScreen> createState() => _NearbySellersScreenState();
@@ -131,7 +131,7 @@ class _NearbySellersScreenState extends State<NearbySellersScreen> {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                Icon(Icons.location_on, color: primaryColor),
+                const Icon(Icons.location_on, color: primaryColor),
                 const SizedBox(width: 8),
                 Text(
                   'Радиус: ${_maxDistance.toInt()} км',
@@ -286,7 +286,7 @@ class _NearbySellersScreenState extends State<NearbySellersScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.2),
+                  color: Colors.blue.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -302,14 +302,14 @@ class _NearbySellersScreenState extends State<NearbySellersScreen> {
             const SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.location_on, size: 16, color: primaryColor),
+                const Icon(Icons.location_on, size: 16, color: primaryColor),
                 const SizedBox(width: 4),
                 Text(
                   _formatDistance(distance),
-                  style: TextStyle(color: primaryColor),
+                  style: const TextStyle(color: primaryColor),
                 ),
                 const SizedBox(width: 16),
-                Icon(Icons.star, size: 16, color: Colors.amber),
+                const Icon(Icons.star, size: 16, color: Colors.amber),
                 const SizedBox(width: 4),
                 Text(
                   '${seller['rating']?.toStringAsFixed(1)}',
@@ -327,7 +327,7 @@ class _NearbySellersScreenState extends State<NearbySellersScreen> {
           ],
         ),
         trailing: IconButton(
-          icon: Icon(Icons.navigation, color: primaryColor),
+          icon: const Icon(Icons.navigation, color: primaryColor),
           onPressed: () => _locationService.openLocationInMaps(
             lat: seller['latitude'],
             lng: seller['longitude'],

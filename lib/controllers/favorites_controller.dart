@@ -25,7 +25,7 @@ class FavoritesController extends GetxController {
         _favorites.value = decoded.map((e) => Map<String, dynamic>.from(e)).toList();
       }
     } catch (e) {
-      print('Error loading favorites: $e');
+      Get.log('Error loading favorites: $e');
     }
   }
   
@@ -34,7 +34,7 @@ class FavoritesController extends GetxController {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('favorites', json.encode(_favorites));
     } catch (e) {
-      print('Error saving favorites: $e');
+      Get.log('Error saving favorites: $e');
     }
   }
   

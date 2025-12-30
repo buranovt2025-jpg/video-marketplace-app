@@ -8,7 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 class OrderTrackingScreen extends StatefulWidget {
   final Map<String, dynamic> order;
 
-  const OrderTrackingScreen({Key? key, required this.order}) : super(key: key);
+  const OrderTrackingScreen({super.key, required this.order});
 
   @override
   State<OrderTrackingScreen> createState() => _OrderTrackingScreenState();
@@ -141,7 +141,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
-                  color: _getStatusColor(_order['status']).withOpacity(0.2),
+                  color: _getStatusColor(_order['status']).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -221,7 +221,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: isCompleted ? Colors.green.withOpacity(0.2) : Colors.grey[800],
+                color: isCompleted ? Colors.green.withValues(alpha: 0.2) : Colors.grey[800],
                 shape: BoxShape.circle,
                 border: isCurrent ? Border.all(color: Colors.green, width: 2) : null,
               ),
@@ -251,8 +251,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   ),
                 ),
                 if (isCurrent)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
+                  const Padding(
+                    padding: EdgeInsets.only(top: 4),
                     child: Text(
                       'Текущий статус',
                       style: TextStyle(
@@ -274,9 +274,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.red.withOpacity(0.1),
+        color: Colors.red.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.red.withOpacity(0.3)),
+        border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -284,7 +284,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.2),
+              color: Colors.red.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.cancel, color: Colors.red, size: 30),

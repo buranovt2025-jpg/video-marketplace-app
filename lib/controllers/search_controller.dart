@@ -10,7 +10,7 @@ class UserSearchController extends GetxController {
   List<User> get searchedUsers => _searchedUsers.value;
 
   searchUser(String typedUser) async {
-    if (DEMO_MODE) {
+    if (demoMode) {
       // Demo mode - search in demo users
       List<User> results = [];
       for (var userData in demoUsers) {

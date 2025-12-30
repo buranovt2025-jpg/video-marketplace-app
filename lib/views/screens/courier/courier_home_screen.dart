@@ -6,7 +6,7 @@ import 'package:tiktok_tutorial/views/screens/courier/courier_order_detail_scree
 import 'package:tiktok_tutorial/views/screens/auth/marketplace_login_screen.dart';
 
 class CourierHomeScreen extends StatefulWidget {
-  const CourierHomeScreen({Key? key}) : super(key: key);
+  const CourierHomeScreen({super.key});
 
   @override
   State<CourierHomeScreen> createState() => _CourierHomeScreenState();
@@ -179,7 +179,7 @@ class _CourierHomeScreenState extends State<CourierHomeScreen> with SingleTicker
           color: Colors.grey[900],
           borderRadius: BorderRadius.circular(12),
           border: type == 'available' 
-            ? Border.all(color: Colors.purple.withOpacity(0.5), width: 1)
+            ? Border.all(color: Colors.purple.withValues(alpha: 0.5), width: 1)
             : null,
         ),
         child: Column(
@@ -200,7 +200,7 @@ class _CourierHomeScreenState extends State<CourierHomeScreen> with SingleTicker
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: statusColors[status]?.withOpacity(0.2),
+                    color: statusColors[status]?.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
