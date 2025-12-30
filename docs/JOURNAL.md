@@ -187,3 +187,9 @@
   - `http: ^1.6.0`
   - `image_picker_platform_interface: ^2.11.1`
 - Ожидаемый эффект: стабилизировать web-компиляцию и убрать ошибки API несовместимости.
+
+### Сессия (продолжение) — Firebase web build compatibility
+- Зафиксировали проблему на сервере при `flutter build web --release`: ошибка в `cloud_firestore_web` уровня JS interop (например: `callMethod` не найден).
+- Решение: обновить Firebase пакеты до актуальных версий, совместимых с Flutter 3.38.5 / Dart 3.10.4:
+  - `firebase_core`, `firebase_auth`, `cloud_firestore`, `firebase_storage`
+  - добавлен `firebase_messaging` (если понадобится для FCM; пока в коде напрямую не используется)
