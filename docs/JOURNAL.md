@@ -158,3 +158,10 @@
 ### Ожидаемый результат
 - Понимаем, **что именно** и **откуда** деплоится на `165.232.81.31`.
 - Деплоим **минимальный hotfix** и подтверждаем его попадание на прод (через build stamp/commit hash в UI).
+
+### Дополнительно (чтобы деплой был “в 1 команду”)
+- Добавлен `scripts/deploy_web.sh`: сборка Flutter Web + rsync в `/var/www/gogomarket` + reload nginx.
+- Добавлен `scripts/build_apk.sh`: сборка release APK.
+- Добавлен web-build фикс для QR/`mobile_scanner`:
+  - локальный override на `packages/mobile_scanner` (web platform disabled в pubspec),
+  - `qr_scanner_export.dart` + web stub, чтобы QR-сканер не ломал web-сборку.
