@@ -5,6 +5,8 @@ import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/controllers/cart_controller.dart';
 import 'package:tiktok_tutorial/controllers/favorites_controller.dart';
 import 'package:tiktok_tutorial/services/api_service.dart';
+import 'package:tiktok_tutorial/services/insecure_http_overrides_stub.dart'
+    if (dart.library.io) 'package:tiktok_tutorial/services/insecure_http_overrides_io.dart';
 import 'package:tiktok_tutorial/services/notification_service.dart';
 import 'package:tiktok_tutorial/services/location_service.dart';
 import 'package:tiktok_tutorial/views/screens/auth/marketplace_login_screen.dart';
@@ -15,6 +17,10 @@ import 'package:tiktok_tutorial/l10n/app_translations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // TEMP (hotfix): accept self-signed certificates (e.g. https://165.232.81.31)
+  // for all HTTP(S) requests on mobile/desktop. This is unsafe for production.
+  installInsecureHttpOverrides();
   
   // Initialize API service and check for existing token
   await ApiService.init();

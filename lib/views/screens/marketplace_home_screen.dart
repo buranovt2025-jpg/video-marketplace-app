@@ -1,5 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/controllers/cart_controller.dart';
@@ -33,6 +37,7 @@ class MarketplaceHomeScreen extends StatefulWidget {
 class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   final MarketplaceController _controller = Get.find<MarketplaceController>();
   int _currentIndex = 0;
+  final String _gitSha = const String.fromEnvironment('GIT_SHA', defaultValue: '');
   
   bool get _isGuestMode => widget.isGuestMode;
   bool get _isSeller => !_isGuestMode && _controller.currentUser.value?['role'] == 'seller';
@@ -108,6 +113,42 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         colorText: Colors.white,
       );
     }
+  }
+
+  Future<Map<String, String>> _fetchBuildInfo() async {
+    final info = <String, String>{};
+
+    // Prefer server-provided stamps on web: version.json + .last_build_id.
+    if (kIsWeb) {
+      try {
+        final versionUri = Uri.base.resolve('version.json');
+        final r = await http.get(versionUri).timeout(const Duration(seconds: 5));
+        if (r.statusCode == 200) {
+          final data = jsonDecode(r.body);
+          final version = data['version']?.toString();
+          final build = data['build_number']?.toString();
+          if (version != null && version.isNotEmpty) info['version'] = version;
+          if (build != null && build.isNotEmpty) info['build_number'] = build;
+        }
+      } catch (_) {
+        // ignore
+      }
+
+      try {
+        final shaUri = Uri.base.resolve('.last_build_id');
+        final r = await http.get(shaUri).timeout(const Duration(seconds: 5));
+        if (r.statusCode == 200) {
+          final sha = r.body.trim();
+          if (sha.isNotEmpty) info['commit'] = sha;
+        }
+      } catch (_) {
+        // ignore
+      }
+    } else if (_gitSha.isNotEmpty) {
+      info['commit'] = _gitSha;
+    }
+
+    return info;
   }
 
   @override
@@ -1230,6 +1271,34 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                   Text(
                     _controller.userEmail,
                     style: TextStyle(color: Colors.grey[500]),
+                  ),
+
+                  // Build / version stamp (hotfix debug)
+                  const SizedBox(height: 8),
+                  FutureBuilder<Map<String, String>>(
+                    future: _fetchBuildInfo(),
+                    builder: (context, snap) {
+                      final info = snap.data ?? const <String, String>{};
+                      final version = info['version'];
+                      final build = info['build_number'];
+                      final commit = info['commit'];
+
+                      final parts = <String>[];
+                      if (version != null && version.isNotEmpty) {
+                        parts.add('v$version${build != null && build.isNotEmpty ? '+$build' : ''}');
+                      }
+                      if (commit != null && commit.isNotEmpty) {
+                        parts.add('commit ${commit.length > 8 ? commit.substring(0, 8) : commit}');
+                      }
+
+                      if (parts.isEmpty) return const SizedBox.shrink();
+
+                      return Text(
+                        parts.join(' • '),
+                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                        textAlign: TextAlign.center,
+                      );
+                    },
                   ),
                   
                   const SizedBox(height: 32),
