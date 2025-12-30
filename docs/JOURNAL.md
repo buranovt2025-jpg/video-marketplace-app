@@ -179,3 +179,11 @@
 - Чтобы не “копировать простыни команд”, выбрали подход: **1 команда на сервере** через `scripts/deploy_web.sh` / `scripts/build_apk.sh`.
 - SSH для пользователя `deploy` включали по паролю (test env) через `PasswordAuthentication yes` в `/etc/ssh/sshd_config.d/50-cloud-init.conf` и `60-cloudimg-settings.conf`.
 - В процессе выяснили, что попытки “чинить web сборку” через хаотичные `dependency_overrides` и ручные правки на сервере приводят к кругам; правильный путь — фиксировать проблему в репозитории и деплоить повторяемым скриптом.
+
+### Сессия (продолжение) — фиксы для web-сборки (Dart 3.10.4 / Flutter 3.38.5)
+- Зафиксировали проблему: `flutter build web --release` падал с ошибками уровня JS interop (например: *"JSObject can't be used as supertype"*), а также конфликтами web-плагинов.
+- Решение: закрепить совместимые версии транзитивных пакетов через `dependency_overrides` в `pubspec.yaml`:
+  - `web: ^1.1.1`
+  - `http: ^1.6.0`
+  - `image_picker_platform_interface: ^2.11.1`
+- Ожидаемый эффект: стабилизировать web-компиляцию и убрать ошибки API несовместимости.
