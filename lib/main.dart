@@ -206,6 +206,14 @@ class AppRouter extends StatelessWidget {
     final controller = Get.find<MarketplaceController>();
     
     return Obx(() {
+      // IMPORTANT:
+      // ApiService.isLoggedIn is not reactive, but `currentUser` is.
+      // When token becomes invalid and we call logout() (clears token + sets currentUser=null),
+      // this Obx rebuilds. At that moment we must *not* stay on the infinite spinner.
+      if (!ApiService.isLoggedIn) {
+        return const MarketplaceLoginScreen();
+      }
+
       if (controller.currentUser.value == null) {
         return const Scaffold(
           body: Center(child: CircularProgressIndicator()),
