@@ -401,7 +401,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       decoration: BoxDecoration(
         color: Colors.grey[900],
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: buttonColor!, width: 2),
+        border: Border.all(color: buttonColor, width: 2),
       ),
       child: Row(
         children: [
@@ -409,7 +409,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: buttonColor!.withOpacity(0.2),
+              color: buttonColor.withOpacity(0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(Icons.money, color: buttonColor),

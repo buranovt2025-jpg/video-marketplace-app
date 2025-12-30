@@ -149,10 +149,10 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
                     margin: const EdgeInsets.only(bottom: 8),
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: isSelected ? buttonColor!.withOpacity(0.2) : Colors.grey[900],
+                      color: isSelected ? buttonColor.withOpacity(0.2) : Colors.grey[900],
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: isSelected ? buttonColor! : Colors.grey[800]!,
+                        color: isSelected ? buttonColor : Colors.grey[800]!,
                         width: isSelected ? 2 : 1,
                       ),
                     ),
@@ -210,7 +210,7 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: buttonColor!),
+                    borderSide: BorderSide(color: buttonColor),
                   ),
                   filled: true,
                   fillColor: Colors.grey[900],
@@ -233,7 +233,7 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: buttonColor!),
+                    borderSide: BorderSide(color: buttonColor),
                   ),
                   filled: true,
                   fillColor: Colors.grey[900],
@@ -267,7 +267,7 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: buttonColor!),
+                    borderSide: BorderSide(color: buttonColor),
                   ),
                   filled: true,
                   fillColor: Colors.grey[900],
@@ -290,7 +290,7 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: buttonColor!),
+                    borderSide: BorderSide(color: buttonColor),
                   ),
                   filled: true,
                   fillColor: Colors.grey[900],
@@ -315,7 +315,7 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: buttonColor!),
+                    borderSide: BorderSide(color: buttonColor),
                   ),
                   filled: true,
                   fillColor: Colors.grey[900],

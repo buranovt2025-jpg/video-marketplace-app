@@ -96,9 +96,9 @@ class OrderSuccessScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: buttonColor!.withOpacity(0.1),
+                  color: buttonColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: buttonColor!.withOpacity(0.3)),
+                  border: Border.all(color: buttonColor.withOpacity(0.3)),
                 ),
                 child: Row(
                   children: [

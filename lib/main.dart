@@ -7,7 +7,6 @@ import 'package:tiktok_tutorial/controllers/favorites_controller.dart';
 import 'package:tiktok_tutorial/services/api_service.dart';
 import 'package:tiktok_tutorial/services/notification_service.dart';
 import 'package:tiktok_tutorial/services/location_service.dart';
-import 'package:tiktok_tutorial/views/screens/auth/marketplace_login_screen.dart';
 import 'package:tiktok_tutorial/views/screens/marketplace_home_screen.dart';
 import 'package:tiktok_tutorial/views/screens/courier/courier_home_screen.dart';
 import 'package:tiktok_tutorial/views/screens/admin/admin_home_screen.dart';
@@ -68,7 +67,9 @@ class AppRouter extends StatelessWidget {
       return const MarketplaceHomeScreen(isGuestMode: true);
     }
     
-    final controller = Get.find<MarketplaceController>();
+    final controller = Get.isRegistered<MarketplaceController>()
+        ? Get.find<MarketplaceController>()
+        : Get.put(MarketplaceController());
     
     return Obx(() {
       if (controller.currentUser.value == null) {

@@ -358,7 +358,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               label: const Text('Открыть в навигаторе'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: buttonColor,
-                side: BorderSide(color: buttonColor!),
+                side: BorderSide(color: buttonColor),
               ),
             ),
           ),

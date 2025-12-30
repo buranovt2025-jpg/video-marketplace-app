@@ -63,14 +63,6 @@ class UploadVideoController extends GetxController {
   Future<File?> _getThumbnail(String videoPath) async {
     try {
       final thumbnail = await VideoCompress.getFileThumbnail(videoPath);
-      if (thumbnail == null) {
-        Get.snackbar(
-          'Error',
-          'Failed to generate thumbnail. Please try again.',
-          snackPosition: SnackPosition.BOTTOM,
-        );
-        return null;
-      }
       return thumbnail;
     } catch (e) {
       Get.snackbar(

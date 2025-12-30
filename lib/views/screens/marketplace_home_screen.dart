@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
-import 'package:tiktok_tutorial/controllers/cart_controller.dart';
 import 'package:tiktok_tutorial/utils/responsive_helper.dart';
 import 'package:tiktok_tutorial/views/screens/seller/create_product_screen.dart';
 import 'package:tiktok_tutorial/views/screens/seller/create_reel_screen.dart';
@@ -10,9 +9,7 @@ import 'package:tiktok_tutorial/views/screens/seller/create_story_screen.dart';
 import 'package:tiktok_tutorial/views/screens/seller/my_products_screen.dart';
 import 'package:tiktok_tutorial/views/screens/auth/marketplace_login_screen.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/product_detail_screen.dart';
-import 'package:tiktok_tutorial/views/screens/buyer/cart_screen.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/order_tracking_screen.dart';
-import 'package:tiktok_tutorial/views/screens/chat/chat_screen.dart';
 import 'package:tiktok_tutorial/views/screens/profile/edit_profile_screen.dart';
 import 'package:tiktok_tutorial/views/screens/stories/story_viewer_screen.dart';
 import 'package:tiktok_tutorial/views/screens/cabinets/seller_cabinet_screen.dart';
@@ -31,7 +28,9 @@ class MarketplaceHomeScreen extends StatefulWidget {
 }
 
 class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
-  final MarketplaceController _controller = Get.find<MarketplaceController>();
+  final MarketplaceController _controller = Get.isRegistered<MarketplaceController>()
+      ? Get.find<MarketplaceController>()
+      : Get.put(MarketplaceController());
   int _currentIndex = 0;
   
   bool get _isGuestMode => widget.isGuestMode;
@@ -43,39 +42,13 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   
   // Ensure currentIndex is within bounds
   int get _safeCurrentIndex => _currentIndex > _maxIndex ? _maxIndex : _currentIndex;
-  
-  // Helper to prompt login for protected actions
-  void _promptLogin(String action) {
-    Get.dialog(
-      AlertDialog(
-        backgroundColor: Colors.grey[900],
-        title: Text('login_required'.tr, style: const TextStyle(color: Colors.white)),
-        content: Text(
-          'Войдите, чтобы $action',
-          style: const TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: Text('cancel'.tr, style: const TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Get.back();
-              Get.to(() => const MarketplaceLoginScreen());
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
-            child: Text('login'.tr),
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    if (!Get.testMode) {
+      _loadData();
+    }
   }
 
   Future<void> _loadData() async {
@@ -939,7 +912,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: buttonColor!.withOpacity(0.2),
+                color: buttonColor.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: buttonColor, size: 28),
@@ -1172,7 +1145,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
-                      color: buttonColor!.withOpacity(0.2),
+                      color: buttonColor.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Text(

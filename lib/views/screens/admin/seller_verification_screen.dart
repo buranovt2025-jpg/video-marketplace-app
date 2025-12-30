@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
-import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 
 class SellerVerificationScreen extends StatefulWidget {
   const SellerVerificationScreen({Key? key}) : super(key: key);
@@ -11,8 +10,6 @@ class SellerVerificationScreen extends StatefulWidget {
 }
 
 class _SellerVerificationScreenState extends State<SellerVerificationScreen> {
-  final MarketplaceController _controller = Get.find<MarketplaceController>();
-  
   String _filter = 'pending'; // pending, verified, rejected
   bool _isLoading = false;
   

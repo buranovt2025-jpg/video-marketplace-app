@@ -137,7 +137,7 @@ class LocationService extends GetxService {
     
     // Google Maps URL
     final googleMapsUrl = Uri.parse(
-      'https://www.google.com/maps/search/?api=1&query=$lat,$lng',
+      'https://www.google.com/maps/search/?api=1&query=$lat,$lng%20($encodedLabel)',
     );
     
     // Yandex Maps URL

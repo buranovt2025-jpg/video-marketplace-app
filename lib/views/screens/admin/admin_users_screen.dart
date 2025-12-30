@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
-import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/services/api_service.dart';
 
 class AdminUsersScreen extends StatefulWidget {
@@ -12,7 +11,6 @@ class AdminUsersScreen extends StatefulWidget {
 }
 
 class _AdminUsersScreenState extends State<AdminUsersScreen> {
-  final MarketplaceController _controller = Get.find<MarketplaceController>();
   List<Map<String, dynamic>> _users = [];
   bool _isLoading = true;
   String _filterRole = 'all';

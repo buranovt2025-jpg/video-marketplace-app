@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/services/location_service.dart';
-import 'package:tiktok_tutorial/services/notification_service.dart';
 import 'package:tiktok_tutorial/views/screens/chat/chat_screen.dart';
 import 'package:tiktok_tutorial/views/screens/common/qr_code_screen.dart';
 import 'package:tiktok_tutorial/views/screens/common/qr_scanner_screen.dart';

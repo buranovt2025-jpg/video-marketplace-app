@@ -344,7 +344,7 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: buttonColor!),
+                  borderSide: BorderSide(color: buttonColor),
                 ),
                 filled: true,
                 fillColor: Colors.grey[900],
@@ -366,7 +366,7 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: buttonColor!),
+                  borderSide: BorderSide(color: buttonColor),
                 ),
                 filled: true,
                 fillColor: Colors.grey[900],
@@ -389,7 +389,7 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: buttonColor!),
+                  borderSide: BorderSide(color: buttonColor),
                 ),
                 filled: true,
                 fillColor: Colors.grey[900],
@@ -414,7 +414,7 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: buttonColor!),
+                  borderSide: BorderSide(color: buttonColor),
                 ),
                 filled: true,
                 fillColor: Colors.grey[900],
@@ -475,7 +475,7 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: buttonColor!),
+                  borderSide: BorderSide(color: buttonColor),
                 ),
                 filled: true,
                 fillColor: Colors.grey[900],

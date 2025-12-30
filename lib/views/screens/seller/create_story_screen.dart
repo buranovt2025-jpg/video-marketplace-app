@@ -131,10 +131,10 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
-                        color: !_isVideo ? buttonColor!.withOpacity(0.2) : Colors.grey[900],
+                        color: !_isVideo ? buttonColor.withOpacity(0.2) : Colors.grey[900],
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: !_isVideo ? buttonColor! : Colors.grey[800]!,
+                          color: !_isVideo ? buttonColor : Colors.grey[800]!,
                         ),
                       ),
                       child: Row(
@@ -164,10 +164,10 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
-                        color: _isVideo ? buttonColor!.withOpacity(0.2) : Colors.grey[900],
+                        color: _isVideo ? buttonColor.withOpacity(0.2) : Colors.grey[900],
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: _isVideo ? buttonColor! : Colors.grey[800]!,
+                          color: _isVideo ? buttonColor : Colors.grey[800]!,
                         ),
                       ),
                       child: Row(
@@ -253,7 +253,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: buttonColor!),
+                    borderSide: BorderSide(color: buttonColor),
                   ),
                   filled: true,
                   fillColor: Colors.grey[900],
@@ -275,7 +275,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: buttonColor!),
+                    borderSide: BorderSide(color: buttonColor),
                   ),
                   filled: true,
                   fillColor: Colors.grey[900],
@@ -302,7 +302,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: buttonColor!),
+                  borderSide: BorderSide(color: buttonColor),
                 ),
                 filled: true,
                 fillColor: Colors.grey[900],

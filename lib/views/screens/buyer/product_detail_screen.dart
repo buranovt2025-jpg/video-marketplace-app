@@ -134,7 +134,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       decoration: BoxDecoration(
-                        color: buttonColor!.withOpacity(0.2),
+                        color: buttonColor.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -411,7 +411,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 label: const Text('В корзину'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.white,
-                  side: BorderSide(color: buttonColor!),
+                  side: BorderSide(color: buttonColor),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
               ),

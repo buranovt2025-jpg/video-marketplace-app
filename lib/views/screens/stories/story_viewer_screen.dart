@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:tiktok_tutorial/constants.dart';
-import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 
 class StoryViewerScreen extends StatefulWidget {
   final List<Map<String, dynamic>> stories;

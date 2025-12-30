@@ -216,12 +216,10 @@ class AppTranslations extends Translations {
             'continue_as_guest': 'Продолжить как гость',
       
       // Nearby sellers
-      'nearby_sellers': 'Продавцы рядом',
       'no_nearby_sellers': 'Нет продавцов поблизости',
       'search_radius': 'Радиус поиска',
       
       // Delete account
-      'delete_account': 'Удалить аккаунт',
       'delete_account_warning': 'Это действие нельзя отменить',
       'confirm_delete': 'Подтвердить удаление',
       
@@ -229,11 +227,6 @@ class AppTranslations extends Translations {
       'seller_verification': 'Верификация продавцов',
       'verify_seller': 'Верифицировать',
       'reject_seller': 'Отклонить',
-      
-          // Phone call
-          'call_seller': 'Позвонить продавцу',
-          'call_courier': 'Позвонить курьеру',
-          'phone_number': 'Номер телефона',
       
           // Analytics
           'analytics': 'Аналитика',
@@ -472,7 +465,6 @@ class AppTranslations extends Translations {
             'detailed_analytics': 'Batafsil analitika',
       
       // Nearby sellers
-      'nearby_sellers': 'Yaqindagi sotuvchilar',
       'no_nearby_sellers': 'Yaqinda sotuvchilar yo\'q',
       'search_radius': 'Qidiruv radiusi',
       
@@ -480,11 +472,6 @@ class AppTranslations extends Translations {
       'seller_verification': 'Sotuvchilarni tasdiqlash',
       'verify_seller': 'Tasdiqlash',
       'reject_seller': 'Rad etish',
-      
-      // Phone call
-      'call_seller': 'Sotuvchiga qo\'ng\'iroq',
-      'call_courier': 'Kuryerga qo\'ng\'iroq',
-      'phone_number': 'Telefon raqami',
     },
     
     'en_US': {
