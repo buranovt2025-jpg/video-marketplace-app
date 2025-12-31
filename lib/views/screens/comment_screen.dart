@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/comment_controller.dart';
 import 'package:timeago/timeago.dart' as tago;
+import 'package:tiktok_tutorial/utils/web_image_policy.dart';
 
 class CommentScreen extends StatelessWidget {
   final String id;
@@ -32,10 +33,14 @@ class CommentScreen extends StatelessWidget {
                       itemCount: commentController.comments.length,
                       itemBuilder: (context, index) {
                         final comment = commentController.comments[index];
+                        final avatar = networkImageProviderOrNull(comment.profilePhoto);
                         return ListTile(
                           leading: CircleAvatar(
                             backgroundColor: Colors.black,
-                            backgroundImage: NetworkImage(comment.profilePhoto),
+                            backgroundImage: avatar,
+                            child: avatar == null
+                                ? const Icon(Icons.person, color: Colors.white)
+                                : null,
                           ),
                           title: Row(
                             children: [

@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/services/api_service.dart';
+import 'package:tiktok_tutorial/utils/web_image_policy.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({Key? key}) : super(key: key);
@@ -226,7 +227,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     backgroundColor: Colors.grey[800],
                     backgroundImage: _selectedImage != null
                         ? FileImage(_selectedImage!)
-                        : (_avatarUrl != null ? NetworkImage(_avatarUrl!) : null) as ImageProvider?,
+                        : networkImageProviderOrNull(_avatarUrl),
                     child: (_selectedImage == null && _avatarUrl == null)
                         ? const Icon(Icons.person, size: 60, color: Colors.white)
                         : null,

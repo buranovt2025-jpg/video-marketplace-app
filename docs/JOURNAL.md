@@ -720,3 +720,32 @@ GET https://app-owphiuvd.fly.dev/api/auth/me
 ### Следующие шаги:
 
 Работаем "пакетом" - копим 3-5 фиксов некритичных проблем, затем деплоим одним разом.
+
+---
+
+## Сессия 31 декабря 2025 (Cursor) — снижение шума в консоли (Web)
+
+### Цель
+Убрать некритичный “спам” в консоли браузера на проде (CORS/404 от внешних картинок), не трогая бизнес‑логику.
+
+### Что сделано
+- Добавлен единый helper `lib/utils/web_image_policy.dart`:
+  - На **Web** блокирует известные проблемные хосты (`unsplash.com`, `images.unsplash.com`, `gravatar.com`, `pravatar.cc`)
+  - Даёт функцию `networkImageProviderOrNull()` для безопасного использования в `CircleAvatar` и т.п.
+- `AppNetworkImage` переведён на использование `shouldLoadNetworkImageUrl()`, чтобы политика была централизованной.
+- Убраны прямые вызовы `NetworkImage(...)` в местах, где они чаще всего тащат demo‑аватарки и создают CORS/404:
+  - `marketplace_home_screen.dart` (аватар профиля + сторисы)
+  - `story_viewer_screen.dart`
+  - `search_screen.dart`
+  - `comment_screen.dart`
+  - `admin_users_screen.dart`
+  - `edit_profile_screen.dart`
+  - `video_screen.dart` (добавлен fallback на локальный asset для аватарки)
+- Убраны `CachedNetworkImage` (заменено на `AppNetworkImage`) в:
+  - `buyer/favorites_screen.dart`
+  - `profile_screen.dart`
+- `signup_screen.dart`: внешний URL аватарки заменён на локальный asset, чтобы не было лишних сетевых запросов.
+
+### Ожидаемый эффект на проде
+- Существенно меньше CORS/404 ошибок в консоли (особенно от `gravatar/pravatar/unsplash`).
+- Меньше “побочных” JS ошибок, которые возникали из-за проблемных внешних ресурсов (если такие были).

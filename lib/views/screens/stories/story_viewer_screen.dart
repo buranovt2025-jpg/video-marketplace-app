@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
+import 'package:tiktok_tutorial/utils/web_image_policy.dart';
 
 class StoryViewerScreen extends StatefulWidget {
   final List<Map<String, dynamic>> stories;
@@ -160,7 +161,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                           radius: 18,
                           backgroundColor: Colors.grey[800],
                           backgroundImage: widget.stories[_currentIndex]['author_avatar'] != null
-                              ? NetworkImage(widget.stories[_currentIndex]['author_avatar'])
+                              ? networkImageProviderOrNull(widget.stories[_currentIndex]['author_avatar'])
                               : null,
                           child: widget.stories[_currentIndex]['author_avatar'] == null
                               ? const Icon(Icons.person, color: Colors.white, size: 18)

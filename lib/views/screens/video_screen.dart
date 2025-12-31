@@ -4,6 +4,7 @@ import 'package:tiktok_tutorial/controllers/video_controller.dart';
 import 'package:tiktok_tutorial/views/screens/comment_screen.dart';
 import 'package:tiktok_tutorial/views/widgets/circle_animation.dart';
 import 'package:tiktok_tutorial/views/widgets/video_player_iten.dart';
+import 'package:tiktok_tutorial/utils/web_image_policy.dart';
 import 'package:video_player/video_player.dart';
 import 'package:get/get.dart';
 
@@ -13,6 +14,8 @@ class VideoScreen extends StatelessWidget {
   final VideoController videoController = Get.put(VideoController());
 
   buildProfile(String profilePhoto) {
+    final avatar = networkImageProviderOrNull(profilePhoto) ??
+        const AssetImage('assets/images/logo_white.png');
     return SizedBox(
       width: 60,
       height: 60,
@@ -30,7 +33,7 @@ class VideoScreen extends StatelessWidget {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(25),
               child: Image(
-                image: NetworkImage(profilePhoto),
+                image: avatar,
                 fit: BoxFit.cover,
               ),
             ),
@@ -41,6 +44,8 @@ class VideoScreen extends StatelessWidget {
   }
 
   buildMusicAlbum(String profilePhoto) {
+    final avatar = networkImageProviderOrNull(profilePhoto) ??
+        const AssetImage('assets/images/logo_white.png');
     return SizedBox(
       width: 60,
       height: 60,
@@ -61,7 +66,7 @@ class VideoScreen extends StatelessWidget {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(25),
                 child: Image(
-                  image: NetworkImage(profilePhoto),
+                  image: avatar,
                   fit: BoxFit.cover,
                 ),
               ))

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/services/api_service.dart';
+import 'package:tiktok_tutorial/utils/web_image_policy.dart';
 
 class AdminUsersScreen extends StatefulWidget {
   const AdminUsersScreen({Key? key}) : super(key: key);
@@ -173,6 +174,8 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     };
 
     final role = user['role'] ?? 'buyer';
+    final avatarUrl = user['avatar']?.toString();
+    final avatar = networkImageProviderOrNull(avatarUrl);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -190,10 +193,8 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
               CircleAvatar(
                 radius: 24,
                 backgroundColor: roleColors[role]?.withOpacity(0.2),
-                backgroundImage: user['avatar'] != null && user['avatar'].toString().isNotEmpty
-                    ? NetworkImage(user['avatar'])
-                    : null,
-                child: user['avatar'] == null || user['avatar'].toString().isEmpty
+                backgroundImage: avatar,
+                child: avatar == null
                     ? Icon(Icons.person, color: roleColors[role], size: 24)
                     : null,
               ),

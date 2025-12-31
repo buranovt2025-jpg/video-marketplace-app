@@ -1,9 +1,9 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get_state_manager/get_state_manager.dart';
 import 'package:get/instance_manager.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/profile_controller.dart';
+import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String uid;
@@ -63,16 +63,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               ClipOval(
-                                child: CachedNetworkImage(
-                                  fit: BoxFit.cover,
-                                  imageUrl: controller.user['profilePhoto'],
+                                child: SizedBox(
                                   height: 100,
                                   width: 100,
-                                  placeholder: (context, url) =>
-                                      const CircularProgressIndicator(),
-                                  errorWidget: (context, url, error) =>
-                                      const Icon(
-                                    Icons.error,
+                                  child: AppNetworkImage(
+                                    url: controller.user['profilePhoto']?.toString(),
+                                    fit: BoxFit.cover,
+                                    placeholder: const Center(
+                                      child: SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                      ),
+                                    ),
+                                    errorWidget: const Center(
+                                      child: Icon(Icons.person, color: Colors.grey),
+                                    ),
                                   ),
                                 ),
                               )
@@ -209,8 +215,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             itemBuilder: (context, index) {
                               String thumbnail =
                                   controller.user['thumbnails'][index];
-                              return CachedNetworkImage(
-                                imageUrl: thumbnail,
+                              return AppNetworkImage(
+                                url: thumbnail,
                                 fit: BoxFit.cover,
                               );
                             },

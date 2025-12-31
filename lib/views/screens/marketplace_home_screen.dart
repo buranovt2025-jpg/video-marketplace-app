@@ -25,6 +25,7 @@ import 'package:tiktok_tutorial/views/screens/buyer/nearby_sellers_screen.dart';
 import 'package:tiktok_tutorial/views/screens/common/delete_account_screen.dart';
 import 'package:tiktok_tutorial/views/screens/admin/seller_verification_screen.dart';
 import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
+import 'package:tiktok_tutorial/utils/web_image_policy.dart';
 import 'package:tiktok_tutorial/utils/formatters.dart';
 
 class MarketplaceHomeScreen extends StatefulWidget {
@@ -545,7 +546,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 padding: const EdgeInsets.all(2),
                 child: CircleAvatar(
                   backgroundImage: story['image_url'] != null
-                      ? NetworkImage(story['image_url'])
+                      ? networkImageProviderOrNull(story['image_url'])
                       : null,
                   backgroundColor: Colors.grey[800],
                   child: story['image_url'] == null
@@ -1226,7 +1227,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                     radius: 50,
                     backgroundColor: Colors.grey[800],
                     backgroundImage: _controller.userAvatar.isNotEmpty
-                        ? NetworkImage(_controller.userAvatar)
+                        ? networkImageProviderOrNull(_controller.userAvatar)
                         : null,
                     child: _controller.userAvatar.isEmpty
                         ? const Icon(Icons.person, size: 50, color: Colors.white)

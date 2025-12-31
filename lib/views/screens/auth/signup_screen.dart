@@ -41,8 +41,7 @@ class SignupScreen extends StatelessWidget {
               children: [
                 const CircleAvatar(
                   radius: 64,
-                  backgroundImage: NetworkImage(
-                      'https://www.pngitem.com/pimgs/m/150-1503945_transparent-user-png-default-user-image-png-png.png'),
+                  backgroundImage: AssetImage('assets/images/logo_white.png'),
                   backgroundColor: Colors.black,
                 ),
                 Positioned(

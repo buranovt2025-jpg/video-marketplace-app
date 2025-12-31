@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
+import 'package:tiktok_tutorial/utils/web_image_policy.dart';
 
 class AppNetworkImage extends StatelessWidget {
   final String? url;
@@ -22,25 +22,8 @@ class AppNetworkImage extends StatelessWidget {
       return errorWidget ?? _defaultError();
     }
     
-    // Flutter Web loads images via XHR which is subject to CORS.
-    // Some external demo providers frequently fail (CORS/404) and spam console.
-    // For prod stability, we skip known-bad hosts on web and show placeholder.
-    if (kIsWeb) {
-      final uri = Uri.tryParse(u);
-      final host = uri?.host.toLowerCase();
-      const blockedHosts = <String>{
-        'images.unsplash.com',
-        'unsplash.com',
-        'i.pravatar.cc',
-        'pravatar.cc',
-        '0.gravatar.com',
-        '1.gravatar.com',
-        '2.gravatar.com',
-        'gravatar.com',
-      };
-      if (host != null && blockedHosts.contains(host)) {
-        return errorWidget ?? _defaultError();
-      }
+    if (!shouldLoadNetworkImageUrl(u)) {
+      return errorWidget ?? _defaultError();
     }
 
     return Image.network(

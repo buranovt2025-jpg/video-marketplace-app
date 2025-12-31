@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/favorites_controller.dart';
 import 'package:tiktok_tutorial/controllers/cart_controller.dart';
+import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
 
 class FavoritesScreen extends StatelessWidget {
   const FavoritesScreen({Key? key}) : super(key: key);
@@ -108,16 +108,16 @@ class FavoritesScreen extends StatelessWidget {
               width: 100,
               height: 100,
               child: product['image_url'] != null
-                  ? CachedNetworkImage(
-                      imageUrl: product['image_url'],
+                  ? AppNetworkImage(
+                      url: product['image_url']?.toString(),
                       fit: BoxFit.cover,
-                      placeholder: (_, __) => Container(
+                      placeholder: Container(
                         color: Colors.grey[800],
                         child: const Center(
                           child: CircularProgressIndicator(strokeWidth: 2),
                         ),
                       ),
-                      errorWidget: (_, __, ___) => Container(
+                      errorWidget: Container(
                         color: Colors.grey[800],
                         child: Icon(Icons.inventory_2, color: Colors.grey[600]),
                       ),

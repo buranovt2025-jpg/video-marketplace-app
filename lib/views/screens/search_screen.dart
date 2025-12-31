@@ -3,6 +3,7 @@ import 'package:tiktok_tutorial/controllers/search_controller.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/models/user.dart';
 import 'package:tiktok_tutorial/views/screens/profile_screen.dart';
+import 'package:tiktok_tutorial/utils/web_image_policy.dart';
 
 class SearchScreen extends StatelessWidget {
   SearchScreen({Key? key}) : super(key: key);
@@ -42,6 +43,7 @@ class SearchScreen extends StatelessWidget {
                 itemCount: searchController.searchedUsers.length,
                 itemBuilder: (context, index) {
                   User user = searchController.searchedUsers[index];
+                  final avatar = networkImageProviderOrNull(user.profilePhoto);
                   return InkWell(
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute(
@@ -50,9 +52,8 @@ class SearchScreen extends StatelessWidget {
                     ),
                     child: ListTile(
                       leading: CircleAvatar(
-                        backgroundImage: NetworkImage(
-                          user.profilePhoto,
-                        ),
+                        backgroundImage: avatar,
+                        child: avatar == null ? const Icon(Icons.person) : null,
                       ),
                       title: Text(
                         user.name,
