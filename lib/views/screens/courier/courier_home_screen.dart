@@ -41,14 +41,15 @@ class _CourierHomeScreenState extends State<CourierHomeScreen> with SingleTicker
       backgroundColor: backgroundColor,
       appBar: AppBar(
         backgroundColor: backgroundColor,
-        title: const Text(
-          'Курьер',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        title: Text(
+          'courier'.tr,
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.white),
             onPressed: _loadOrders,
+            tooltip: 'refresh'.tr,
           ),
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.white),
@@ -63,10 +64,10 @@ class _CourierHomeScreenState extends State<CourierHomeScreen> with SingleTicker
           indicatorColor: buttonColor,
           labelColor: buttonColor,
           unselectedLabelColor: Colors.grey,
-          tabs: const [
-            Tab(text: 'Доступные'),
-            Tab(text: 'Активные'),
-            Tab(text: 'История'),
+          tabs: [
+            Tab(text: 'available'.tr),
+            Tab(text: 'active'.tr),
+            Tab(text: 'history'.tr),
           ],
         ),
       ),
@@ -115,15 +116,15 @@ class _CourierHomeScreenState extends State<CourierHomeScreen> with SingleTicker
             ),
             const SizedBox(height: 16),
             Text(
-              type == 'available' ? 'Нет доступных заказов' :
-              type == 'active' ? 'Нет активных заказов' :
-              'История пуста',
+              type == 'available' ? 'no_available_orders'.tr :
+              type == 'active' ? 'no_active_orders'.tr :
+              'history_empty'.tr,
               style: TextStyle(color: Colors.grey[500], fontSize: 16),
             ),
             if (type == 'available') ...[
               const SizedBox(height: 8),
               Text(
-                'Заказы появятся, когда продавцы\nподготовят товары к выдаче',
+                'orders_will_appear_hint'.tr,
                 style: TextStyle(color: Colors.grey[600], fontSize: 14),
                 textAlign: TextAlign.center,
               ),
@@ -159,14 +160,14 @@ class _CourierHomeScreenState extends State<CourierHomeScreen> with SingleTicker
     };
 
     final statusLabels = {
-      'created': 'Создан',
-      'accepted': 'Принят',
-      'ready': 'Готов к выдаче',
-      'picked_up': 'Забран',
-      'in_transit': 'В пути',
-      'delivered': 'Доставлен',
-      'completed': 'Завершён',
-      'cancelled': 'Отменён',
+      'created': 'status_created'.tr,
+      'accepted': 'status_accepted'.tr,
+      'ready': 'status_ready'.tr,
+      'picked_up': 'status_picked_up'.tr,
+      'in_transit': 'status_in_transit'.tr,
+      'delivered': 'status_delivered'.tr,
+      'completed': 'status_completed'.tr,
+      'cancelled': 'status_cancelled'.tr,
     };
 
     final status = order['status'] ?? 'created';
@@ -192,7 +193,9 @@ class _CourierHomeScreenState extends State<CourierHomeScreen> with SingleTicker
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Заказ #${order['id']?.substring(0, 8) ?? ''}',
+                  'order_number_short'.trParams({
+                    'id': (order['id']?.toString() ?? '').substring(0, 8),
+                  }),
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -224,7 +227,7 @@ class _CourierHomeScreenState extends State<CourierHomeScreen> with SingleTicker
                 Icon(Icons.payments_outlined, size: 18, color: Colors.green[400]),
                 const SizedBox(width: 8),
                 Text(
-                  '${formatMoneyWithCurrency(totalAmount)} (наличка)',
+                  '${formatMoneyWithCurrency(totalAmount)} (${ 'cash'.tr })',
                   style: TextStyle(
                     color: Colors.green[400],
                     fontWeight: FontWeight.bold,
@@ -247,11 +250,11 @@ class _CourierHomeScreenState extends State<CourierHomeScreen> with SingleTicker
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Забрать:',
+                          'pickup_label'.tr,
                           style: TextStyle(color: Colors.grey[500], fontSize: 12),
                         ),
                         Text(
-                          order['seller_address'] ?? 'Адрес продавца',
+                          order['seller_address'] ?? 'seller_address_fallback'.tr,
                           style: const TextStyle(color: Colors.white, fontSize: 13),
                         ),
                       ],
@@ -274,7 +277,7 @@ class _CourierHomeScreenState extends State<CourierHomeScreen> with SingleTicker
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Доставить:',
+                          'deliver_label'.tr,
                           style: TextStyle(color: Colors.grey[500], fontSize: 12),
                         ),
                         Text(
@@ -295,7 +298,9 @@ class _CourierHomeScreenState extends State<CourierHomeScreen> with SingleTicker
                 Icon(Icons.inventory_2_outlined, size: 16, color: Colors.grey[500]),
                 const SizedBox(width: 6),
                 Text(
-                  '${(order['items'] as List?)?.length ?? 0} товар(ов)',
+                  'items_count'.trParams({
+                    'count': ((order['items'] as List?)?.length ?? 0).toString(),
+                  }),
                   style: TextStyle(color: Colors.grey[500], fontSize: 13),
                 ),
               ],
@@ -309,7 +314,7 @@ class _CourierHomeScreenState extends State<CourierHomeScreen> with SingleTicker
                 child: ElevatedButton.icon(
                   onPressed: () => _acceptOrder(order),
                   icon: const Icon(Icons.check_circle_outline),
-                  label: const Text('Взять заказ'),
+                  label: Text('take_order'.tr),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.purple,
                     foregroundColor: Colors.white,
@@ -333,23 +338,23 @@ class _CourierHomeScreenState extends State<CourierHomeScreen> with SingleTicker
     final confirmed = await Get.dialog<bool>(
       AlertDialog(
         backgroundColor: Colors.grey[900],
-        title: const Text(
-          'Взять заказ?',
-          style: TextStyle(color: Colors.white),
-        ),
+        title: Text('take_order_question'.tr, style: const TextStyle(color: Colors.white)),
         content: Text(
-          'Вы берёте заказ #$orderIdShort на сумму ${formatMoneyWithCurrency(order['total_amount'])}',
+          'take_order_confirm'.trParams({
+            'id': orderIdShort,
+            'amount': formatMoneyWithCurrency(order['total_amount']),
+          }),
           style: TextStyle(color: Colors.grey[400]),
         ),
         actions: [
           TextButton(
             onPressed: () => Get.back(result: false),
-            child: Text('Отмена', style: TextStyle(color: Colors.grey[500])),
+            child: Text('cancel'.tr, style: TextStyle(color: Colors.grey[500])),
           ),
           ElevatedButton(
             onPressed: () => Get.back(result: true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.purple),
-            child: const Text('Взять'),
+            child: Text('take_order'.tr),
           ),
         ],
       ),
@@ -359,8 +364,8 @@ class _CourierHomeScreenState extends State<CourierHomeScreen> with SingleTicker
       final success = await _controller.updateOrderStatus(order['id'], 'picked_up');
       if (success) {
         Get.snackbar(
-          'Заказ принят',
-          'Теперь заберите товар у продавца',
+          'order_accepted'.tr,
+          'pickup_from_seller'.tr,
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.green,
           colorText: Colors.white,
@@ -368,8 +373,8 @@ class _CourierHomeScreenState extends State<CourierHomeScreen> with SingleTicker
         _tabController.animateTo(1); // Switch to active tab
       } else {
         Get.snackbar(
-          'Ошибка',
-          'Не удалось взять заказ',
+          'error'.tr,
+          'failed_take_order'.tr,
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.red,
           colorText: Colors.white,

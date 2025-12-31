@@ -80,7 +80,7 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
         'error'.tr,
         _controller.error.value.isNotEmpty 
             ? _controller.error.value 
-            : 'Не удалось создать рилс',
+            : 'create_reel_failed'.tr,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -157,7 +157,7 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Рекомендуемый формат: 9:16',
+                      'recommended_format_9_16'.tr,
                       style: TextStyle(
                         color: Colors.grey[600],
                         fontSize: 12,
@@ -202,7 +202,7 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
               decoration: InputDecoration(
                 labelText: 'description'.tr,
                 labelStyle: TextStyle(color: Colors.grey[400]),
-                hintText: 'Расскажите о вашем товаре...',
+                hintText: 'tell_about_product_hint'.tr,
                 hintStyle: TextStyle(color: Colors.grey[600]),
                 alignLabelWithHint: true,
                 counterStyle: TextStyle(color: Colors.grey[500]),
@@ -247,7 +247,7 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'У вас пока нет товаров. Создайте товар, чтобы привязать его к рилсу.',
+                          'no_products_link_reel'.tr,
                           style: TextStyle(color: Colors.grey[500], fontSize: 13),
                         ),
                       ),

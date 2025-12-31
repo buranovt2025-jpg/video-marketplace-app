@@ -127,7 +127,7 @@ class _MarketplaceLoginScreenState extends State<MarketplaceLoginScreen> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'Оптовые рынки в твоём телефоне',
+                              'app_tagline'.tr,
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 14,
@@ -143,7 +143,7 @@ class _MarketplaceLoginScreenState extends State<MarketplaceLoginScreen> {
                 keyboardType: TextInputType.emailAddress,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
-                  labelText: 'Email',
+                  labelText: 'email'.tr,
                   labelStyle: TextStyle(color: Colors.grey[400]),
                   prefixIcon: Icon(Icons.email, color: Colors.grey[400]),
                   enabledBorder: OutlineInputBorder(
@@ -166,7 +166,7 @@ class _MarketplaceLoginScreenState extends State<MarketplaceLoginScreen> {
                 obscureText: _obscurePassword,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
-                  labelText: 'Пароль',
+                  labelText: 'password'.tr,
                   labelStyle: TextStyle(color: Colors.grey[400]),
                   prefixIcon: Icon(Icons.lock, color: Colors.grey[400]),
                   suffixIcon: IconButton(
@@ -226,8 +226,8 @@ class _MarketplaceLoginScreenState extends State<MarketplaceLoginScreen> {
                           color: Colors.white,
                         ),
                       )
-                    : const Text(
-                        'Войти',
+                    : Text(
+                        'login'.tr,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -250,20 +250,20 @@ class _MarketplaceLoginScreenState extends State<MarketplaceLoginScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Демо-аккаунты:',
+                      'demo_accounts'.tr,
                       style: TextStyle(
                         color: Colors.grey[400],
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    _buildDemoAccount('Продавец', 'seller@demo.com'),
-                    _buildDemoAccount('Покупатель', 'buyer@demo.com'),
-                    _buildDemoAccount('Курьер', 'courier@demo.com'),
-                    _buildDemoAccount('Админ', 'admin@demo.com'),
+                    _buildDemoAccount('seller'.tr, 'seller@demo.com'),
+                    _buildDemoAccount('buyer'.tr, 'buyer@demo.com'),
+                    _buildDemoAccount('courier'.tr, 'courier@demo.com'),
+                    _buildDemoAccount('admin'.tr, 'admin@demo.com'),
                     const SizedBox(height: 4),
                     Text(
-                      'Пароль: demo123 (admin123 для админа)',
+                      'demo_password_hint'.tr,
                       style: TextStyle(
                         color: Colors.grey[500],
                         fontSize: 12,
@@ -297,13 +297,13 @@ class _MarketplaceLoginScreenState extends State<MarketplaceLoginScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                'Нет аккаунта? ',
+                                '${'no_account_question'.tr} ',
                                 style: TextStyle(color: Colors.grey[400]),
                               ),
                               GestureDetector(
                                 onTap: () => Get.to(() => const MarketplaceRegisterScreen()),
                                 child: Text(
-                                  'Зарегистрироваться',
+                                  'sign_up'.tr,
                                   style: TextStyle(
                                     color: buttonColor,
                                     fontWeight: FontWeight.bold,

@@ -149,7 +149,7 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                     const SizedBox(height: 18),
                     _ActionButton(
                       icon: Icons.share,
-                      label: 'Поделиться',
+                      label: 'share'.tr,
                       color: Colors.white,
                       onTap: () {},
                     ),
@@ -189,8 +189,8 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                       const SizedBox(height: 10),
                       if (reel['product_id'] != null)
                         _ProductPill(
-                          title: 'Товар',
-                          subtitle: 'Открыть карточку',
+                          title: 'product'.tr,
+                          subtitle: 'open_product_card'.tr,
                           onTap: () {
                             final productId = reel['product_id']?.toString();
                             if (productId == null || productId.isEmpty) return;
@@ -206,8 +206,8 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                               Get.to(() => ProductDetailScreen(product: Map<String, dynamic>.from(p!)));
                             } else {
                               Get.snackbar(
-                                'Товар',
-                                'Товар #$productId',
+                                'product'.tr,
+                                'product_number'.trParams({'id': productId}),
                                 snackPosition: SnackPosition.BOTTOM,
                                 backgroundColor: Colors.white,
                                 colorText: Colors.black,

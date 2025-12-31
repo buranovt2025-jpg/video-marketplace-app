@@ -200,7 +200,7 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
                 controller: _nameController,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
-                  labelText: 'Имя *',
+                  labelText: '${'name'.tr} *',
                   labelStyle: TextStyle(color: Colors.grey[400]),
                   prefixIcon: Icon(Icons.person, color: Colors.grey[400]),
                   enabledBorder: OutlineInputBorder(
@@ -223,7 +223,7 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
                 keyboardType: TextInputType.emailAddress,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
-                  labelText: 'Email *',
+                  labelText: '${'email'.tr} *',
                   labelStyle: TextStyle(color: Colors.grey[400]),
                   prefixIcon: Icon(Icons.email, color: Colors.grey[400]),
                   enabledBorder: OutlineInputBorder(
@@ -246,7 +246,7 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
                 obscureText: _obscurePassword,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
-                  labelText: 'Пароль *',
+                  labelText: '${'password'.tr} *',
                   labelStyle: TextStyle(color: Colors.grey[400]),
                   prefixIcon: Icon(Icons.lock, color: Colors.grey[400]),
                   suffixIcon: IconButton(
@@ -280,7 +280,7 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
                 keyboardType: TextInputType.phone,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
-                  labelText: 'Телефон',
+                  labelText: 'phone_number'.tr,
                   labelStyle: TextStyle(color: Colors.grey[400]),
                   prefixIcon: Icon(Icons.phone, color: Colors.grey[400]),
                   enabledBorder: OutlineInputBorder(
@@ -304,8 +304,8 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
                 maxLines: 2,
                 decoration: InputDecoration(
                   labelText: _selectedRole == 'seller' 
-                      ? 'Адрес точки продаж' 
-                      : 'Адрес доставки',
+                      ? 'sales_point_address'.tr
+                      : 'delivery_address'.tr,
                   labelStyle: TextStyle(color: Colors.grey[400]),
                   prefixIcon: Icon(Icons.location_on, color: Colors.grey[400]),
                   enabledBorder: OutlineInputBorder(
@@ -342,8 +342,8 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
                           color: Colors.white,
                         ),
                       )
-                    : const Text(
-                        'Зарегистрироваться',
+                    : Text(
+                        'sign_up'.tr,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -359,13 +359,13 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Уже есть аккаунт? ',
+                    '${'already_have_account'.tr} ',
                     style: TextStyle(color: Colors.grey[400]),
                   ),
                   GestureDetector(
                     onTap: () => Get.back(),
                     child: Text(
-                      'Войти',
+                      'login'.tr,
                       style: TextStyle(
                         color: buttonColor,
                         fontWeight: FontWeight.bold,

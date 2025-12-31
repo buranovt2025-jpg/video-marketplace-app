@@ -26,18 +26,18 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
   File? _selectedImage;
   bool _isPickingImage = false;
   
-  final List<Map<String, String>> _categories = [
-    {'value': 'fruits', 'label': 'Фрукты'},
-    {'value': 'vegetables', 'label': 'Овощи'},
-    {'value': 'meat', 'label': 'Мясо'},
-    {'value': 'dairy', 'label': 'Молочные продукты'},
-    {'value': 'bakery', 'label': 'Выпечка'},
-    {'value': 'drinks', 'label': 'Напитки'},
-    {'value': 'spices', 'label': 'Специи'},
-    {'value': 'clothes', 'label': 'Одежда'},
-    {'value': 'electronics', 'label': 'Электроника'},
-    {'value': 'household', 'label': 'Товары для дома'},
-    {'value': 'other', 'label': 'Другое'},
+  final List<Map<String, String>> _categories = const [
+    {'value': 'fruits', 'labelKey': 'fruits'},
+    {'value': 'vegetables', 'labelKey': 'vegetables'},
+    {'value': 'meat', 'labelKey': 'meat'},
+    {'value': 'dairy', 'labelKey': 'dairy'},
+    {'value': 'bakery', 'labelKey': 'bakery'},
+    {'value': 'drinks', 'labelKey': 'drinks'},
+    {'value': 'spices', 'labelKey': 'spices'},
+    {'value': 'clothes', 'labelKey': 'clothes'},
+    {'value': 'electronics', 'labelKey': 'electronics'},
+    {'value': 'household', 'labelKey': 'household'},
+    {'value': 'other', 'labelKey': 'other'},
   ];
 
   @override
@@ -72,7 +72,7 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
     } catch (e) {
       Get.snackbar(
         'error'.tr,
-        'Не удалось выбрать изображение',
+        'image_pick_failed'.tr,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -103,7 +103,7 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'Выберите источник',
+              'choose_source'.tr,
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 18,
@@ -120,8 +120,8 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
                 ),
                 child: Icon(Icons.photo_library, color: primaryColor),
               ),
-              title: const Text('Галерея', style: TextStyle(color: Colors.white)),
-              subtitle: Text('Выбрать из галереи', style: TextStyle(color: Colors.grey[500])),
+              title: Text('gallery'.tr, style: const TextStyle(color: Colors.white)),
+              subtitle: Text('pick_from_gallery'.tr, style: TextStyle(color: Colors.grey[500])),
               onTap: () {
                 Get.back();
                 _pickImage(ImageSource.gallery);
@@ -137,8 +137,8 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
                 ),
                 child: const Icon(Icons.camera_alt, color: Colors.blue),
               ),
-              title: const Text('Камера', style: TextStyle(color: Colors.white)),
-              subtitle: Text('Сделать фото', style: TextStyle(color: Colors.grey[500])),
+              title: Text('camera'.tr, style: const TextStyle(color: Colors.white)),
+              subtitle: Text('take_photo'.tr, style: TextStyle(color: Colors.grey[500])),
               onTap: () {
                 Get.back();
                 _pickImage(ImageSource.camera);
@@ -154,8 +154,8 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
   Future<void> _createProduct() async {
     if (_nameController.text.isEmpty || _priceController.text.isEmpty) {
       Get.snackbar(
-        'Ошибка',
-        'Заполните название и цену',
+        'error'.tr,
+        'fill_name_and_price'.tr,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -166,8 +166,8 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
     final price = double.tryParse(_priceController.text);
     if (price == null || price <= 0) {
       Get.snackbar(
-        'Ошибка',
-        'Введите корректную цену',
+        'error'.tr,
+        'enter_valid_price'.tr,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -178,8 +178,8 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
     final quantity = int.tryParse(_quantityController.text) ?? 1;
     if (quantity <= 0) {
       Get.snackbar(
-        'Ошибка',
-        'Количество должно быть больше 0',
+        'error'.tr,
+        'quantity_gt_zero'.tr,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -213,18 +213,18 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
     if (product != null) {
       Get.back();
       Get.snackbar(
-        'Успешно',
-        'Товар "${product['name']}" создан',
+        'success'.tr,
+        'product_created_named'.trParams({'name': (product['name'] ?? '').toString()}),
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
     } else {
       Get.snackbar(
-        'Ошибка',
+        'error'.tr,
         _controller.error.value.isNotEmpty 
             ? _controller.error.value 
-            : 'Не удалось создать товар',
+            : 'product_create_failed'.tr,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -243,10 +243,7 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
           icon: const Icon(Icons.close, color: Colors.white),
           onPressed: () => Get.back(),
         ),
-        title: const Text(
-          'Новый товар',
-          style: TextStyle(color: Colors.white),
-        ),
+        title: Text('new_product'.tr, style: const TextStyle(color: Colors.white)),
         actions: [
           Obx(() => TextButton(
             onPressed: _controller.isLoading.value ? null : _createProduct,
@@ -260,7 +257,7 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
                     ),
                   )
                 : Text(
-                    'Создать',
+                    'create'.tr,
                     style: TextStyle(
                       color: buttonColor,
                       fontWeight: FontWeight.bold,
@@ -334,9 +331,9 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
               style: const TextStyle(color: Colors.white),
               onChanged: (value) => setState(() {}),
               decoration: InputDecoration(
-                labelText: 'URL изображения (опционально)',
+                labelText: 'image_url_label_optional'.tr,
                 labelStyle: TextStyle(color: Colors.grey[400]),
-                hintText: 'https://example.com/image.jpg',
+                hintText: 'image_url_hint'.tr,
                 hintStyle: TextStyle(color: Colors.grey[600]),
                 prefixIcon: Icon(Icons.link, color: Colors.grey[400]),
                 enabledBorder: OutlineInputBorder(
@@ -358,7 +355,7 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
               controller: _nameController,
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
-                labelText: 'Название товара *',
+                labelText: '${'product_name'.tr} *',
                 labelStyle: TextStyle(color: Colors.grey[400]),
                 prefixIcon: Icon(Icons.inventory_2, color: Colors.grey[400]),
                 enabledBorder: OutlineInputBorder(
@@ -404,10 +401,10 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
               keyboardType: TextInputType.number,
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
-                labelText: 'Количество в наличии *',
+                labelText: '${'quantity'.tr} *',
                 labelStyle: TextStyle(color: Colors.grey[400]),
                 prefixIcon: Icon(Icons.inventory, color: Colors.grey[400]),
-                suffixText: 'шт.',
+                suffixText: 'pcs'.tr,
                 suffixStyle: TextStyle(color: Colors.grey[500]),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -445,7 +442,7 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
                         children: [
                           Icon(Icons.category, color: Colors.grey[400], size: 20),
                           const SizedBox(width: 12),
-                          Text(category['label']!),
+                          Text((category['labelKey'] ?? '').tr),
                         ],
                       ),
                     );
@@ -466,7 +463,7 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
               style: const TextStyle(color: Colors.white),
               maxLines: 4,
               decoration: InputDecoration(
-                labelText: 'Описание',
+                labelText: 'description'.tr,
                 labelStyle: TextStyle(color: Colors.grey[400]),
                 alignLabelWithHint: true,
                 enabledBorder: OutlineInputBorder(
@@ -498,7 +495,7 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Добавьте качественное фото и подробное описание для привлечения покупателей',
+                      'add_photo_tip'.tr,
                       style: TextStyle(color: Colors.blue[300], fontSize: 13),
                     ),
                   ),
@@ -518,7 +515,7 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
         Icon(Icons.add_photo_alternate, size: 48, color: Colors.grey[600]),
         const SizedBox(height: 8),
         Text(
-          'Добавить фото',
+          'add_photo'.tr,
           style: TextStyle(color: Colors.grey[500]),
         ),
       ],

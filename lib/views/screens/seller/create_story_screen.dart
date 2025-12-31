@@ -87,7 +87,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
         'error'.tr,
         _controller.error.value.isNotEmpty 
             ? _controller.error.value 
-            : 'Не удалось создать историю',
+            : 'create_story_failed'.tr,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -280,9 +280,9 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                 controller: _imageUrlController,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
-                  labelText: 'URL изображения *',
+                  labelText: 'image_url_required'.tr,
                   labelStyle: TextStyle(color: Colors.grey[400]),
-                  hintText: 'https://example.com/image.jpg',
+                  hintText: 'image_url_hint'.tr,
                   hintStyle: TextStyle(color: Colors.grey[600]),
                   prefixIcon: Icon(Icons.link, color: Colors.grey[400]),
                   enabledBorder: OutlineInputBorder(
@@ -306,9 +306,9 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
               maxLines: 2,
               maxLength: 200,
               decoration: InputDecoration(
-                labelText: 'Подпись',
+                labelText: 'caption'.tr,
                 labelStyle: TextStyle(color: Colors.grey[400]),
-                hintText: 'Добавьте подпись...',
+                hintText: 'add_caption_hint'.tr,
                 hintStyle: TextStyle(color: Colors.grey[600]),
                 alignLabelWithHint: true,
                 counterStyle: TextStyle(color: Colors.grey[500]),
@@ -353,7 +353,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'У вас пока нет товаров.',
+                          'no_products_yet'.tr,
                           style: TextStyle(color: Colors.grey[500], fontSize: 13),
                         ),
                       ),

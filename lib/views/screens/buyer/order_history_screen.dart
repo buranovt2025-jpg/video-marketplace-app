@@ -89,7 +89,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               style: const TextStyle(color: Colors.white),
               maxLines: 3,
               decoration: InputDecoration(
-                hintText: 'Укажите причину отмены...',
+                hintText: 'cancel_reason_hint'.tr,
                 hintStyle: TextStyle(color: Colors.grey[600]),
                 filled: true,
                 fillColor: Colors.grey[800],
@@ -235,7 +235,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                       OutlinedButton.icon(
                         onPressed: _controller.isLoggedIn ? _controller.fetchOrders : null,
                         icon: const Icon(Icons.refresh),
-                        label: Text('Обновить'),
+                        label: Text('refresh'.tr),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.white,
                           side: BorderSide(color: Colors.grey[700]!),
@@ -289,7 +289,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Заказ #$orderIdShort',
+                  'order_number_short'.trParams({'id': orderIdShort}),
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -326,7 +326,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  order['delivery_address'] ?? 'Адрес не указан',
+                  order['delivery_address'] ?? 'address_not_specified'.tr,
                   style: TextStyle(color: Colors.grey[400]),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -348,7 +348,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                       foregroundColor: Colors.white,
                       side: BorderSide(color: Colors.grey[700]!),
                     ),
-                    child: Text('Подробнее'),
+                    child: Text('details'.tr),
                   ),
                 ),
                 if (canCancel) ...[

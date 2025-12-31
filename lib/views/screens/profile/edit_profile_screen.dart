@@ -6,7 +6,6 @@ import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/services/api_service.dart';
 import 'package:tiktok_tutorial/utils/web_image_policy.dart';
-import 'package:tiktok_tutorial/utils/money.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({Key? key}) : super(key: key);
@@ -252,7 +251,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Изменить фото',
+              'change_photo'.tr,
               style: TextStyle(color: buttonColor, fontSize: 14),
             ),
             
@@ -261,7 +260,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             // Name field
             _buildTextField(
               controller: _nameController,
-              label: 'Имя',
+              label: 'name'.tr,
               icon: Icons.person,
               required: true,
             ),
@@ -270,7 +269,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             // Phone field
             _buildTextField(
               controller: _phoneController,
-              label: 'Телефон',
+              label: 'phone_number'.tr,
               icon: Icons.phone,
               keyboardType: TextInputType.phone,
             ),
@@ -279,7 +278,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             // Address field
             _buildTextField(
               controller: _addressController,
-              label: 'Адрес',
+              label: 'delivery_address'.tr,
               icon: Icons.location_on,
               maxLines: 2,
             ),
@@ -300,7 +299,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Email и роль нельзя изменить. Обратитесь в поддержку если нужна помощь.',
+                      'email_role_readonly'.tr,
                       style: TextStyle(color: Colors.grey[500], fontSize: 13),
                     ),
                   ),
@@ -326,7 +325,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Email',
+                          'email'.tr,
                           style: TextStyle(color: Colors.grey[500], fontSize: 12),
                         ),
                         const SizedBox(height: 4),
@@ -360,7 +359,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Роль',
+                          'role'.tr,
                           style: TextStyle(color: Colors.grey[500], fontSize: 12),
                         ),
                         const SizedBox(height: 4),
@@ -415,13 +414,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   String _getRoleLabel(String role) {
     switch (role) {
       case 'seller':
-        return 'Продавец';
+        return 'seller'.tr;
       case 'buyer':
-        return 'Покупатель';
+        return 'buyer'.tr;
       case 'courier':
-        return 'Курьер';
+        return 'courier'.tr;
       case 'admin':
-        return 'Администратор';
+        return 'admin'.tr;
       default:
         return role;
     }
