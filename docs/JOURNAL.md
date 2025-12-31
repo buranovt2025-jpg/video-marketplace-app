@@ -562,3 +562,59 @@ GET https://app-owphiuvd.fly.dev/api/auth/me
 2. Собрать APK для Android тестирования
 3. Починить `deploy_web.sh` (убрать `--web-renderer` флаг)
 4. Настроить SSL сертификат (Let's Encrypt)
+
+---
+
+## Сессия 31 декабря 2025 (Cursor) — Накопление фиксов + настройка автодеплоя (GitHub Actions → SSH)
+
+### Цели
+- Накопить улучшения/фиксы **без частых деплоев** (пушим в ветку, деплоим “пакетом”).
+- Настроить **автодеплой** через GitHub Actions по SSH, чтобы не деплоить руками.
+
+### Что сделано в коде (Cursor)
+1. **Стабилизация auth/401 поведения и UX**
+   - `ApiService`: централизованная обработка ошибок; при `401` токен очищается (не залипаем в “псевдо-логине”).
+   - `MarketplaceController`: единая реакция на `401` во всех методах (logout + сообщение “Сессия истекла…”).
+   - `AppRouter`: вместо вечного спиннера показываем понятный экран (логин/кнопка “Выйти”).
+
+2. **Стабилизация UI на “битых данных”**
+   - Добавлен `AppNetworkImage` и заменены `Image.network` по экранам, чтобы 404/битые URL не ломали UI.
+   - Добавлен `lib/utils/formatters.dart` и заменены опасные `toStringAsFixed()` для полей `price/total_amount`, чтобы не падать на `String/null`.
+
+### Коммиты (ключевые)
+- `c7b7d24` — Improve auth 401 handling, loading UX, and image fallback
+- `ab6b510` — Stabilize UI: image fallbacks and safer API parsing
+- `7a8e808` — Handle 401 consistently in marketplace controller
+- `06b5dae` — Stabilize money formatting across dynamic API payloads
+
+### Автодеплой: GitHub Actions → SSH (вариант 1)
+Добавлены файлы:
+- `.github/workflows/deploy_web.yml`
+- `docs/DEPLOY_AUTOMATION_GITHUB_ACTIONS.md`
+
+Коммиты:
+- `c6ebc7c` — ci: add GitHub Actions SSH deploy workflow
+- `aac447a` — ci: allow configuring flutter path and web root for SSH deploy
+- `d9304fe` — ci: allow manual deploy via workflow_dispatch (кнопка “Run workflow”)
+
+### Настройка на сервере (prod `165.232.81.31`)
+Сделано на сервере:
+- Репозиторий для деплоя под `deploy`: `/home/deploy/projects/video-marketplace-app`
+- Flutter для `deploy`: `/home/deploy/flutter/bin/flutter` (чтобы cache был writable)
+- Web root: `/var/www/gogomarket`
+- Настроены `sudoers` для `deploy` под non-interactive деплой (`sudo -n`), проверка прошла (`OK`).
+
+### Диагностика CI ошибок (и что важно помнить)
+- Ошибка GitHub Actions: `ssh-add ... error in libcrypto` — чаще всего из-за повреждённого multi-line ключа в Secrets.
+- Ошибка: `The ssh-private-key argument is empty` — запуск был до добавления secret или secret пустой.
+- Важно: **не делать `git commit/push` на сервере** (там нет git identity и он запросит логин к GitHub). Сервер должен только `git pull` + build/deploy.
+
+### Ручной контрольный деплой (проверка работоспособности)
+- Запуск под `deploy` прошёл успешно:
+  - сборка `flutter build web --release` → success
+  - rsync в `/var/www/gogomarket`
+  - `.last_build_id` обновлён на: `aac447a6d9b898666f073856838184c60ce3c2f4`
+
+### Следующие шаги
+1. Довести CI до зелёного статуса (при необходимости — перейти на `DEPLOY_SSH_KEY_B64`).
+2. Деплоить “пакетом” после накопления ещё 1–2 критичных улучшений.
