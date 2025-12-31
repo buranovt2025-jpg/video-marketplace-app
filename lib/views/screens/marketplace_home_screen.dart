@@ -60,7 +60,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         backgroundColor: Colors.grey[900],
         title: Text('login_required'.tr, style: const TextStyle(color: Colors.white)),
         content: Text(
-          'Войдите, чтобы $action',
+          'login_to_action'.trParams({'action': action}),
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
@@ -485,7 +485,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
           Icon(Icons.shopping_bag_outlined, size: 80, color: Colors.grey[600]),
           const SizedBox(height: 24),
           Text(
-            'Войдите, чтобы видеть заказы',
+            'login_to_view_orders'.tr,
             style: TextStyle(color: Colors.grey[400], fontSize: 18),
           ),
           const SizedBox(height: 24),
@@ -520,7 +520,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'Добро пожаловать!',
+              'welcome'.tr,
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 24,
@@ -529,7 +529,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Войдите или зарегистрируйтесь,\nчтобы делать покупки',
+              'login_or_register_to_shop'.tr,
               style: TextStyle(color: Colors.grey[400], fontSize: 16),
               textAlign: TextAlign.center,
             ),
@@ -576,12 +576,9 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         SliverAppBar(
           floating: true,
           backgroundColor: backgroundColor,
-          title: const Text(
-            'Video Marketplace',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
+          title: Text(
+            'video_marketplace'.tr,
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
           actions: [
             IconButton(
@@ -644,8 +641,8 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 Get.to(() => const CreateStoryScreen());
               } else {
                 Get.snackbar(
-                  'Недоступно',
-                  'Только продавцы могут создавать истории',
+                  'unavailable'.tr,
+                  'only_sellers_can_create_stories'.tr,
                   snackPosition: SnackPosition.BOTTOM,
                 );
               }
@@ -665,13 +662,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            'Добавить',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 11,
-            ),
-          ),
+          Text('add'.tr, style: const TextStyle(color: Colors.white, fontSize: 11)),
         ],
       ),
     );
@@ -1373,13 +1364,10 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   Widget _buildOrdersTab() {
     return CustomScrollView(
       slivers: [
-        const SliverAppBar(
+        SliverAppBar(
           floating: true,
           backgroundColor: backgroundColor,
-          title: Text(
-            'Заказы',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-          ),
+          title: Text('orders'.tr, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         ),
         
         Obx(() {
@@ -1396,7 +1384,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                       Icon(Icons.shopping_bag_outlined, size: 64, color: Colors.grey[700]),
                       const SizedBox(height: 16),
                       Text(
-                        'Пока нет заказов',
+                        'no_orders_yet'.tr,
                         style: TextStyle(color: Colors.grey[500], fontSize: 16),
                       ),
                     ],
@@ -1486,7 +1474,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Сумма: ${order['total_amount']?.toStringAsFixed(0) ?? '0'} сум',
+                "${'order_total'.tr}: ${order['total_amount']?.toStringAsFixed(0) ?? '0'} ${'currency_sum'.tr}",
                 style: TextStyle(color: Colors.grey[400]),
               ),
               if (order['delivery_address'] != null) ...[
