@@ -409,7 +409,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
       final completedOrders = orders.where((o) => o['status'] == 'delivered').toList();
       final totalRevenue = completedOrders.fold<double>(
         0,
-        (sum, order) => sum + (order['total_amount'] ?? 0).toDouble(),
+        (sum, order) => sum + asDouble(order['total_amount']),
       );
       final pendingOrders = orders.where((o) => o['status'] == 'pending').length;
       final activeOrders = orders.where((o) => 

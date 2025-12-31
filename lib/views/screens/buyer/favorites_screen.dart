@@ -4,6 +4,7 @@ import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/favorites_controller.dart';
 import 'package:tiktok_tutorial/controllers/cart_controller.dart';
 import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
+import 'package:tiktok_tutorial/utils/formatters.dart';
 
 class FavoritesScreen extends StatelessWidget {
   const FavoritesScreen({Key? key}) : super(key: key);
@@ -157,7 +158,7 @@ class FavoritesScreen extends StatelessWidget {
                     ),
                   const SizedBox(height: 8),
                   Text(
-                    '${_formatPrice(product['price']?.toDouble() ?? 0)} сум',
+                    '${_formatPrice(asDouble(product['price']))} сум',
                     style: TextStyle(
                       color: primaryColor,
                       fontSize: 16,

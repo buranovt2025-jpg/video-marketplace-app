@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:tiktok_tutorial/utils/formatters.dart';
 
 class CartItem {
   final String productId;
@@ -64,7 +65,7 @@ class CartController extends GetxController {
       items.add(CartItem(
         productId: product['id'].toString(),
         productName: product['name'],
-        price: (product['price'] as num).toDouble(),
+        price: asDouble(product['price']),
         imageUrl: product['image_url'],
         sellerId: product['seller_id'].toString(),
         sellerName: product['seller_name'] ?? 'Продавец',

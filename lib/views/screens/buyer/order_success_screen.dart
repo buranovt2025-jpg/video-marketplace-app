@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/order_tracking_screen.dart';
 import 'package:tiktok_tutorial/views/screens/marketplace_home_screen.dart';
+import 'package:tiktok_tutorial/utils/formatters.dart';
 
 class OrderSuccessScreen extends StatelessWidget {
   final Map<String, dynamic> order;
@@ -204,7 +205,7 @@ class OrderSuccessScreen extends StatelessWidget {
 
   String _formatPrice(dynamic price) {
     if (price == null) return '0';
-    final numPrice = (price as num).toDouble();
+    final numPrice = asDouble(price);
     if (numPrice >= 1000000) {
       return '${(numPrice / 1000000).toStringAsFixed(1)}M';
     } else if (numPrice >= 1000) {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/utils/formatters.dart';
 
 class SellerAnalyticsScreen extends StatefulWidget {
   const SellerAnalyticsScreen({Key? key}) : super(key: key);
@@ -541,7 +542,7 @@ class _SellerAnalyticsScreenState extends State<SellerAnalyticsScreen> {
                       ),
                     ),
                     Text(
-                      _formatPrice(product['revenue'].toDouble()),
+                      _formatPrice(asDouble(product['revenue'])),
                       style: const TextStyle(
                         color: primaryColor,
                         fontWeight: FontWeight.bold,

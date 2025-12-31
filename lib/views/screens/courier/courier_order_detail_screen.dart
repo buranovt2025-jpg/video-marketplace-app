@@ -39,8 +39,8 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
     if (currentPosition == null) return;
     
     // Calculate distance to seller
-    final sellerLat = _order['seller_latitude']?.toDouble();
-    final sellerLng = _order['seller_longitude']?.toDouble();
+    final sellerLat = tryNum(_order['seller_latitude'])?.toDouble();
+    final sellerLng = tryNum(_order['seller_longitude'])?.toDouble();
     if (sellerLat != null && sellerLng != null) {
       final distance = _locationService.calculateDistance(
         currentPosition.latitude,
@@ -54,8 +54,8 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
     }
     
     // Calculate distance to buyer
-    final buyerLat = _order['delivery_latitude']?.toDouble();
-    final buyerLng = _order['delivery_longitude']?.toDouble();
+    final buyerLat = tryNum(_order['delivery_latitude'])?.toDouble();
+    final buyerLng = tryNum(_order['delivery_longitude'])?.toDouble();
     if (buyerLat != null && buyerLng != null) {
       final distance = _locationService.calculateDistance(
         currentPosition.latitude,
@@ -181,8 +181,8 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
               address: _order['seller_address'] ?? 'Адрес не указан',
               name: _order['seller_name'] ?? 'Продавец',
               phone: _order['seller_phone'],
-              latitude: _order['seller_latitude']?.toDouble(),
-              longitude: _order['seller_longitude']?.toDouble(),
+              latitude: tryNum(_order['seller_latitude'])?.toDouble(),
+              longitude: tryNum(_order['seller_longitude'])?.toDouble(),
               userId: _order['seller_id'],
               showNavigation: status == 'picked_up' || status == 'ready',
               distance: _distanceToSeller,
@@ -197,8 +197,8 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
               address: _order['delivery_address'] ?? 'Адрес не указан',
               name: _order['buyer_name'] ?? 'Покупатель',
               phone: _order['buyer_phone'],
-              latitude: _order['delivery_latitude']?.toDouble(),
-              longitude: _order['delivery_longitude']?.toDouble(),
+              latitude: tryNum(_order['delivery_latitude'])?.toDouble(),
+              longitude: tryNum(_order['delivery_longitude'])?.toDouble(),
               userId: _order['buyer_id'],
               showNavigation: status == 'in_transit',
               distance: _distanceToBuyer,

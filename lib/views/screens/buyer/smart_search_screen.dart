@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/services/api_service.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/product_detail_screen.dart';
 import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
 
@@ -101,40 +102,52 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
     return cat['label']!.tr;
   }
 
-  void _performSearch() {
-    final query = _searchController.text.trim().toLowerCase();
+  Future<void> _performSearch() async {
+    final rawQuery = _searchController.text.trim();
+    final query = rawQuery.toLowerCase();
+
     setState(() {
       _isSearching = true;
       _showSuggestions = false;
     });
 
-    final products = _controller.products;
-    final results = products.where((product) {
-      // Category filter
-      if (_selectedCategory != 'all' && product['category'] != _selectedCategory) {
-        return false;
-      }
+    final category = _selectedCategory == 'all' ? null : _selectedCategory;
+    final search = query.isEmpty ? null : query;
 
-      // Search query filter
-      if (query.isNotEmpty) {
+    try {
+      // Prefer server-side search so results don't depend on initial feed size.
+      final data = await ApiService.getProducts(
+        category: category,
+        search: search,
+      );
+      setState(() {
+        _searchResults = List<Map<String, dynamic>>.from(data);
+      });
+    } catch (_) {
+      // Fallback to local filter if API search fails (offline/self-signed/etc).
+      final products = _controller.products;
+      final results = products.where((product) {
+        if (category != null && product['category'] != category) return false;
+        if (query.isEmpty) return true;
+
         final name = product['name']?.toString().toLowerCase() ?? '';
         final description = product['description']?.toString().toLowerCase() ?? '';
-        final category = product['category']?.toString().toLowerCase() ?? '';
+        final cat = product['category']?.toString().toLowerCase() ?? '';
         final sellerName = product['seller_name']?.toString().toLowerCase() ?? '';
-        
         return name.contains(query) ||
-               description.contains(query) ||
-               category.contains(query) ||
-               sellerName.contains(query);
-      }
+            description.contains(query) ||
+            cat.contains(query) ||
+            sellerName.contains(query);
+      }).toList();
 
-      return true;
-    }).toList();
-
-    setState(() {
-      _searchResults = results;
-      _isSearching = false;
-    });
+      setState(() {
+        _searchResults = results;
+      });
+    } finally {
+      setState(() {
+        _isSearching = false;
+      });
+    }
   }
 
   void _selectSuggestion(String suggestion) {

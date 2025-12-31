@@ -1166,7 +1166,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Сумма: ${totalAmountNum.toStringAsFixed(0)} сум',
+                'Сумма: ${formatMoney(totalAmountNum, suffix: 'сум')}',
                 style: TextStyle(color: Colors.grey[400]),
               ),
               if (order['delivery_address'] != null) ...[
