@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/utils/formatters.dart';
 
 class CreateStoryScreen extends StatefulWidget {
   const CreateStoryScreen({Key? key}) : super(key: key);
@@ -381,7 +382,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
-                                  '${product['name']} - ${product['price']?.toStringAsFixed(0)} сум',
+                                  '${product['name']} - ${formatMoney(product['price'])} сум',
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),

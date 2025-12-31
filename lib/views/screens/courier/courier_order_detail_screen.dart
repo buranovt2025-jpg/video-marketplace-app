@@ -8,6 +8,7 @@ import 'package:tiktok_tutorial/views/screens/chat/chat_screen.dart';
 import 'package:tiktok_tutorial/views/screens/common/qr_code_screen.dart';
 import 'package:tiktok_tutorial/views/screens/common/qr_scanner_export.dart';
 import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
+import 'package:tiktok_tutorial/utils/formatters.dart';
 
 class CourierOrderDetailScreen extends StatefulWidget {
   final Map<String, dynamic> order;
@@ -539,7 +540,7 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
                         style: const TextStyle(color: Colors.white, fontSize: 14),
                       ),
                       Text(
-                        '${item['quantity'] ?? 1} шт. x ${item['price']?.toStringAsFixed(0) ?? '0'} сум',
+                        '${item['quantity'] ?? 1} шт. x ${formatMoney(item['price'])} сум',
                         style: TextStyle(color: Colors.grey[500], fontSize: 12),
                       ),
                     ],

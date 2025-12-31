@@ -25,6 +25,7 @@ import 'package:tiktok_tutorial/views/screens/buyer/nearby_sellers_screen.dart';
 import 'package:tiktok_tutorial/views/screens/common/delete_account_screen.dart';
 import 'package:tiktok_tutorial/views/screens/admin/seller_verification_screen.dart';
 import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
+import 'package:tiktok_tutorial/utils/formatters.dart';
 
 class MarketplaceHomeScreen extends StatefulWidget {
   final bool isGuestMode;
@@ -862,7 +863,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  '${product['price']?.toStringAsFixed(0) ?? '0'} сум',
+                  formatMoney(product['price'], suffix: 'сум'),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 10,

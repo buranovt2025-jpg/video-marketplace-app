@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/utils/formatters.dart';
 import 'package:tiktok_tutorial/views/screens/courier/courier_order_detail_screen.dart';
 import 'package:tiktok_tutorial/views/screens/auth/marketplace_login_screen.dart';
 
@@ -222,7 +223,7 @@ class _CourierHomeScreenState extends State<CourierHomeScreen> with SingleTicker
                 Icon(Icons.payments_outlined, size: 18, color: Colors.green[400]),
                 const SizedBox(width: 8),
                 Text(
-                  '${totalAmount.toStringAsFixed(0)} сум (наличка)',
+                  '${formatMoney(totalAmount)} сум (наличка)',
                   style: TextStyle(
                     color: Colors.green[400],
                     fontWeight: FontWeight.bold,
@@ -326,6 +327,8 @@ class _CourierHomeScreenState extends State<CourierHomeScreen> with SingleTicker
   }
 
   Future<void> _acceptOrder(Map<String, dynamic> order) async {
+    final orderIdStr = (order['id'] ?? '').toString();
+    final orderIdShort = orderIdStr.length > 8 ? orderIdStr.substring(0, 8) : orderIdStr;
     final confirmed = await Get.dialog<bool>(
       AlertDialog(
         backgroundColor: Colors.grey[900],
@@ -334,7 +337,7 @@ class _CourierHomeScreenState extends State<CourierHomeScreen> with SingleTicker
           style: TextStyle(color: Colors.white),
         ),
         content: Text(
-          'Вы берёте заказ #${order['id']?.substring(0, 8)} на сумму ${order['total_amount']?.toStringAsFixed(0)} сум',
+          'Вы берёте заказ #$orderIdShort на сумму ${formatMoney(order['total_amount'])} сум',
           style: TextStyle(color: Colors.grey[400]),
         ),
         actions: [

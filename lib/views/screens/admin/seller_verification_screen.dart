@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/utils/formatters.dart';
 
 class SellerVerificationScreen extends StatefulWidget {
   const SellerVerificationScreen({Key? key}) : super(key: key);
@@ -397,7 +398,7 @@ class _SellerVerificationScreenState extends State<SellerVerificationScreen> {
                 _buildDetailRow('ИНН', request['inn']),
                 _buildDetailRow('Тип документа', request['document_type']),
                 _buildDetailRow('Товаров', '${request['products_count']}'),
-                _buildDetailRow('Продажи', '${(request['total_sales'] / 1000).toStringAsFixed(0)}K сум'),
+                _buildDetailRow('Продажи', '${formatMoney(asDouble(request['total_sales']) / 1000, decimals: 0)}K сум'),
                 if (status == 'rejected' && request['rejection_reason'] != null)
                   _buildDetailRow('Причина отказа', request['rejection_reason'], isError: true),
               ],

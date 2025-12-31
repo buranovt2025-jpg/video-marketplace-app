@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/utils/formatters.dart';
 
 class AdminOrdersScreen extends StatefulWidget {
   const AdminOrdersScreen({Key? key}) : super(key: key);
@@ -217,7 +218,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                 Icon(Icons.payments_outlined, size: 18, color: Colors.green[400]),
                 const SizedBox(width: 8),
                 Text(
-                  '${totalAmount.toStringAsFixed(0)} сум',
+                  formatMoney(totalAmount, suffix: 'сум'),
                   style: TextStyle(
                     color: Colors.green[400],
                     fontWeight: FontWeight.bold,
@@ -406,7 +407,10 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                       ),
                     ),
                     Text(
-                      '${((item['price'] ?? 0) * (item['quantity'] ?? 1)).toStringAsFixed(0)} сум',
+                      formatMoney(
+                        asDouble(item['price']) * asInt(item['quantity'], fallback: 1),
+                        suffix: 'сум',
+                      ),
                       style: TextStyle(color: Colors.grey[400]),
                     ),
                   ],
@@ -430,7 +434,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                     ),
                   ),
                   Text(
-                    '${order['total_amount']?.toStringAsFixed(0) ?? '0'} сум',
+                    formatMoney(order['total_amount'], suffix: 'сум'),
                     style: TextStyle(
                       color: Colors.green[400],
                       fontWeight: FontWeight.bold,
