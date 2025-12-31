@@ -575,7 +575,7 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
                   style: TextStyle(color: Colors.grey[400], fontSize: 12),
                 ),
                 Text(
-                  '${totalAmount.toStringAsFixed(0)} сум',
+                  formatMoney(totalAmount, suffix: 'сум'),
                   style: TextStyle(
                     color: Colors.green[400],
                     fontSize: 22,

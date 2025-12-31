@@ -312,7 +312,7 @@ class _NearbySellersScreenState extends State<NearbySellersScreen> {
                 Icon(Icons.star, size: 16, color: Colors.amber),
                 const SizedBox(width: 4),
                 Text(
-                  '${seller['rating']?.toStringAsFixed(1)}',
+                  '${asDouble(seller['rating']).toStringAsFixed(1)}',
                   style: const TextStyle(color: Colors.amber),
                 ),
                 const SizedBox(width: 16),

@@ -617,7 +617,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
                   ),
                 ),
                 Text(
-                  'В наличии: ${product['quantity'] ?? 0}',
+                  'В наличии: ${asInt(product['quantity'])}',
                   style: TextStyle(color: Colors.grey[400], fontSize: 12),
                 ),
               ],
@@ -675,7 +675,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
   }
 
   Widget _buildInventoryCard(Map<String, dynamic> product) {
-    final quantity = product['quantity'] ?? 0;
+    final quantity = asInt(product['quantity']);
     final isLowStock = quantity < 5;
 
     return Card(

@@ -817,7 +817,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
   }
 
   Widget _buildProductCard(Map<String, dynamic> product) {
-    final quantity = product['quantity'] ?? 0;
+    final quantity = asInt(product['quantity']);
     final inStock = quantity > 0;
     
     return GestureDetector(

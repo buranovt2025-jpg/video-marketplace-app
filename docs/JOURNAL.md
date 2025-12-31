@@ -764,4 +764,7 @@ GET https://app-owphiuvd.fly.dev/api/auth/me
   - `marketplace_home_screen.dart`: сумма заказа выводится через `formatMoney(...)`
   - `favorites_screen.dart`, `courier_order_detail_screen.dart`, `seller_analytics_screen.dart`: убраны небезопасные `?.toDouble()`/`.toDouble()` на динамических значениях
   - `smart_search_screen.dart`: форматирование цены теперь через `asDouble(...)`
+  - `smart_search_screen.dart`, `seller_cabinet_screen.dart`: `quantity` теперь через `asInt(...)` (без сравнения строк с числами)
+  - `nearby_sellers_screen.dart`: `rating` теперь через `asDouble(...)`
+  - `courier_order_detail_screen.dart`: сумма к оплате через `formatMoney(...)`
 - `docs/TZ_MVP.md` приведён к фактическому статусу (чекбоксы обновлены).
