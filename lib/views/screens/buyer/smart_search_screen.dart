@@ -16,6 +16,8 @@ class SmartSearchScreen extends StatefulWidget {
 
 class _SmartSearchScreenState extends State<SmartSearchScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _minPriceController = TextEditingController();
+  final TextEditingController _maxPriceController = TextEditingController();
   final MarketplaceController _controller = Get.find<MarketplaceController>();
   final FocusNode _focusNode = FocusNode();
   
@@ -56,8 +58,35 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _minPriceController.dispose();
+    _maxPriceController.dispose();
     _focusNode.dispose();
     super.dispose();
+  }
+
+  num? _parsePrice(String value) {
+    final n = tryNum(value);
+    if (n == null) return null;
+    if (n.isNaN) return null;
+    if (n.isInfinite) return null;
+    if (n < 0) return 0;
+    return n;
+  }
+
+  num? get _minPrice => _parsePrice(_minPriceController.text);
+  num? get _maxPrice => _parsePrice(_maxPriceController.text);
+
+  List<Map<String, dynamic>> _applyPriceFilter(List<Map<String, dynamic>> items) {
+    final minP = _minPrice;
+    final maxP = _maxPrice;
+    if (minP == null && maxP == null) return items;
+
+    return items.where((p) {
+      final price = asDouble(p['price']);
+      if (minP != null && price < minP) return false;
+      if (maxP != null && price > maxP) return false;
+      return true;
+    }).toList();
   }
 
   void _onSearchChanged(String query) {
@@ -127,7 +156,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
         search: search,
       );
       setState(() {
-        _searchResults = List<Map<String, dynamic>>.from(data);
+        _searchResults = _applyPriceFilter(List<Map<String, dynamic>>.from(data));
       });
     } catch (_) {
       // Fallback to local filter if API search fails (offline/self-signed/etc).
@@ -150,7 +179,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
       }).toList();
 
       setState(() {
-        _searchResults = results;
+        _searchResults = _applyPriceFilter(results);
       });
     } finally {
       setState(() {
@@ -309,6 +338,119 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
     await _performSearch();
   }
 
+  Future<void> _openPriceFilter() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.grey[900],
+      isScrollControlled: true,
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 8),
+                  Text(
+                    'Фильтр по цене',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _minPriceController,
+                          keyboardType: TextInputType.number,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            hintText: 'Мин',
+                            hintStyle: TextStyle(color: Colors.grey[500]),
+                            filled: true,
+                            fillColor: Colors.grey[850],
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextField(
+                          controller: _maxPriceController,
+                          keyboardType: TextInputType.number,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            hintText: 'Макс',
+                            hintStyle: TextStyle(color: Colors.grey[500]),
+                            filled: true,
+                            fillColor: Colors.grey[850],
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            _minPriceController.clear();
+                            _maxPriceController.clear();
+                            Navigator.of(context).pop();
+                          },
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: Colors.grey[700]!),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          child: const Text('Сбросить'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryColor,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          child: const Text('Применить'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    if (!mounted) return;
+    await _performSearch();
+  }
+
   void _selectSuggestion(String suggestion) {
     _searchController.text = suggestion;
     _focusNode.unfocus();
@@ -356,6 +498,11 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
             tooltip: 'Продавец',
             onPressed: _pickSeller,
             icon: const Icon(Icons.store, color: Colors.white),
+          ),
+          IconButton(
+            tooltip: 'Цена',
+            onPressed: _openPriceFilter,
+            icon: const Icon(Icons.tune, color: Colors.white),
           ),
         ],
       ),
@@ -418,6 +565,32 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                               _selectedSellerId = null;
                               _selectedSellerName = null;
                             });
+                            await _performSearch();
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (_minPrice != null || _maxPrice != null) ...[
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        Chip(
+                          backgroundColor: Colors.grey[850],
+                          label: Text(
+                            'Цена: ${formatMoney(_minPrice ?? 0)}–${_maxPrice != null ? formatMoney(_maxPrice!) : '∞'}',
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                          deleteIcon: const Icon(Icons.close, color: Colors.white, size: 18),
+                          onDeleted: () async {
+                            _minPriceController.clear();
+                            _maxPriceController.clear();
+                            setState(() {});
                             await _performSearch();
                           },
                         ),
