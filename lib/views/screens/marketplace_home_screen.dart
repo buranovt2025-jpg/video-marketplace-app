@@ -17,6 +17,7 @@ import 'package:tiktok_tutorial/views/screens/chat/chat_screen.dart';
 import 'package:tiktok_tutorial/views/screens/profile/edit_profile_screen.dart';
 import 'package:tiktok_tutorial/views/screens/stories/story_viewer_screen.dart';
 import 'package:tiktok_tutorial/views/screens/reels/reels_viewer_screen.dart';
+import 'package:tiktok_tutorial/views/screens/common/report_content_screen.dart';
 import 'package:tiktok_tutorial/views/screens/cabinets/seller_cabinet_screen.dart';
 import 'package:tiktok_tutorial/views/screens/cabinets/buyer_cabinet_screen.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/nearby_sellers_screen.dart';
@@ -211,6 +212,68 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      isScrollControlled: true,
+    );
+  }
+
+  void _openReelMoreSheet(Map<String, dynamic> reel) {
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
+        decoration: BoxDecoration(
+          color: Colors.grey[900],
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 42,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[700],
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              const SizedBox(height: 14),
+              ListTile(
+                leading: const Icon(Icons.link, color: Colors.white),
+                title: const Text('Скопировать ссылку', style: TextStyle(color: Colors.white)),
+                onTap: () async {
+                  Get.back();
+                  await _copyReelLink(reel);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.report_outlined, color: Colors.redAccent),
+                title: const Text('Пожаловаться', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  final id = reel['id']?.toString();
+                  if (id == null || id.isEmpty) return;
+                  Get.back();
+                  Get.to(() => ReportContentScreen(contentId: id, contentType: 'reel'));
+                },
+              ),
+              const SizedBox(height: 6),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () => Get.back(),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: BorderSide(color: Colors.grey[700]!),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text('Отмена'),
                 ),
               ),
             ],
@@ -800,7 +863,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.more_vert, color: Colors.white),
-                    onPressed: () {},
+                    onPressed: () => _openReelMoreSheet(reel),
                   ),
                 ],
               ),
