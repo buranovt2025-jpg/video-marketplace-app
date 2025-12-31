@@ -5,6 +5,12 @@ on:
     branches:
       # Change this to the branch you want to auto-deploy.
       - cursor/what-has-been-done-5e03
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Branch to deploy (default: current)
+        required: false
+        type: string
 
 concurrency:
   group: deploy-web-${{ github.ref }}
@@ -50,7 +56,7 @@ jobs:
           DEPLOY_PROJECT_DIR: ${{ secrets.DEPLOY_PROJECT_DIR }}
           DEPLOY_WEB_ROOT: ${{ secrets.DEPLOY_WEB_ROOT }}
           DEPLOY_FLUTTER_BIN: ${{ secrets.DEPLOY_FLUTTER_BIN }}
-          DEPLOY_BRANCH: ${{ github.ref_name }}
+          DEPLOY_BRANCH: ${{ inputs.branch || github.ref_name }}
         run: |
           set -euo pipefail
           echo "Deploying branch: ${DEPLOY_BRANCH}"
