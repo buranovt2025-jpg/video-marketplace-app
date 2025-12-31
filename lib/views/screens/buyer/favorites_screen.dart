@@ -137,7 +137,7 @@ class FavoritesScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    product['name'] ?? 'Product',
+                    product['name'] ?? 'product'.tr,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 16,
@@ -157,7 +157,7 @@ class FavoritesScreen extends StatelessWidget {
                     ),
                   const SizedBox(height: 8),
                   Text(
-                    '${_formatPrice(product['price']?.toDouble() ?? 0)} сум',
+                    "${_formatPrice(product['price']?.toDouble() ?? 0)} ${'currency_sum'.tr}",
                     style: TextStyle(
                       color: primaryColor,
                       fontSize: 16,
@@ -184,7 +184,7 @@ class FavoritesScreen extends StatelessWidget {
                   cartController.addToCart(product);
                   Get.snackbar(
                     'cart'.tr,
-                    '${product['name']} added',
+                    'added_to_cart'.trParams({'name': (product['name'] ?? 'product'.tr).toString()}),
                     snackPosition: SnackPosition.BOTTOM,
                     duration: const Duration(seconds: 1),
                   );
@@ -215,7 +215,7 @@ class FavoritesScreen extends StatelessWidget {
           style: const TextStyle(color: Colors.white),
         ),
         content: Text(
-          'Clear all favorites?',
+          'clear_all_favorites'.tr,
           style: TextStyle(color: Colors.grey[400]),
         ),
         actions: [

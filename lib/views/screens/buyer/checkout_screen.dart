@@ -60,16 +60,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget build(BuildContext context) {
     final items = _cartController.getItemsBySeller(widget.sellerId);
     final total = _cartController.getTotalBySeller(widget.sellerId);
-    final sellerName = items.isNotEmpty ? items.first.sellerName : 'Продавец';
+    final sellerName = items.isNotEmpty ? items.first.sellerName : 'seller'.tr;
 
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
         backgroundColor: backgroundColor,
-        title: const Text(
-          'Оформление заказа',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
+        title: Text('checkout_title'.tr, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Get.back(),
@@ -87,27 +84,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               const SizedBox(height: 24),
 
               // Order items
-              const Text(
-                'Товары',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              Text('products'.tr, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
               _buildOrderItems(items),
               const SizedBox(height: 24),
 
               // Delivery address
-              const Text(
-                'Адрес доставки',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              Text('delivery_address_title'.tr, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
               _buildAddressField(),
               const SizedBox(height: 16),
@@ -115,40 +98,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               const SizedBox(height: 24),
 
               // Notes
-              const Text(
-                'Комментарий к заказу',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              Text('order_comment'.tr, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
               _buildNotesField(),
               const SizedBox(height: 24),
 
               // Delivery tariff
-              const Text(
-                'Тариф доставки',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              Text('delivery_tariff'.tr, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
               _buildDeliveryTariff(total),
               const SizedBox(height: 24),
 
               // Payment method
-              const Text(
-                'Способ оплаты',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              Text('payment_method'.tr, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
               _buildPaymentMethod(),
               const SizedBox(height: 24),
@@ -193,7 +155,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Продавец',
+                  'seller'.tr,
                   style: TextStyle(
                     color: Colors.grey[500],
                     fontSize: 12,
@@ -265,7 +227,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  '${item.quantity} x ${_formatPrice(item.price)} сум',
+                  "${item.quantity} x ${_formatPrice(item.price)} ${'currency_sum'.tr}",
                   style: TextStyle(
                     color: Colors.grey[500],
                     fontSize: 12,
@@ -275,7 +237,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
           ),
           Text(
-            '${_formatPrice(item.total)} сум',
+            "${_formatPrice(item.total)} ${'currency_sum'.tr}",
             style: const TextStyle(
               color: Colors.white,
               fontSize: 14,
@@ -365,7 +327,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Курьер увидит ваш адрес и сможет открыть навигатор для маршрута',
+              'location_info'.tr,
               style: TextStyle(
                 color: Colors.grey[500],
                 fontSize: 12,
@@ -383,7 +345,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       style: const TextStyle(color: Colors.white),
       maxLines: 3,
       decoration: InputDecoration(
-        hintText: 'Комментарий для курьера (необязательно)',
+        hintText: 'courier_note_hint'.tr,
         hintStyle: TextStyle(color: Colors.grey[600]),
         filled: true,
         fillColor: Colors.grey[900],
@@ -415,12 +377,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             child: Icon(Icons.money, color: buttonColor),
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Наличными курьеру',
+                  'cash_to_courier'.tr,
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 16,
@@ -429,7 +391,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'Оплата при получении',
+                  'pay_on_delivery'.tr,
                   style: TextStyle(
                     color: Colors.grey,
                     fontSize: 12,
@@ -478,8 +440,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Стандартная доставка',
+                      Text(
+                        'standard_delivery'.tr,
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 16,
@@ -488,14 +450,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '60-90 минут',
+                        'minutes_60_90'.tr,
                         style: TextStyle(color: Colors.grey[500], fontSize: 12),
                       ),
                     ],
                   ),
                 ),
                 Text(
-                  isFreeDelivery ? 'Бесплатно' : '${_formatPrice(_standardDeliveryFee)} сум',
+                  isFreeDelivery ? 'free'.tr : "${_formatPrice(_standardDeliveryFee)} ${'currency_sum'.tr}",
                   style: TextStyle(
                     color: isFreeDelivery ? Colors.green : Colors.white,
                     fontWeight: FontWeight.bold,
@@ -541,8 +503,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Экспресс доставка',
+                      Text(
+                        'express_delivery'.tr,
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 16,
@@ -551,14 +513,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '30-45 минут',
+                        'minutes_30_45'.tr,
                         style: TextStyle(color: Colors.grey[500], fontSize: 12),
                       ),
                     ],
                   ),
                 ),
                 Text(
-                  '${_formatPrice(_expressDeliveryFee)} сум',
+                  "${_formatPrice(_expressDeliveryFee)} ${'currency_sum'.tr}",
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -591,7 +553,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Бесплатная доставка от ${_formatPrice(_freeDeliveryThreshold)} сум',
+                      'free_delivery_from'.trParams({
+                        'amount': _formatPrice(_freeDeliveryThreshold),
+                        'currency': 'currency_sum'.tr,
+                      }),
                       style: const TextStyle(color: Colors.green, fontSize: 12),
                     ),
                   ),
@@ -623,17 +588,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ),
       child: Column(
         children: [
-          _buildSummaryRow('Товары (${items.length})', '${_formatPrice(itemsTotal)} сум'),
+          _buildSummaryRow(
+            "${'products'.tr} (${items.length})",
+            "${_formatPrice(itemsTotal)} ${'currency_sum'.tr}",
+          ),
           const SizedBox(height: 8),
           _buildSummaryRow(
-            'Доставка (${_selectedTariff == 'express' ? 'экспресс' : 'стандарт'})',
-            deliveryFee == 0 ? 'Бесплатно' : '${_formatPrice(deliveryFee)} сум',
+            'delivery_summary'.trParams({
+              'tariff': (_selectedTariff == 'express' ? 'tariff_express'.tr : 'tariff_standard'.tr),
+            }),
+            deliveryFee == 0 ? 'free'.tr : "${_formatPrice(deliveryFee)} ${'currency_sum'.tr}",
             valueColor: deliveryFee == 0 ? Colors.green : null,
           ),
           const Divider(color: Colors.grey, height: 24),
           _buildSummaryRow(
-            'Итого',
-            '${_formatPrice(grandTotal)} сум',
+            'total'.tr,
+            "${_formatPrice(grandTotal)} ${'currency_sum'.tr}",
             isBold: true,
             valueColor: primaryColor,
           ),
@@ -702,7 +672,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     ),
                   )
                 : Text(
-                    'Заказать за ${_formatPrice(grandTotal)} сум',
+                    'order_now_for'.trParams({
+                      'amount': _formatPrice(grandTotal),
+                      'currency': 'currency_sum'.tr,
+                    }),
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -740,10 +713,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         Get.off(() => OrderSuccessScreen(order: order));
       } else {
         Get.snackbar(
-          'Ошибка',
+          'error'.tr,
           _marketplaceController.error.value.isNotEmpty 
               ? _marketplaceController.error.value 
-              : 'Не удалось создать заказ',
+              : 'unable_to_create_order'.tr,
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.red,
           colorText: Colors.white,

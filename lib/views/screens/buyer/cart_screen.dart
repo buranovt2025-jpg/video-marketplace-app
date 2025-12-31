@@ -29,10 +29,7 @@ class _CartScreenState extends State<CartScreen> {
       backgroundColor: backgroundColor,
       appBar: AppBar(
         backgroundColor: backgroundColor,
-        title: const Text(
-          'Корзина',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
+        title: Text('cart'.tr, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Get.back(),
@@ -42,7 +39,7 @@ class _CartScreenState extends State<CartScreen> {
               ? TextButton(
                   onPressed: _showClearCartDialog,
                   child: Text(
-                    'Очистить',
+                    'clear'.tr,
                     style: TextStyle(color: Colors.red[400]),
                   ),
                 )
@@ -76,7 +73,7 @@ class _CartScreenState extends State<CartScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Корзина пуста',
+            'empty_cart'.tr,
             style: TextStyle(
               color: Colors.grey[500],
               fontSize: 18,
@@ -84,7 +81,7 @@ class _CartScreenState extends State<CartScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Добавьте товары из каталога',
+            'add_products_from_catalog'.tr,
             style: TextStyle(
               color: Colors.grey[600],
               fontSize: 14,
@@ -97,7 +94,7 @@ class _CartScreenState extends State<CartScreen> {
               backgroundColor: buttonColor,
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
             ),
-            child: const Text('К покупкам'),
+            child: Text('continue_shopping'.tr),
           ),
         ],
       ),
@@ -121,7 +118,7 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Widget _buildSellerSection(String sellerId, List<CartItem> items, double total) {
-    final sellerName = items.isNotEmpty ? items.first.sellerName : 'Продавец';
+    final sellerName = items.isNotEmpty ? items.first.sellerName : 'seller'.tr;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -154,7 +151,7 @@ class _CartScreenState extends State<CartScreen> {
                   ),
                 ),
                 Text(
-                  '${_formatPrice(total)} сум',
+                  "${_formatPrice(total)} ${'currency_sum'.tr}",
                   style: TextStyle(
                     color: buttonColor,
                     fontSize: 14,
@@ -180,7 +177,7 @@ class _CartScreenState extends State<CartScreen> {
                   backgroundColor: buttonColor,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
-                child: const Text('Оформить заказ'),
+                child: Text('checkout'.tr),
               ),
             ),
           ),
@@ -239,7 +236,7 @@ class _CartScreenState extends State<CartScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${_formatPrice(item.price)} сум',
+                  "${_formatPrice(item.price)} ${'currency_sum'.tr}",
                   style: TextStyle(
                     color: Colors.grey[400],
                     fontSize: 12,
@@ -271,7 +268,7 @@ class _CartScreenState extends State<CartScreen> {
                     ),
                     const Spacer(),
                     Text(
-                      '${_formatPrice(item.total)} сум',
+                      "${_formatPrice(item.total)} ${'currency_sum'.tr}",
                       style: TextStyle(
                         color: buttonColor,
                         fontSize: 14,
@@ -331,7 +328,7 @@ class _CartScreenState extends State<CartScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Всего:',
+                    '${'total'.tr}:',
                     style: TextStyle(
                       color: Colors.grey[400],
                       fontSize: 12,
@@ -339,7 +336,7 @@ class _CartScreenState extends State<CartScreen> {
                   ),
                   const SizedBox(height: 4),
                   Obx(() => Text(
-                    '${_formatPrice(_cartController.totalAmount)} сум',
+                    "${_formatPrice(_cartController.totalAmount)} ${'currency_sum'.tr}",
                     style: TextStyle(
                       color: buttonColor,
                       fontSize: 20,
@@ -350,7 +347,7 @@ class _CartScreenState extends State<CartScreen> {
               ),
             ),
             Obx(() => Text(
-              '${_cartController.itemCount} товар(ов)',
+              'items_count'.trParams({'n': '${_cartController.itemCount}'}),
               style: TextStyle(
                 color: Colors.grey[400],
                 fontSize: 14,
@@ -366,18 +363,12 @@ class _CartScreenState extends State<CartScreen> {
     Get.dialog(
       AlertDialog(
         backgroundColor: Colors.grey[900],
-        title: const Text(
-          'Очистить корзину?',
-          style: TextStyle(color: Colors.white),
-        ),
-        content: const Text(
-          'Все товары будут удалены из корзины',
-          style: TextStyle(color: Colors.grey),
-        ),
+        title: Text('clear_cart_title'.tr, style: const TextStyle(color: Colors.white)),
+        content: Text('clear_cart_message'.tr, style: const TextStyle(color: Colors.grey)),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: const Text('Отмена'),
+            child: Text('cancel'.tr),
           ),
           TextButton(
             onPressed: () {
@@ -385,7 +376,7 @@ class _CartScreenState extends State<CartScreen> {
               Get.back();
             },
             child: Text(
-              'Очистить',
+              'clear'.tr,
               style: TextStyle(color: Colors.red[400]),
             ),
           ),
@@ -398,18 +389,15 @@ class _CartScreenState extends State<CartScreen> {
     Get.dialog(
       AlertDialog(
         backgroundColor: Colors.grey[900],
-        title: const Text(
-          'Удалить товар?',
-          style: TextStyle(color: Colors.white),
-        ),
+        title: Text('delete_item_title'.tr, style: const TextStyle(color: Colors.white)),
         content: Text(
-          'Удалить "${item.productName}" из корзины?',
+          'delete_item_message'.trParams({'name': item.productName}),
           style: const TextStyle(color: Colors.grey),
         ),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: const Text('Отмена'),
+            child: Text('cancel'.tr),
           ),
           TextButton(
             onPressed: () {
@@ -417,7 +405,7 @@ class _CartScreenState extends State<CartScreen> {
               Get.back();
             },
             child: Text(
-              'Удалить',
+              'delete'.tr,
               style: TextStyle(color: Colors.red[400]),
             ),
           ),
