@@ -13,27 +13,23 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   final List<Map<String, dynamic>> _notifications = [
     {
       'id': '1',
-      'title': 'Новый заказ',
-      'message': 'Вы получили новый заказ #12345',
-      'time': '5 мин назад',
-      'read': false,
       'type': 'order',
+      'order_id': '12345',
+      'time_minutes': 5,
+      'read': false,
     },
     {
       'id': '2',
-      'title': 'Заказ доставлен',
-      'message': 'Ваш заказ #12344 успешно доставлен',
-      'time': '1 час назад',
-      'read': true,
       'type': 'delivery',
+      'order_id': '12344',
+      'time_hours': 1,
+      'read': true,
     },
     {
       'id': '3',
-      'title': 'Новый отзыв',
-      'message': 'Покупатель оставил отзыв на ваш товар',
-      'time': '2 часа назад',
-      'read': true,
       'type': 'review',
+      'time_hours': 2,
+      'read': true,
     },
   ];
 
@@ -130,6 +126,30 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Widget _buildNotificationItem(Map<String, dynamic> notification) {
     final isRead = notification['read'] as bool;
+    final type = notification['type']?.toString() ?? 'order';
+    final orderId = notification['order_id']?.toString();
+    final minutes = notification['time_minutes'];
+    final hours = notification['time_hours'];
+
+    final title = switch (type) {
+      'order' => 'notif_new_order_title'.tr,
+      'delivery' => 'notif_order_delivered_title'.tr,
+      'review' => 'notif_new_review_title'.tr,
+      _ => 'notifications'.tr,
+    };
+
+    final message = switch (type) {
+      'order' => 'notif_new_order_message'.trParams({'id': orderId ?? ''}),
+      'delivery' => 'notif_order_delivered_message'.trParams({'id': orderId ?? ''}),
+      'review' => 'notif_new_review_message'.tr,
+      _ => '',
+    };
+
+    final timeText = (minutes is int)
+        ? 'time_minutes_ago'.trParams({'n': '$minutes'})
+        : (hours is int)
+            ? 'time_hours_ago'.trParams({'n': '$hours'})
+            : 'time_recent'.tr;
     
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -156,7 +176,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           children: [
             Expanded(
               child: Text(
-                notification['title'],
+                title,
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
@@ -179,12 +199,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           children: [
             const SizedBox(height: 4),
             Text(
-              notification['message'],
+              message,
               style: TextStyle(color: Colors.grey[400]),
             ),
             const SizedBox(height: 4),
             Text(
-              notification['time'],
+              timeText,
               style: TextStyle(color: Colors.grey[600], fontSize: 12),
             ),
           ],

@@ -31,7 +31,7 @@ class _RateOrderScreenState extends State<RateOrderScreen> {
     if (_rating == 0) {
       Get.snackbar(
         'error'.tr,
-        'Выберите оценку',
+        'select_rating'.tr,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -101,7 +101,13 @@ class _RateOrderScreenState extends State<RateOrderScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Заказ #${widget.order['id']?.substring(0, 8) ?? ''}',
+              'order_number'.trParams({
+                'id': (() {
+                  final s = widget.order['id']?.toString() ?? '';
+                  if (s.isEmpty) return '';
+                  return s.length > 8 ? s.substring(0, 8) : s;
+                })(),
+              }),
               style: TextStyle(color: Colors.grey[500]),
             ),
             const SizedBox(height: 32),
@@ -147,6 +153,7 @@ class _RateOrderScreenState extends State<RateOrderScreen> {
                 labelText: 'write_review'.tr,
                 labelStyle: TextStyle(color: Colors.grey[400]),
                 hintText: 'Расскажите о вашем опыте...',
+                hintText: 'review_hint'.tr,
                 hintStyle: TextStyle(color: Colors.grey[600]),
                 alignLabelWithHint: true,
                 filled: true,
@@ -199,15 +206,15 @@ class _RateOrderScreenState extends State<RateOrderScreen> {
   String _getRatingText() {
     switch (_rating) {
       case 1:
-        return 'Очень плохо';
+        return 'rating_1'.tr;
       case 2:
-        return 'Плохо';
+        return 'rating_2'.tr;
       case 3:
-        return 'Нормально';
+        return 'rating_3'.tr;
       case 4:
-        return 'Хорошо';
+        return 'rating_4'.tr;
       case 5:
-        return 'Отлично!';
+        return 'rating_5'.tr;
       default:
         return '';
     }
