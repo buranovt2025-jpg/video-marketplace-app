@@ -4,6 +4,7 @@ import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
 import 'package:tiktok_tutorial/utils/web_image_policy.dart';
+import 'package:tiktok_tutorial/views/widgets/video_player_iten.dart';
 
 class StoryViewerScreen extends StatefulWidget {
   final List<Map<String, dynamic>> stories;
@@ -53,6 +54,10 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
   }
 
   void _startProgress() {
+    // Video stories should stay longer than images by default.
+    final current = widget.stories[_currentIndex];
+    final isVideo = (current['video_url']?.toString() ?? '').trim().isNotEmpty;
+    _progressController.duration = Duration(seconds: isVideo ? 10 : 5);
     _progressController.reset();
     _progressController.forward();
   }
@@ -283,18 +288,8 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                   ],
                 ),
               )
-            : videoUrl != null
-                ? Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.play_circle_outline, size: 80, color: Colors.grey[600]),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Видео история',
-                        style: TextStyle(color: Colors.grey[500]),
-                      ),
-                    ],
-                  )
+            : (videoUrl != null && videoUrl.toString().trim().isNotEmpty)
+                ? VideoPlayerItem(videoUrl: videoUrl.toString())
                 : Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

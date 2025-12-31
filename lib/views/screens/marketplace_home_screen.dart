@@ -24,6 +24,7 @@ import 'package:tiktok_tutorial/views/screens/cabinets/buyer_cabinet_screen.dart
 import 'package:tiktok_tutorial/views/screens/buyer/nearby_sellers_screen.dart';
 import 'package:tiktok_tutorial/views/screens/common/delete_account_screen.dart';
 import 'package:tiktok_tutorial/views/screens/admin/seller_verification_screen.dart';
+import 'package:tiktok_tutorial/views/screens/reels/reels_viewer_screen.dart';
 import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
 import 'package:tiktok_tutorial/utils/web_image_policy.dart';
 import 'package:tiktok_tutorial/utils/formatters.dart';
@@ -613,13 +614,13 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         itemCount: reels.length,
         itemBuilder: (context, index) {
           final reel = reels[index];
-          return _buildReelCard(reel);
+          return _buildReelCard(reel, index: index);
         },
       );
     });
   }
 
-  Widget _buildReelCard(Map<String, dynamic> reel) {
+  Widget _buildReelCard(Map<String, dynamic> reel, {required int index}) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       decoration: BoxDecoration(
@@ -665,28 +666,61 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
           // Video placeholder - responsive height
           LayoutBuilder(
             builder: (context, constraints) {
-              final videoHeight = ResponsiveHelper.responsiveValue(
-                context,
-                mobile: 400.0,
-                tablet: 500.0,
-                desktop: 600.0,
-              );
+              final width = constraints.maxWidth;
+              final videoHeight = (width * 16 / 9).clamp(280.0, 640.0);
+              final thumbUrl = reel['thumbnail_url']?.toString();
               return Container(
                 height: videoHeight,
                 width: double.infinity,
-                color: Colors.grey[800],
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.play_circle_outline, size: 64, color: Colors.grey[600]),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Видео',
-                        style: TextStyle(color: Colors.grey[600]),
+                color: Colors.grey[850],
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    if (thumbUrl != null && thumbUrl.trim().isNotEmpty)
+                      AppNetworkImage(
+                        url: thumbUrl,
+                        fit: BoxFit.cover,
+                        errorWidget: Center(
+                          child: Icon(Icons.video_library, size: 48, color: Colors.grey[600]),
+                        ),
+                      )
+                    else
+                      Center(
+                        child: Icon(Icons.video_library, size: 48, color: Colors.grey[600]),
                       ),
-                    ],
-                  ),
+                    Center(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: const BoxDecoration(
+                          color: Colors.black54,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.play_arrow, color: Colors.white, size: 32),
+                      ),
+                    ),
+                    Positioned(
+                      right: 12,
+                      bottom: 12,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.black54,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.favorite, color: Colors.white, size: 14),
+                            const SizedBox(width: 6),
+                            Text(
+                              '${asInt(reel['likes_count'] ?? reel['likes'] ?? 0)}',
+                              style: const TextStyle(color: Colors.white, fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               );
             },
@@ -715,6 +749,13 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                   onPressed: () {},
                 ),
                 const Spacer(),
+                TextButton(
+                  onPressed: () {
+                    final reels = List<Map<String, dynamic>>.from(_controller.reels);
+                    Get.to(() => ReelsViewerScreen(reels: reels, initialIndex: index));
+                  },
+                  child: const Text('Смотреть', style: TextStyle(color: Colors.white)),
+                ),
                 // Buy button for reels with linked product
                 if (reel['product_id'] != null) ...[
                   ElevatedButton.icon(
