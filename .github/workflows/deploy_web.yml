@@ -6,11 +6,6 @@ on:
       # Change this to the branch you want to auto-deploy.
       - cursor/what-has-been-done-5e03
   workflow_dispatch:
-    inputs:
-      branch:
-        description: Branch to deploy (default: current)
-        required: false
-        # Default input type is string; `type: string` is not supported here.
 
 concurrency:
   group: deploy-web-${{ github.ref }}
@@ -56,9 +51,7 @@ jobs:
           DEPLOY_PROJECT_DIR: ${{ secrets.DEPLOY_PROJECT_DIR }}
           DEPLOY_WEB_ROOT: ${{ secrets.DEPLOY_WEB_ROOT }}
           DEPLOY_FLUTTER_BIN: ${{ secrets.DEPLOY_FLUTTER_BIN }}
-          # For `push` events, deploy the pushed branch. For manual runs, allow
-          # overriding via workflow_dispatch input.
-          DEPLOY_BRANCH: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.branch) || github.ref_name }}
+          DEPLOY_BRANCH: ${{ github.ref_name }}
         run: |
           set -euo pipefail
           echo "Deploying branch: ${DEPLOY_BRANCH}"
