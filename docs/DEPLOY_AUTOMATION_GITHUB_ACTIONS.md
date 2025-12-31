@@ -64,6 +64,8 @@ chmod 440 /etc/sudoers.d/deploy-web
 - `DEPLOY_USER` = `deploy`
 - `DEPLOY_SSH_KEY` = приватный ключ (PEM) для SSH в `deploy@165.232.81.31`
 - `DEPLOY_PROJECT_DIR` = `/root/projects/video-marketplace-app` (или другой путь, где лежит git-репа на сервере)
+- `DEPLOY_WEB_ROOT` = `/var/www/gogomarket` (если отличается)
+- `DEPLOY_FLUTTER_BIN` = `/opt/flutter/bin/flutter` (рекомендуется путь, доступный `deploy`)
 
 ---
 

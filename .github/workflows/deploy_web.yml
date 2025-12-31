@@ -33,6 +33,8 @@ jobs:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_PROJECT_DIR: ${{ secrets.DEPLOY_PROJECT_DIR }}
+          DEPLOY_WEB_ROOT: ${{ secrets.DEPLOY_WEB_ROOT }}
+          DEPLOY_FLUTTER_BIN: ${{ secrets.DEPLOY_FLUTTER_BIN }}
           DEPLOY_BRANCH: ${{ github.ref_name }}
         run: |
           set -euo pipefail
@@ -41,10 +43,12 @@ jobs:
           ssh "${DEPLOY_USER}@${DEPLOY_HOST}" "bash -lc '
             set -euo pipefail
             PROJECT_DIR=\"${DEPLOY_PROJECT_DIR:-/root/projects/video-marketplace-app}\"
+            WEB_ROOT=\"${DEPLOY_WEB_ROOT:-/var/www/gogomarket}\"
+            FLUTTER_BIN=\"${DEPLOY_FLUTTER_BIN:-/opt/flutter/bin/flutter}\"
             cd \"${PROJECT_DIR}\"
             git fetch origin
             git checkout \"${DEPLOY_BRANCH}\"
             git pull origin \"${DEPLOY_BRANCH}\"
-            bash scripts/deploy_web.sh
+            PROJECT_DIR=\"${PROJECT_DIR}\" WEB_ROOT=\"${WEB_ROOT}\" FLUTTER_BIN=\"${FLUTTER_BIN}\" bash scripts/deploy_web.sh
           '"
 
