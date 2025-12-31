@@ -119,6 +119,27 @@ class AppTranslations extends Translations {
       'login_or_register_to_shop': 'Войдите или зарегистрируйтесь,\nчтобы делать покупки',
       'no_orders_yet': 'Пока нет заказов',
       'order_total': 'Сумма',
+      'create_first_reel': 'Создать первый рилс',
+      'products': 'Товары',
+      'reels': 'Рилсы',
+
+      // Time ago (stories)
+      'time_recent': 'Недавно',
+      'time_just_now': 'Только что',
+      'time_minutes_ago': '{n} мин назад',
+      'time_hours_ago': '{n} ч назад',
+      'time_days_ago': '{n} дн назад',
+
+      // Order statuses
+      'status_created': 'Создан',
+      'status_accepted': 'Принят',
+      'status_ready': 'Готов',
+      'status_picked_up': 'Забран',
+      'status_in_transit': 'В пути',
+      'status_delivered': 'Доставлен',
+      'status_completed': 'Завершён',
+      'status_cancelled': 'Отменён',
+      'order_number': 'Заказ #{id}',
       'problem_with_order': 'Проблема с заказом',
       'report_problem': 'Сообщить о проблеме',
       
@@ -400,6 +421,27 @@ class AppTranslations extends Translations {
       'login_or_register_to_shop': 'Xarid qilish uchun kiring yoki ro\'yxatdan o\'ting',
       'no_orders_yet': 'Hali buyurtmalar yo\'q',
       'order_total': 'Jami',
+      'create_first_reel': 'Birinchi rilsni yaratish',
+      'products': 'Mahsulotlar',
+      'reels': 'Rilslar',
+
+      // Time ago (stories)
+      'time_recent': 'Yaqinda',
+      'time_just_now': 'Hozirgina',
+      'time_minutes_ago': '{n} daqiqa oldin',
+      'time_hours_ago': '{n} soat oldin',
+      'time_days_ago': '{n} kun oldin',
+
+      // Order statuses
+      'status_created': 'Yaratildi',
+      'status_accepted': 'Qabul qilindi',
+      'status_ready': 'Tayyor',
+      'status_picked_up': 'Olib ketildi',
+      'status_in_transit': 'Yo\'lda',
+      'status_delivered': 'Yetkazildi',
+      'status_completed': 'Yakunlandi',
+      'status_cancelled': 'Bekor qilindi',
+      'order_number': 'Buyurtma #{id}',
       'problem_with_order': 'Buyurtma bilan muammo',
       'report_problem': 'Muammo haqida xabar berish',
       
@@ -661,6 +703,27 @@ class AppTranslations extends Translations {
       'login_or_register_to_shop': 'Login or register to shop',
       'no_orders_yet': 'No orders yet',
       'order_total': 'Total',
+      'create_first_reel': 'Create first reel',
+      'products': 'Products',
+      'reels': 'Reels',
+
+      // Time ago (stories)
+      'time_recent': 'Recently',
+      'time_just_now': 'Just now',
+      'time_minutes_ago': '{n} min ago',
+      'time_hours_ago': '{n} h ago',
+      'time_days_ago': '{n} d ago',
+
+      // Order statuses
+      'status_created': 'Created',
+      'status_accepted': 'Accepted',
+      'status_ready': 'Ready',
+      'status_picked_up': 'Picked up',
+      'status_in_transit': 'In transit',
+      'status_delivered': 'Delivered',
+      'status_completed': 'Completed',
+      'status_cancelled': 'Cancelled',
+      'order_number': 'Order #{id}',
       'problem_with_order': 'Problem with order',
       'report_problem': 'Report Problem',
       

@@ -515,7 +515,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
   }
 
   String _getTimeAgo(String? dateString) {
-    if (dateString == null) return 'Недавно';
+    if (dateString == null) return 'time_recent'.tr;
     
     try {
       final date = DateTime.parse(dateString);
@@ -523,16 +523,16 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
       final difference = now.difference(date);
 
       if (difference.inMinutes < 1) {
-        return 'Только что';
+        return 'time_just_now'.tr;
       } else if (difference.inMinutes < 60) {
-        return '${difference.inMinutes} мин назад';
+        return 'time_minutes_ago'.trParams({'n': '${difference.inMinutes}'});
       } else if (difference.inHours < 24) {
-        return '${difference.inHours} ч назад';
+        return 'time_hours_ago'.trParams({'n': '${difference.inHours}'});
       } else {
-        return '${difference.inDays} дн назад';
+        return 'time_days_ago'.trParams({'n': '${difference.inDays}'});
       }
     } catch (e) {
-      return 'Недавно';
+      return 'time_recent'.tr;
     }
   }
 }

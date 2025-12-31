@@ -793,7 +793,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: buttonColor,
                     ),
-                    child: const Text('Создать первый рилс'),
+                    child: Text('create_first_reel'.tr),
                   ),
                 ],
               ],
@@ -1421,14 +1421,14 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
       };
     
       final statusLabels = {
-        'created': 'Создан',
-        'accepted': 'Принят',
-        'ready': 'Готов',
-        'picked_up': 'Забран',
-        'in_transit': 'В пути',
-        'delivered': 'Доставлен',
-        'completed': 'Завершён',
-        'cancelled': 'Отменён',
+        'created': 'status_created'.tr,
+        'accepted': 'status_accepted'.tr,
+        'ready': 'status_ready'.tr,
+        'picked_up': 'status_picked_up'.tr,
+        'in_transit': 'status_in_transit'.tr,
+        'delivered': 'status_delivered'.tr,
+        'completed': 'status_completed'.tr,
+        'cancelled': 'status_cancelled'.tr,
       };
     
       final status = order['status'] ?? 'created';
@@ -1449,7 +1449,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Заказ #${order['id']?.substring(0, 8) ?? ''}',
+                    'order_number'.trParams({'id': (order['id']?.toString() ?? '').substring(0, 8)}),
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -1584,9 +1584,9 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      _buildStatItem('Товары', _controller.myProducts.length.toString()),
-                      _buildStatItem('Заказы', _controller.orders.length.toString()),
-                      _buildStatItem('Рилсы', _controller.reels.where((r) => r['author_id'] == _controller.userId).length.toString()),
+                      _buildStatItem('products'.tr, _controller.myProducts.length.toString()),
+                      _buildStatItem('orders'.tr, _controller.orders.length.toString()),
+                      _buildStatItem('reels'.tr, _controller.reels.where((r) => r['author_id'] == _controller.userId).length.toString()),
                     ],
                   ),
                   
