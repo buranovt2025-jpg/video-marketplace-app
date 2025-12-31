@@ -24,6 +24,16 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
   late final PageController _pageController;
   int _currentIndex = 0;
 
+  Map<String, dynamic>? _findProductForReel(Map<String, dynamic> reel) {
+    final productId = reel['product_id']?.toString();
+    if (productId == null || productId.isEmpty) return null;
+    final product = _controller.products.firstWhere(
+      (p) => p['id']?.toString() == productId,
+      orElse: () => <String, dynamic>{},
+    );
+    return product.isEmpty ? null : product;
+  }
+
   void _openProductFromReel(Map<String, dynamic> reel) {
     final productId = reel['product_id']?.toString();
     if (productId == null || productId.isEmpty) return;
@@ -81,9 +91,11 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                 final reel = widget.reels[index];
                 final videoUrl = (reel['video_url'] ?? reel['media_url']) as String?;
                 final authorName = reel['author_name'] ?? 'User';
+                final authorAvatar = reel['author_avatar']?.toString();
                 final caption = (reel['caption'] ?? '').toString();
                 final likes = reel['likes'] ?? reel['likes_count'] ?? 0;
                 final contentId = reel['id']?.toString();
+                final product = _findProductForReel(reel);
 
                 return Stack(
                   fit: StackFit.expand,
@@ -129,6 +141,15 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                               onPressed: () => Get.back(),
                             ),
                             const SizedBox(width: 4),
+                            CircleAvatar(
+                              radius: 16,
+                              backgroundColor: Colors.grey[850],
+                              backgroundImage: (authorAvatar != null && authorAvatar.isNotEmpty) ? NetworkImage(authorAvatar) : null,
+                              child: (authorAvatar == null || authorAvatar.isEmpty)
+                                  ? const Icon(Icons.person, color: Colors.white, size: 16)
+                                  : null,
+                            ),
+                            const SizedBox(width: 10),
                             Expanded(
                               child: Text(
                                 authorName,
@@ -201,6 +222,13 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            if (product != null) ...[
+                              _ProductMiniCard(
+                                product: product,
+                                onTap: () => _openProductFromReel(reel),
+                              ),
+                              const SizedBox(height: 10),
+                            ],
                             if (caption.trim().isNotEmpty)
                               Text(
                                 caption,
@@ -208,24 +236,6 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                                 maxLines: 3,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                            if (reel['product_id'] != null) ...[
-                              const SizedBox(height: 10),
-                              SizedBox(
-                                height: 42,
-                                child: ElevatedButton.icon(
-                                  onPressed: () {
-                                    _openProductFromReel(reel);
-                                  },
-                                  icon: const Icon(Icons.shopping_bag_outlined, size: 18),
-                                  label: Text('buy_now'.tr),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: primaryColor,
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
-                                  ),
-                                ),
-                              ),
-                            ],
                           ],
                         ),
                       ),
@@ -234,6 +244,102 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                 );
               },
             ),
+    );
+  }
+}
+
+class _ProductMiniCard extends StatelessWidget {
+  final Map<String, dynamic> product;
+  final VoidCallback onTap;
+
+  const _ProductMiniCard({
+    required this.product,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final name = (product['name'] ?? 'Товар').toString();
+    final imageUrl = product['image_url']?.toString();
+    final price = product['price'];
+    final priceText = (price is num) ? '${price.toStringAsFixed(0)} сум' : null;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.92),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: (imageUrl != null && imageUrl.isNotEmpty)
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.network(
+                        imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const Icon(Icons.shopping_bag, color: Colors.grey),
+                      ),
+                    )
+                  : const Icon(Icons.shopping_bag, color: Colors.grey),
+            ),
+            const SizedBox(width: 10),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 240),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    priceText ?? 'Открыть товар',
+                    style: TextStyle(
+                      color: Colors.grey[800],
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: primaryColor,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                'buy_now'.tr,
+                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

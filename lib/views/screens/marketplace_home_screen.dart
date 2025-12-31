@@ -621,6 +621,9 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                   desktop: 620.0,
                 );
                 final thumbUrl = reel['thumbnail_url']?.toString();
+                final hasProduct = reel['product_id'] != null;
+                final likes = reel['likes'] ?? reel['likes_count'] ?? 0;
+                final caption = (reel['caption'] ?? '').toString().trim();
                 return Container(
                   height: videoHeight,
                   width: double.infinity,
@@ -639,6 +642,27 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                         )
                       else
                         Container(color: Colors.grey[900]),
+
+                      // Bottom gradient for readability (IG-like)
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.transparent,
+                                  Colors.black.withOpacity(0.15),
+                                  Colors.black.withOpacity(0.55),
+                                ],
+                                stops: const [0.55, 0.75, 1.0],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
                       Center(
                         child: Container(
                           padding: const EdgeInsets.all(14),
@@ -649,25 +673,45 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                           child: const Icon(Icons.play_arrow, color: Colors.white, size: 34),
                         ),
                       ),
+
+                      // Top-left badges
                       Positioned(
                         left: 12,
-                        right: 12,
-                        bottom: 10,
+                        top: 12,
                         child: Row(
                           children: [
-                            Icon(Icons.touch_app, size: 14, color: Colors.grey[300]),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                'Нажмите, чтобы открыть',
-                                style: TextStyle(color: Colors.grey[300], fontSize: 12),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                            if (hasProduct)
+                              _Badge(
+                                icon: Icons.shopping_bag_outlined,
+                                text: 'Товар',
                               ),
+                            if (hasProduct) const SizedBox(width: 8),
+                            _Badge(
+                              icon: Icons.favorite,
+                              text: '$likes',
+                              iconColor: Colors.red[300],
                             ),
                           ],
                         ),
                       ),
+
+                      // Bottom caption hint
+                      if (caption.isNotEmpty)
+                        Positioned(
+                          left: 12,
+                          right: 12,
+                          bottom: 12,
+                          child: Text(
+                            caption,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
                     ],
                   ),
                 );
@@ -737,6 +781,27 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _Badge({required IconData icon, required String text, Color? iconColor}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.55),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: iconColor ?? Colors.white),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+          ),
+        ],
       ),
     );
   }
