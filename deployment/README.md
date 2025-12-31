@@ -276,24 +276,24 @@ sudo systemctl restart nginx
 
 ```bash
 export SERVER_IP="165.232.81.31"          # IP сервера
-export SERVER_USER="root"                 # Пользователь
+export SERVER_USER="deploy"               # Пользователь (не root)
 export SSH_PORT="22"                      # SSH порт
-export SERVER_WEB_DIR="/var/www/html"    # Директория веб-приложения
+export SERVER_WEB_DIR="/var/www/gogomarket" # Директория веб-приложения
 ```
 
 #### Настройки проекта
 
 ```bash
-export PROJECT_DIR="/home/ubuntu/video-marketplace-app"  # Путь к проекту
+export PROJECT_DIR="/home/deploy/projects/video-marketplace-app"  # Путь к проекту
 export BUILD_DIR="${PROJECT_DIR}/build/web"              # Путь к билду
-export DEPLOY_BRANCH="main"                              # Ветка для деплоя
+export DEPLOY_BRANCH="cursor/what-has-been-done-5e03"    # Ветка для деплоя
 ```
 
 #### Настройки Flutter Build
 
 ```bash
 export FLUTTER_BUILD_CMD="flutter build web --release"  # Команда билда
-export FLUTTER_BUILD_FLAGS="--web-renderer canvaskit"   # Флаги
+export FLUTTER_BUILD_FLAGS="--pwa-strategy=none"        # Флаги (self-signed SSL friendly)
 export CLEAN_BEFORE_BUILD="true"                        # Очистка перед билдом
 ```
 
@@ -399,7 +399,7 @@ flutter clean
 flutter pub get
 
 # Попробуйте собрать вручную
-flutter build web --release --web-renderer canvaskit
+flutter build web --release --pwa-strategy=none
 
 # Проверьте ошибки
 flutter analyze

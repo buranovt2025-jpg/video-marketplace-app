@@ -13,14 +13,16 @@
 # IP адрес сервера
 export SERVER_IP="165.232.81.31"
 
-# Пользователь на сервере (обычно root для Digital Ocean)
-export SERVER_USER="root"
+# Пользователь на сервере (рекомендуется НЕ root)
+# Пример: deploy
+export SERVER_USER="deploy"
 
 # Порт SSH (по умолчанию 22)
 export SSH_PORT="22"
 
 # Путь к директории с веб-приложением на сервере
-export SERVER_WEB_DIR="/var/www/html"
+# В этом проекте используется:
+export SERVER_WEB_DIR="/var/www/gogomarket"
 
 # Путь к конфигурации nginx на сервере
 export NGINX_CONFIG="/etc/nginx/sites-available/default"
@@ -31,13 +33,13 @@ export NGINX_CONFIG="/etc/nginx/sites-available/default"
 
 # Путь к директории проекта (по умолчанию - родительская директория)
 # ВАЖНО: Измените этот путь на фактический путь к вашему проекту!
-export PROJECT_DIR="/home/ubuntu/video-marketplace-app"
+export PROJECT_DIR="/home/deploy/projects/video-marketplace-app"
 
 # Путь к директории с билдом Flutter web
 export BUILD_DIR="${PROJECT_DIR}/build/web"
 
 # Ветка для деплоя (main, production, develop и т.д.)
-export DEPLOY_BRANCH="main"
+export DEPLOY_BRANCH="cursor/what-has-been-done-5e03"
 
 #-----------------------------------------------------------------------------
 # НАСТРОЙКИ FLUTTER BUILD
@@ -46,8 +48,10 @@ export DEPLOY_BRANCH="main"
 # Команда для билда Flutter web приложения
 export FLUTTER_BUILD_CMD="flutter build web --release"
 
-# Дополнительные флаги для билда (например, --web-renderer html или canvaskit)
-export FLUTTER_BUILD_FLAGS="--web-renderer canvaskit"
+# Дополнительные флаги для билда
+# Примечание: в Flutter 3.38.5 `--web-renderer` может быть недоступен.
+# Также для self-signed HTTPS рекомендуется отключать PWA:
+export FLUTTER_BUILD_FLAGS="--pwa-strategy=none"
 
 # Очистка перед билдом (true/false)
 export CLEAN_BEFORE_BUILD="true"

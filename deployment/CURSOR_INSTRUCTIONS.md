@@ -811,7 +811,7 @@ git push origin main
 
 ```dart
 // ❌ ПЛОХО
-final password = "GoGoMarket2025!Secure";
+final password = "[REDACTED]";
 
 // ✅ ХОРОШО
 final password = dotenv.env['DB_PASSWORD'];
