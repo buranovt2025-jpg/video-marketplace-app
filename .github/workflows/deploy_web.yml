@@ -61,10 +61,10 @@ jobs:
             PROJECT_DIR=\"${DEPLOY_PROJECT_DIR:-/root/projects/video-marketplace-app}\"
             WEB_ROOT=\"${DEPLOY_WEB_ROOT:-/var/www/gogomarket}\"
             FLUTTER_BIN=\"${DEPLOY_FLUTTER_BIN:-/opt/flutter/bin/flutter}\"
-            cd \"${PROJECT_DIR}\"
+            cd \"\${PROJECT_DIR}\"
             git fetch origin
             git checkout \"${DEPLOY_BRANCH}\"
             git pull origin \"${DEPLOY_BRANCH}\"
-            PROJECT_DIR=\"${PROJECT_DIR}\" WEB_ROOT=\"${WEB_ROOT}\" FLUTTER_BIN=\"${FLUTTER_BIN}\" bash scripts/deploy_web.sh
+            PROJECT_DIR=\"\${PROJECT_DIR}\" WEB_ROOT=\"\${WEB_ROOT}\" FLUTTER_BIN=\"\${FLUTTER_BIN}\" bash scripts/deploy_web.sh
           '"
 
