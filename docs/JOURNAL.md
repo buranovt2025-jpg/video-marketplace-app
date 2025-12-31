@@ -773,3 +773,15 @@ GET https://app-owphiuvd.fly.dev/api/auth/me
   - `nearby_sellers_screen.dart`: `rating` теперь через `asDouble(...)`
   - `courier_order_detail_screen.dart`: сумма к оплате через `formatMoney(...)`
 - `docs/TZ_MVP.md` приведён к фактическому статусу (чекбоксы обновлены).
+
+### HANDOFF (для нового чата)
+Если откроем новый чат — вставить туда этот блок:
+- **Цель**: сделать рилсы/истории визуально как TikTok/Instagram (полноэкранные рилсы, видео‑сторисы), и допилить превью рилсов в `MarketplaceHomeScreen`.
+- **Ветка**: `cursor/what-has-been-done-5e03`
+- **Что уже сделано в коде**:
+  - `lib/views/screens/reels/reels_viewer_screen.dart` — полноэкранный TikTok‑like viewer (`PageView` вертикально, видео + overlay).
+  - `lib/views/widgets/video_player_iten.dart` — `BoxFit.cover`, loop, tap pause/play.
+  - `lib/views/screens/stories/story_viewer_screen.dart` — видео‑сторисы реально проигрываются + включён свайп между сторис.
+  - `lib/views/screens/marketplace_home_screen.dart` — превью рилсов показывает `thumbnail_url` и есть кнопка “Смотреть” (открывает `ReelsViewerScreen`).
+- **Что сейчас в работе / не доделано**:
+  - Доработка `_buildReelCard` в `lib/views/screens/marketplace_home_screen.dart`: сделать tap по карточке/превью → открывать `ReelsViewerScreen`, и добавить “инста‑оверлеи” (ник/подпись/градиент) на превью. Мой большой patch на замену `_buildReelCard` не применился из‑за несовпадения контекста — нужно сделать это точечными правками по текущему коду.
