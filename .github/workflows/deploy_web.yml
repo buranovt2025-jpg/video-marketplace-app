@@ -56,7 +56,8 @@ jobs:
           DEPLOY_PROJECT_DIR: ${{ secrets.DEPLOY_PROJECT_DIR }}
           DEPLOY_WEB_ROOT: ${{ secrets.DEPLOY_WEB_ROOT }}
           DEPLOY_FLUTTER_BIN: ${{ secrets.DEPLOY_FLUTTER_BIN }}
-          DEPLOY_BRANCH: ${{ inputs.branch || github.ref_name }}
+          # `inputs` context is not available for `push` events; use `github.event.inputs`.
+          DEPLOY_BRANCH: ${{ github.event.inputs.branch || github.ref_name }}
         run: |
           set -euo pipefail
           echo "Deploying branch: ${DEPLOY_BRANCH}"
