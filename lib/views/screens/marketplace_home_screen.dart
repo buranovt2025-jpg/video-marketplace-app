@@ -636,6 +636,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         final reels = List<Map<String, dynamic>>.from(_controller.reels);
         await Get.to(() => ReelsViewerScreen(reels: reels, initialIndex: index));
       },
+      onDoubleTap: () => _toggleReelLike(reel),
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         decoration: BoxDecoration(
@@ -851,15 +852,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               ),
             ),
 
-            // Caption
-            if (reel['caption'] != null && reel['caption'].isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Text(
-                  reel['caption'],
-                  style: const TextStyle(color: Colors.white),
-                ),
-              ),
+            // Caption is shown in preview overlay (to keep card clean)
           ],
         ),
       ),
