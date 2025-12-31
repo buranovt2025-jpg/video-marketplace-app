@@ -37,8 +37,8 @@ class _MarketplaceLoginScreenState extends State<MarketplaceLoginScreen> {
   Future<void> _login() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
       Get.snackbar(
-        'Ошибка',
-        'Заполните все поля',
+        'error'.tr,
+        'fill_required_fields'.tr,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -62,10 +62,10 @@ class _MarketplaceLoginScreenState extends State<MarketplaceLoginScreen> {
       }
     }else {
       Get.snackbar(
-        'Ошибка',
+        'error'.tr,
         _controller.error.value.isNotEmpty 
             ? _controller.error.value 
-            : 'Неверный email или пароль',
+            : 'invalid_email_or_password'.tr,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,

@@ -6,6 +6,7 @@ import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/services/api_service.dart';
 import 'package:tiktok_tutorial/utils/web_image_policy.dart';
+import 'package:tiktok_tutorial/utils/money.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({Key? key}) : super(key: key);
@@ -64,7 +65,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             children: [
               ListTile(
                 leading: const Icon(Icons.camera_alt, color: Colors.white),
-                title: const Text('Камера', style: TextStyle(color: Colors.white)),
+                title: Text('camera'.tr, style: const TextStyle(color: Colors.white)),
                 onTap: () async {
                   Navigator.pop(context);
                   final XFile? image = await _picker.pickImage(
@@ -82,7 +83,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.photo_library, color: Colors.white),
-                title: const Text('Галерея', style: TextStyle(color: Colors.white)),
+                title: Text('gallery'.tr, style: const TextStyle(color: Colors.white)),
                 onTap: () async {
                   Navigator.pop(context);
                   final XFile? image = await _picker.pickImage(
@@ -101,7 +102,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               if (_avatarUrl != null || _selectedImage != null)
                 ListTile(
                   leading: const Icon(Icons.delete, color: Colors.red),
-                  title: const Text('Удалить фото', style: TextStyle(color: Colors.red)),
+                  title: Text('remove_photo'.tr, style: const TextStyle(color: Colors.red)),
                   onTap: () {
                     Navigator.pop(context);
                     setState(() {
@@ -120,8 +121,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Future<void> _saveProfile() async {
     if (_nameController.text.trim().isEmpty) {
       Get.snackbar(
-        'Ошибка',
-        'Имя не может быть пустым',
+        'error'.tr,
+        'name_cannot_be_empty'.tr,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -156,16 +157,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       Get.back();
       Get.snackbar(
-        'Успешно',
-        'Профиль обновлён',
+        'success'.tr,
+        'profile_updated'.tr,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
     } catch (e) {
       Get.snackbar(
-        'Ошибка',
-        'Не удалось обновить профиль: $e',
+        'error'.tr,
+        '${'profile_update_failed'.tr}: $e',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -183,10 +184,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       backgroundColor: backgroundColor,
       appBar: AppBar(
         backgroundColor: backgroundColor,
-        title: const Text(
-          'Редактировать профиль',
-          style: TextStyle(color: Colors.white),
-        ),
+        title: Text('edit_profile'.tr, style: const TextStyle(color: Colors.white)),
         leading: IconButton(
           icon: const Icon(Icons.close, color: Colors.white),
           onPressed: () => Get.back(),
@@ -204,7 +202,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                   )
                 : Text(
-                    'Сохранить',
+                    'save'.tr,
                     style: TextStyle(
                       color: buttonColor,
                       fontWeight: FontWeight.bold,
