@@ -78,6 +78,10 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
 
   num? get _minPrice => _parsePrice(_minPriceController.text);
   num? get _maxPrice => _parsePrice(_maxPriceController.text);
+  bool get _hasActiveFilters =>
+      (_selectedSellerId != null && _selectedSellerId!.isNotEmpty) ||
+      _minPrice != null ||
+      _maxPrice != null;
 
   List<Map<String, dynamic>> _applyPriceFilter(List<Map<String, dynamic>> items) {
     final minP = _minPrice;
@@ -553,7 +557,25 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
           IconButton(
             tooltip: 'Фильтры',
             onPressed: _openFilters,
-            icon: const Icon(Icons.tune, color: Colors.white),
+            icon: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(Icons.tune, color: _hasActiveFilters ? primaryColor : Colors.white),
+                if (_hasActiveFilters)
+                  Positioned(
+                    right: -1,
+                    top: -1,
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ],
       ),
@@ -646,6 +668,29 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                           },
                         ),
                       ],
+                    ),
+                  ),
+                ],
+
+                if (_hasActiveFilters) ...[
+                  const SizedBox(height: 6),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: () async {
+                        _minPriceController.clear();
+                        _maxPriceController.clear();
+                        setState(() {
+                          _selectedSellerId = null;
+                          _selectedSellerName = null;
+                        });
+                        await _performSearch();
+                      },
+                      icon: Icon(Icons.restart_alt, color: Colors.grey[400], size: 18),
+                      label: Text(
+                        'Сбросить фильтры',
+                        style: TextStyle(color: Colors.grey[400]),
+                      ),
                     ),
                   ),
                 ],
