@@ -37,6 +37,8 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   final Set<String> _likedReelIds = <String>{};
   final Map<String, int> _reelLikeOverrides = <String, int>{};
   final Set<String> _viewedStoryIds = <String>{};
+  String? _feedBigHeartReelId;
+  bool _feedBigHeartVisible = false;
   
   bool get _isGuestMode => widget.isGuestMode;
   bool get _isSeller => !_isGuestMode && _controller.currentUser.value?['role'] == 'seller';
@@ -140,6 +142,38 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     });
 
     _controller.likeContent(contentId);
+  }
+
+  void _flashFeedBigHeart(String reelId) {
+    setState(() {
+      _feedBigHeartReelId = reelId;
+      _feedBigHeartVisible = true;
+    });
+    Future.delayed(const Duration(milliseconds: 650), () {
+      if (!mounted) return;
+      setState(() {
+        _feedBigHeartVisible = false;
+        // keep last id to avoid layout jumps; just hide opacity
+      });
+    });
+  }
+
+  void _likeReelFromDoubleTap(Map<String, dynamic> reel) {
+    final contentId = reel['id']?.toString();
+    if (contentId == null || contentId.isEmpty) return;
+
+    final isLiked = _likedReelIds.contains(contentId);
+    if (!isLiked) {
+      final baseLikes = _reelLikeOverrides[contentId] ?? _likesFromReel(reel);
+      final nextLikes = (baseLikes + 1).clamp(0, 1 << 30);
+      setState(() {
+        _likedReelIds.add(contentId);
+        _reelLikeOverrides[contentId] = nextLikes;
+      });
+      _controller.likeContent(contentId);
+    }
+
+    _flashFeedBigHeart(contentId);
   }
 
   @override
@@ -636,7 +670,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         final reels = List<Map<String, dynamic>>.from(_controller.reels);
         await Get.to(() => ReelsViewerScreen(reels: reels, initialIndex: index));
       },
-      onDoubleTap: () => _toggleReelLike(reel),
+      onDoubleTap: () => _likeReelFromDoubleTap(reel),
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         decoration: BoxDecoration(
@@ -725,6 +759,25 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                                   Colors.black.withOpacity(0.55),
                                 ],
                                 stops: const [0.55, 0.75, 1.0],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // Big heart on double tap (IG-like)
+                      Center(
+                        child: IgnorePointer(
+                          child: AnimatedOpacity(
+                            opacity: (_feedBigHeartVisible && _feedBigHeartReelId == contentId) ? 1 : 0,
+                            duration: const Duration(milliseconds: 140),
+                            child: AnimatedScale(
+                              scale: (_feedBigHeartVisible && _feedBigHeartReelId == contentId) ? 1.0 : 0.8,
+                              duration: const Duration(milliseconds: 140),
+                              child: const Icon(
+                                Icons.favorite,
+                                color: Colors.white70,
+                                size: 110,
                               ),
                             ),
                           ),
