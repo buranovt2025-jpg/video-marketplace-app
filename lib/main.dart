@@ -49,14 +49,22 @@ void main() async {
 
     // Firebase init:
     // - Mobile/desktop: can use native config (google-services.json / GoogleService-Info.plist).
-    // - Web: requires explicit FirebaseOptions (flutterfire configure). If missing, we log and
-    //   continue so marketplace mode (FastAPI backend) can still work.
-    try {
-      await Firebase.initializeApp();
-      debugPrint('Firebase.initializeApp OK');
-    } catch (e, st) {
-      debugPrint('Firebase.initializeApp FAILED (continuing): $e');
-      debugPrint('$st');
+    // - Web: requires explicit FirebaseOptions (flutterfire configure).
+    //
+    // Current prod web uses FastAPI backend + self-signed SSL, and Firebase web config
+    // is often not present. Firebase init can throw and also generate noisy JS errors.
+    // Default: skip Firebase init on web unless explicitly enabled.
+    const enableFirebaseWeb = bool.fromEnvironment('ENABLE_FIREBASE_WEB', defaultValue: false);
+    if (!kIsWeb || enableFirebaseWeb) {
+      try {
+        await Firebase.initializeApp();
+        debugPrint('Firebase.initializeApp OK');
+      } catch (e, st) {
+        debugPrint('Firebase.initializeApp FAILED (continuing): $e');
+        debugPrint('$st');
+      }
+    } else {
+      debugPrint('Web: Firebase.initializeApp skipped (ENABLE_FIREBASE_WEB=false)');
     }
 
     // Initialize API service and check for existing token
