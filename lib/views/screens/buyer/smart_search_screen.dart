@@ -338,7 +338,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
     await _performSearch();
   }
 
-  Future<void> _openPriceFilter() async {
+  Future<void> _openFilters() async {
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.grey[900],
@@ -357,7 +357,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                 children: [
                   const SizedBox(height: 8),
                   Text(
-                    'Фильтр по цене',
+                    'Фильтры',
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -365,6 +365,28 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.store, color: Colors.white),
+                    title: const Text('Продавец', style: TextStyle(color: Colors.white)),
+                    subtitle: Text(
+                      (_selectedSellerId == null || _selectedSellerId!.isEmpty)
+                          ? 'Все продавцы'
+                          : (_selectedSellerName ?? _selectedSellerId!),
+                      style: TextStyle(color: Colors.grey[400]),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    trailing: const Icon(Icons.chevron_right, color: Colors.white),
+                    onTap: () async {
+                      // Close filters sheet, open seller picker, then reopen filters.
+                      Navigator.of(context).pop();
+                      await _pickSeller();
+                      if (!mounted) return;
+                      await _openFilters();
+                    },
+                  ),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
                       Expanded(
@@ -412,6 +434,10 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                           onPressed: () {
                             _minPriceController.clear();
                             _maxPriceController.clear();
+                            setState(() {
+                              _selectedSellerId = null;
+                              _selectedSellerName = null;
+                            });
                             Navigator.of(context).pop();
                           },
                           style: OutlinedButton.styleFrom(
@@ -419,7 +445,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
-                          child: const Text('Сбросить'),
+                          child: const Text('Сбросить всё'),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -495,13 +521,8 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
         ),
         actions: [
           IconButton(
-            tooltip: 'Продавец',
-            onPressed: _pickSeller,
-            icon: const Icon(Icons.store, color: Colors.white),
-          ),
-          IconButton(
-            tooltip: 'Цена',
-            onPressed: _openPriceFilter,
+            tooltip: 'Фильтры',
+            onPressed: _openFilters,
             icon: const Icon(Icons.tune, color: Colors.white),
           ),
         ],

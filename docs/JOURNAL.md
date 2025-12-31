@@ -754,6 +754,7 @@ GET https://app-owphiuvd.fly.dev/api/auth/me
 - Поиск товаров (`SmartSearchScreen`) переключён на server-side запрос (`/api/products?search=&category=`) с fallback на локальный фильтр.
 - Добавлен выбор **продавца** в `SmartSearchScreen` (через `/api/sellers` + фильтр по `seller_id` в `/api/products`).
 - Добавлен фильтр **цена min/max** в `SmartSearchScreen` (применяется поверх результатов, без требований к backend).
+- Фильтры поиска объединены в один экран “Фильтры” (продавец + цена, плюс “Сбросить всё”).
 - Устранены потенциальные краши из-за типов чисел из API:
   - `cart_controller.dart`: цена товара в корзину теперь через `asDouble(...)` (без `(price as num)`).
   - `seller_cabinet_screen.dart`: выручка теперь считает через `asDouble(...)`
