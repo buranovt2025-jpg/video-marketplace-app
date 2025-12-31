@@ -26,7 +26,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
   String? _selectedSellerName;
   List<Map<String, dynamic>> _sellers = [];
   List<Map<String, dynamic>> _searchResults = [];
-  List<String> _suggestions = [];
+  List<_SearchSuggestion> _suggestions = [];
   bool _isSearching = false;
   bool _showSuggestions = false;
 
@@ -48,6 +48,9 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
   @override
   void initState() {
     super.initState();
+    // Warm up sellers list for seller-name suggestions. If it fails, we still
+    // have local suggestions and manual filter picker.
+    _ensureSellersLoaded();
     _focusNode.addListener(() {
       setState(() {
         _showSuggestions = _focusNode.hasFocus && _suggestions.isNotEmpty;
@@ -89,7 +92,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
     }).toList();
   }
 
-  void _onSearchChanged(String query) {
+  Future<void> _onSearchChanged(String query) async {
     if (query.isEmpty) {
       setState(() {
         _suggestions = [];
@@ -100,7 +103,8 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
 
     // Generate suggestions from products
     final products = _controller.products;
-    final Set<String> suggestionSet = {};
+    final List<_SearchSuggestion> next = [];
+    final Set<String> dedupe = {};
     
     for (var product in products) {
       final name = product['name']?.toString().toLowerCase() ?? '';
@@ -110,18 +114,46 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
       final queryLower = query.toLowerCase();
       
       if (name.contains(queryLower)) {
-        suggestionSet.add(product['name']);
+        final label = product['name']?.toString() ?? '';
+        if (label.isNotEmpty && dedupe.add('p:$label')) {
+          next.add(_SearchSuggestion.text(label));
+        }
       }
       if (category.contains(queryLower)) {
-        suggestionSet.add(_getCategoryLabel(product['category']));
+        final label = _getCategoryLabel(product['category']);
+        if (label.isNotEmpty && dedupe.add('c:$label')) {
+          next.add(_SearchSuggestion.category(label));
+        }
       }
       if (sellerName.contains(queryLower)) {
-        suggestionSet.add(product['seller_name']);
+        final label = product['seller_name']?.toString() ?? '';
+        if (label.isNotEmpty && dedupe.add('sn:$label')) {
+          next.add(_SearchSuggestion.text(label));
+        }
+      }
+    }
+
+    // Add seller suggestions (server list) so user can search sellers by name.
+    await _ensureSellersLoaded();
+    if (_sellers.isNotEmpty) {
+      final q = query.toLowerCase();
+      for (final s in _sellers) {
+        final id = s['id']?.toString();
+        if (id == null || id.isEmpty) continue;
+        final name = s['name']?.toString() ?? '';
+        final email = s['email']?.toString() ?? '';
+        final nameL = name.toLowerCase();
+        final emailL = email.toLowerCase();
+        if (nameL.contains(q) || emailL.contains(q)) {
+          final key = 'seller:$id';
+          if (!dedupe.add(key)) continue;
+          next.add(_SearchSuggestion.seller(id: id, name: name, email: email.isEmpty ? null : email));
+        }
       }
     }
 
     setState(() {
-      _suggestions = suggestionSet.take(5).toList();
+      _suggestions = next.take(6).toList();
       _showSuggestions = _focusNode.hasFocus && _suggestions.isNotEmpty;
     });
   }
@@ -477,10 +509,8 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
     await _performSearch();
   }
 
-  void _selectSuggestion(String suggestion) {
-    _searchController.text = suggestion;
-    _focusNode.unfocus();
-    _performSearch();
+  Future<void> _selectSuggestion(_SearchSuggestion suggestion) async {
+    await suggestion.apply(this);
   }
 
   void _selectCategory(String category) {
@@ -638,11 +668,16 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                     child: Column(
                       children: _suggestions.map((suggestion) {
                         return ListTile(
-                          leading: Icon(Icons.search, color: Colors.grey[500], size: 20),
-                          title: Text(
-                            suggestion,
-                            style: const TextStyle(color: Colors.white),
-                          ),
+                          leading: Icon(suggestion.icon, color: Colors.grey[500], size: 20),
+                          title: Text(suggestion.title, style: const TextStyle(color: Colors.white)),
+                          subtitle: suggestion.subtitle == null
+                              ? null
+                              : Text(
+                                  suggestion.subtitle!,
+                                  style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                           dense: true,
                           onTap: () => _selectSuggestion(suggestion),
                         );
@@ -866,4 +901,68 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
       (Match m) => '${m[1]} ',
     );
   }
+}
+
+/// A typed suggestion item for the search dropdown.
+class _SearchSuggestion {
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final Future<void> Function(_SmartSearchScreenState state) _apply;
+
+  const _SearchSuggestion._({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required Future<void> Function(_SmartSearchScreenState state) apply,
+  }) : _apply = apply;
+
+  static _SearchSuggestion text(String text) {
+    return _SearchSuggestion._(
+      icon: Icons.search,
+      title: text,
+      subtitle: null,
+      apply: (state) async {
+        state._searchController.text = text;
+        state._focusNode.unfocus();
+        await state._performSearch();
+      },
+    );
+  }
+
+  static _SearchSuggestion category(String label) {
+    return _SearchSuggestion._(
+      icon: Icons.category,
+      title: label,
+      subtitle: null,
+      apply: (state) async {
+        state._searchController.text = label;
+        state._focusNode.unfocus();
+        await state._performSearch();
+      },
+    );
+  }
+
+  static _SearchSuggestion seller({required String id, required String name, String? email}) {
+    final title = name.isNotEmpty ? name : 'Seller $id';
+    return _SearchSuggestion._(
+      icon: Icons.store,
+      title: title,
+      subtitle: email,
+      apply: (state) async {
+        state.setState(() {
+          state._selectedSellerId = id;
+          state._selectedSellerName = name.isNotEmpty ? name : null;
+          state._suggestions = [];
+          state._showSuggestions = false;
+        });
+        // Clear query to show all seller products; user can type further after.
+        state._searchController.clear();
+        state._focusNode.unfocus();
+        await state._performSearch();
+      },
+    );
+  }
+
+  Future<void> apply(_SmartSearchScreenState state) => _apply(state);
 }
