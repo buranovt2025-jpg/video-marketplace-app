@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/views/screens/buyer/product_detail_screen.dart';
+import 'package:tiktok_tutorial/views/widgets/video_player_iten.dart';
 
 class StoryViewerScreen extends StatefulWidget {
   final List<Map<String, dynamic>> stories;
@@ -19,6 +21,7 @@ class StoryViewerScreen extends StatefulWidget {
 
 class _StoryViewerScreenState extends State<StoryViewerScreen>
     with SingleTickerProviderStateMixin {
+  final MarketplaceController _controller = Get.find<MarketplaceController>();
   late PageController _pageController;
   late AnimationController _progressController;
   int _currentIndex = 0;
@@ -53,6 +56,28 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
   void _startProgress() {
     _progressController.reset();
     _progressController.forward();
+  }
+
+  void _openProductFromStory(Map<String, dynamic> story) {
+    final productId = story['product_id']?.toString();
+    if (productId == null || productId.isEmpty) return;
+
+    final product = _controller.products.firstWhere(
+      (p) => p['id']?.toString() == productId,
+      orElse: () => <String, dynamic>{},
+    );
+
+    if (product.isNotEmpty) {
+      Get.to(() => ProductDetailScreen(product: product));
+    } else {
+      Get.snackbar(
+        'error'.tr,
+        'Товар не найден',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
   }
 
   void _nextStory() {
@@ -121,7 +146,11 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
             // Story content
             PageView.builder(
               controller: _pageController,
-              physics: const NeverScrollableScrollPhysics(),
+              physics: const PageScrollPhysics(),
+              onPageChanged: (index) {
+                setState(() => _currentIndex = index);
+                _startProgress();
+              },
               itemCount: widget.stories.length,
               itemBuilder: (context, index) {
                 final story = widget.stories[index];
@@ -256,13 +285,13 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
   }
 
   Widget _buildStoryContent(Map<String, dynamic> story) {
-    final imageUrl = story['image_url'];
-    final videoUrl = story['video_url'];
+    final imageUrl = story['image_url']?.toString();
+    final videoUrl = story['video_url']?.toString();
 
     return Container(
       color: Colors.black,
       child: Center(
-        child: imageUrl != null
+        child: (imageUrl != null && imageUrl.isNotEmpty)
             ? Image.network(
                 imageUrl,
                 fit: BoxFit.contain,
@@ -292,18 +321,8 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                   );
                 },
               )
-            : videoUrl != null
-                ? Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.play_circle_outline, size: 80, color: Colors.grey[600]),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Видео история',
-                        style: TextStyle(color: Colors.grey[500]),
-                      ),
-                    ],
-                  )
+            : (videoUrl != null && videoUrl.isNotEmpty)
+                ? VideoPlayerItem(videoUrl: videoUrl, looping: false)
                 : Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -322,14 +341,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
   Widget _buildProductLink(Map<String, dynamic> story) {
     return GestureDetector(
       onTap: () {
-        // Navigate to product detail
-        Get.snackbar(
-          'Товар',
-          'Переход к товару: ${story['product_id']}',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.white,
-          colorText: Colors.black,
-        );
+        _openProductFromStory(story);
       },
       child: Container(
         padding: const EdgeInsets.all(12),

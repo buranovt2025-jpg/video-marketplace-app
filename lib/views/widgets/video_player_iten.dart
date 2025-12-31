@@ -3,9 +3,11 @@ import 'package:video_player/video_player.dart';
 
 class VideoPlayerItem extends StatefulWidget {
   final String videoUrl;
+  final bool looping;
   const VideoPlayerItem({
     Key? key,
     required this.videoUrl,
+    this.looping = true,
   }) : super(key: key);
 
   @override
@@ -23,7 +25,7 @@ class _VideoPlayerItemState extends State<VideoPlayerItem> {
     videoPlayerController = VideoPlayerController.network(widget.videoUrl)
       ..initialize().then((value) {
         if (!mounted) return;
-        videoPlayerController.setLooping(true);
+        videoPlayerController.setLooping(widget.looping);
         videoPlayerController.play();
         videoPlayerController.setVolume(1);
         setState(() {

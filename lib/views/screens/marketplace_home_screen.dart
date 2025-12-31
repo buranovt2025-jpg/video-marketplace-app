@@ -570,10 +570,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     return GestureDetector(
       onTap: () async {
         final reels = List<Map<String, dynamic>>.from(_controller.reels);
-        final result = await Get.to(() => ReelsViewerScreen(reels: reels, initialIndex: index));
-        if (result is Map && result['open_product_from_reel'] is Map<String, dynamic>) {
-          _openProductFromReel(result['open_product_from_reel'] as Map<String, dynamic>);
-        }
+        await Get.to(() => ReelsViewerScreen(reels: reels, initialIndex: index));
       },
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -623,6 +620,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                   tablet: 520.0,
                   desktop: 620.0,
                 );
+                final thumbUrl = reel['thumbnail_url']?.toString();
                 return Container(
                   height: videoHeight,
                   width: double.infinity,
@@ -630,7 +628,17 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      Container(color: Colors.grey[900]),
+                      if (thumbUrl != null && thumbUrl.isNotEmpty)
+                        ClipRRect(
+                          borderRadius: BorderRadius.zero,
+                          child: Image.network(
+                            thumbUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(color: Colors.grey[900]),
+                          ),
+                        )
+                      else
+                        Container(color: Colors.grey[900]),
                       Center(
                         child: Container(
                           padding: const EdgeInsets.all(14),

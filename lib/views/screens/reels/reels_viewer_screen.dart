@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/views/screens/buyer/product_detail_screen.dart';
 import 'package:tiktok_tutorial/views/widgets/video_player_iten.dart';
 
 class ReelsViewerScreen extends StatefulWidget {
@@ -22,6 +23,28 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
   final MarketplaceController _controller = Get.find<MarketplaceController>();
   late final PageController _pageController;
   int _currentIndex = 0;
+
+  void _openProductFromReel(Map<String, dynamic> reel) {
+    final productId = reel['product_id']?.toString();
+    if (productId == null || productId.isEmpty) return;
+
+    final product = _controller.products.firstWhere(
+      (p) => p['id']?.toString() == productId,
+      orElse: () => <String, dynamic>{},
+    );
+
+    if (product.isNotEmpty) {
+      Get.to(() => ProductDetailScreen(product: product));
+    } else {
+      Get.snackbar(
+        'error'.tr,
+        'Товар не найден',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
 
   @override
   void initState() {
@@ -191,9 +214,7 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                                 height: 42,
                                 child: ElevatedButton.icon(
                                   onPressed: () {
-                                    // Delegate to existing product open flow if available upstream.
-                                    // We just close viewer and let parent handle product open if needed.
-                                    Get.back(result: {'open_product_from_reel': reel});
+                                    _openProductFromReel(reel);
                                   },
                                   icon: const Icon(Icons.shopping_bag_outlined, size: 18),
                                   label: Text('buy_now'.tr),
