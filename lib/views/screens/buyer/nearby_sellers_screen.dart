@@ -4,6 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/services/location_service.dart';
+import 'package:tiktok_tutorial/utils/formatters.dart';
 
 class NearbySellersScreen extends StatefulWidget {
   const NearbySellersScreen({Key? key}) : super(key: key);
