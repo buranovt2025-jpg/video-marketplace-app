@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:flutter/services.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/product_detail_screen.dart';
@@ -42,6 +43,81 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
     if (raw is int) return raw;
     if (raw is num) return raw.toInt();
     return int.tryParse(raw.toString()) ?? 0;
+  }
+
+  String _shareTextForReel(Map<String, dynamic> reel) {
+    final id = reel['id']?.toString();
+    final videoUrl = (reel['video_url'] ?? reel['media_url'])?.toString();
+    if (videoUrl != null && videoUrl.isNotEmpty) return videoUrl;
+    if (id != null && id.isNotEmpty) return 'reel:$id';
+    return 'reel';
+  }
+
+  Future<void> _copyReelLink(Map<String, dynamic> reel) async {
+    final text = _shareTextForReel(reel);
+    await Clipboard.setData(ClipboardData(text: text));
+    Get.snackbar(
+      'Готово',
+      'Ссылка скопирована',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.black87,
+      colorText: Colors.white,
+    );
+  }
+
+  void _openCommentsStub() {
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
+        decoration: BoxDecoration(
+          color: Colors.grey[900],
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 42,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[700],
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              const SizedBox(height: 14),
+              const Text(
+                'Комментарии',
+                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Скоро добавим комментарии для рилсов в marketplace.',
+                style: TextStyle(color: Colors.grey[400]),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => Get.back(),
+                  icon: const Icon(Icons.check),
+                  label: const Text('Ок'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      isScrollControlled: true,
+    );
   }
 
   void _flashBigHeart() {
@@ -260,21 +336,21 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                               icon: Icons.comment_outlined,
                               label: '',
                               color: Colors.white,
-                              onTap: () {},
+                              onTap: _openCommentsStub,
                             ),
                             const SizedBox(height: 16),
                             _ActionButton(
                               icon: Icons.share_outlined,
                               label: '',
                               color: Colors.white,
-                              onTap: () {},
+                              onTap: () => _copyReelLink(reel),
                             ),
                             const SizedBox(height: 16),
                             _ActionButton(
                               icon: Icons.more_horiz,
                               label: '',
                               color: Colors.white,
-                              onTap: () {},
+                              onTap: () => _copyReelLink(reel),
                             ),
                           ],
                         ),
