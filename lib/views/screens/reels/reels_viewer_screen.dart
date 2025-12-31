@@ -23,6 +23,9 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
   final MarketplaceController _controller = Get.find<MarketplaceController>();
   late final PageController _pageController;
   int _currentIndex = 0;
+  final Set<String> _likedContentIds = <String>{};
+  final Map<String, int> _likeOverrides = <String, int>{};
+  bool _showBigHeart = false;
 
   Map<String, dynamic>? _findProductForReel(Map<String, dynamic> reel) {
     final productId = reel['product_id']?.toString();
@@ -32,6 +35,49 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
       orElse: () => <String, dynamic>{},
     );
     return product.isEmpty ? null : product;
+  }
+
+  int _likesFromReel(Map<String, dynamic> reel) {
+    final raw = reel['likes'] ?? reel['likes_count'] ?? 0;
+    if (raw is int) return raw;
+    if (raw is num) return raw.toInt();
+    return int.tryParse(raw.toString()) ?? 0;
+  }
+
+  void _flashBigHeart() {
+    if (_showBigHeart) return;
+    setState(() => _showBigHeart = true);
+    Future.delayed(const Duration(milliseconds: 650), () {
+      if (!mounted) return;
+      setState(() => _showBigHeart = false);
+    });
+  }
+
+  void _toggleLike(Map<String, dynamic> reel, {bool fromDoubleTap = false}) {
+    final contentId = reel['id']?.toString();
+    if (contentId == null || contentId.isEmpty) return;
+
+    final baseLikes = _likeOverrides[contentId] ?? _likesFromReel(reel);
+    final isLiked = _likedContentIds.contains(contentId);
+
+    // IG behavior: double tap only likes (doesn't unlike).
+    if (fromDoubleTap && isLiked) return;
+
+    final nextLiked = !isLiked;
+    final nextLikes = (baseLikes + (nextLiked ? 1 : -1)).clamp(0, 1 << 30);
+
+    setState(() {
+      if (nextLiked) {
+        _likedContentIds.add(contentId);
+      } else {
+        _likedContentIds.remove(contentId);
+      }
+      _likeOverrides[contentId] = nextLikes;
+    });
+
+    if (fromDoubleTap) _flashBigHeart();
+
+    _controller.likeContent(contentId);
   }
 
   void _openProductFromReel(Map<String, dynamic> reel) {
@@ -93,15 +139,21 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                 final authorName = reel['author_name'] ?? 'User';
                 final authorAvatar = reel['author_avatar']?.toString();
                 final caption = (reel['caption'] ?? '').toString();
-                final likes = reel['likes'] ?? reel['likes_count'] ?? 0;
                 final contentId = reel['id']?.toString();
+                final likes = contentId == null
+                    ? _likesFromReel(reel)
+                    : (_likeOverrides[contentId] ?? _likesFromReel(reel));
+                final isLiked = contentId != null && _likedContentIds.contains(contentId);
                 final product = _findProductForReel(reel);
 
                 return Stack(
                   fit: StackFit.expand,
                   children: [
                     if (videoUrl != null && videoUrl.isNotEmpty)
-                      VideoPlayerItem(videoUrl: videoUrl)
+                      VideoPlayerItem(
+                        videoUrl: videoUrl,
+                        onDoubleTap: () => _toggleLike(reel, fromDoubleTap: true),
+                      )
                     else
                       Container(
                         color: Colors.black,
@@ -125,6 +177,25 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                                 Colors.black.withOpacity(0.55),
                               ],
                               stops: const [0.0, 0.25, 0.65, 1.0],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Big heart on double tap
+                    Center(
+                      child: IgnorePointer(
+                        child: AnimatedOpacity(
+                          opacity: _showBigHeart ? 1 : 0,
+                          duration: const Duration(milliseconds: 140),
+                          child: AnimatedScale(
+                            scale: _showBigHeart ? 1.0 : 0.8,
+                            duration: const Duration(milliseconds: 140),
+                            child: const Icon(
+                              Icons.favorite,
+                              color: Colors.white70,
+                              size: 110,
                             ),
                           ),
                         ),
@@ -177,12 +248,11 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             _ActionButton(
-                              icon: Icons.favorite,
+                              icon: isLiked ? Icons.favorite : Icons.favorite_border,
                               label: '$likes',
-                              color: Colors.white,
+                              color: isLiked ? Colors.red[300]! : Colors.white,
                               onTap: () {
-                                if (contentId == null || contentId.isEmpty) return;
-                                _controller.likeContent(contentId);
+                                _toggleLike(reel);
                               },
                             ),
                             const SizedBox(height: 16),

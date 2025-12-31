@@ -4,10 +4,12 @@ import 'package:video_player/video_player.dart';
 class VideoPlayerItem extends StatefulWidget {
   final String videoUrl;
   final bool looping;
+  final VoidCallback? onDoubleTap;
   const VideoPlayerItem({
     Key? key,
     required this.videoUrl,
     this.looping = true,
+    this.onDoubleTap,
   }) : super(key: key);
 
   @override
@@ -60,6 +62,7 @@ class _VideoPlayerItemState extends State<VideoPlayerItem> {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: _togglePlayPause,
+      onDoubleTap: widget.onDoubleTap,
       child: Container(
         width: size.width,
         height: size.height,

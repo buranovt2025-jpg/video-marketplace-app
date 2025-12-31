@@ -34,6 +34,8 @@ class MarketplaceHomeScreen extends StatefulWidget {
 class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   final MarketplaceController _controller = Get.find<MarketplaceController>();
   int _currentIndex = 0;
+  final Set<String> _likedReelIds = <String>{};
+  final Map<String, int> _reelLikeOverrides = <String, int>{};
   
   bool get _isGuestMode => widget.isGuestMode;
   bool get _isSeller => !_isGuestMode && _controller.currentUser.value?['role'] == 'seller';
@@ -109,6 +111,34 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         colorText: Colors.white,
       );
     }
+  }
+
+  int _likesFromReel(Map<String, dynamic> reel) {
+    final raw = reel['likes'] ?? reel['likes_count'] ?? 0;
+    if (raw is int) return raw;
+    if (raw is num) return raw.toInt();
+    return int.tryParse(raw.toString()) ?? 0;
+  }
+
+  void _toggleReelLike(Map<String, dynamic> reel) {
+    final contentId = reel['id']?.toString();
+    if (contentId == null || contentId.isEmpty) return;
+
+    final baseLikes = _reelLikeOverrides[contentId] ?? _likesFromReel(reel);
+    final isLiked = _likedReelIds.contains(contentId);
+    final nextLiked = !isLiked;
+    final nextLikes = (baseLikes + (nextLiked ? 1 : -1)).clamp(0, 1 << 30);
+
+    setState(() {
+      if (nextLiked) {
+        _likedReelIds.add(contentId);
+      } else {
+        _likedReelIds.remove(contentId);
+      }
+      _reelLikeOverrides[contentId] = nextLikes;
+    });
+
+    _controller.likeContent(contentId);
   }
 
   @override
@@ -622,7 +652,10 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 );
                 final thumbUrl = reel['thumbnail_url']?.toString();
                 final hasProduct = reel['product_id'] != null;
-                final likes = reel['likes'] ?? reel['likes_count'] ?? 0;
+                final contentId = reel['id']?.toString();
+                final likes = contentId == null
+                    ? _likesFromReel(reel)
+                    : (_reelLikeOverrides[contentId] ?? _likesFromReel(reel));
                 final caption = (reel['caption'] ?? '').toString().trim();
                 return Container(
                   height: videoHeight,
@@ -723,17 +756,31 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               padding: const EdgeInsets.all(12),
               child: Row(
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.favorite_border, color: Colors.white),
-                    onPressed: () {
+                  Builder(
+                    builder: (context) {
                       final contentId = reel['id']?.toString();
-                      if (contentId == null || contentId.isEmpty) return;
-                      _controller.likeContent(contentId);
+                      final isLiked = contentId != null && _likedReelIds.contains(contentId);
+                      final likes = contentId == null
+                          ? _likesFromReel(reel)
+                          : (_reelLikeOverrides[contentId] ?? _likesFromReel(reel));
+
+                      return Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: Icon(
+                              isLiked ? Icons.favorite : Icons.favorite_border,
+                              color: isLiked ? Colors.red[300] : Colors.white,
+                            ),
+                            onPressed: () => _toggleReelLike(reel),
+                          ),
+                          Text(
+                            '$likes',
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ],
+                      );
                     },
-                  ),
-                  Text(
-                    '${reel['likes'] ?? reel['likes_count'] ?? 0}',
-                    style: const TextStyle(color: Colors.white),
                   ),
                   const SizedBox(width: 16),
                   IconButton(
