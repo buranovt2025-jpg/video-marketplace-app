@@ -752,10 +752,12 @@ GET https://app-owphiuvd.fly.dev/api/auth/me
 
 ### Дополнительно (в этот же пакет)
 - Поиск товаров (`SmartSearchScreen`) переключён на server-side запрос (`/api/products?search=&category=`) с fallback на локальный фильтр.
+- Добавлен выбор **продавца** в `SmartSearchScreen` (через `/api/sellers` + фильтр по `seller_id` в `/api/products`).
 - Устранены потенциальные краши из-за типов чисел из API:
   - `cart_controller.dart`: цена товара в корзину теперь через `asDouble(...)` (без `(price as num)`).
   - `seller_cabinet_screen.dart`: выручка теперь считает через `asDouble(...)`
   - `product_detail_screen.dart`, `order_success_screen.dart`, `order_tracking_screen.dart`: форматирование цены теперь через `asDouble(...)`
   - `marketplace_home_screen.dart`: сумма заказа выводится через `formatMoney(...)`
   - `favorites_screen.dart`, `courier_order_detail_screen.dart`, `seller_analytics_screen.dart`: убраны небезопасные `?.toDouble()`/`.toDouble()` на динамических значениях
+  - `smart_search_screen.dart`: форматирование цены теперь через `asDouble(...)`
 - `docs/TZ_MVP.md` приведён к фактическому статусу (чекбоксы обновлены).

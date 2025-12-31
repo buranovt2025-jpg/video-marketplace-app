@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/services/api_service.dart';
+import 'package:tiktok_tutorial/utils/formatters.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/product_detail_screen.dart';
 import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
 
@@ -19,6 +20,9 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
   final FocusNode _focusNode = FocusNode();
   
   String _selectedCategory = 'all';
+  String? _selectedSellerId;
+  String? _selectedSellerName;
+  List<Map<String, dynamic>> _sellers = [];
   List<Map<String, dynamic>> _searchResults = [];
   List<String> _suggestions = [];
   bool _isSearching = false;
@@ -113,10 +117,12 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
 
     final category = _selectedCategory == 'all' ? null : _selectedCategory;
     final search = query.isEmpty ? null : query;
+    final sellerId = _selectedSellerId;
 
     try {
       // Prefer server-side search so results don't depend on initial feed size.
       final data = await ApiService.getProducts(
+        sellerId: sellerId,
         category: category,
         search: search,
       );
@@ -128,6 +134,9 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
       final products = _controller.products;
       final results = products.where((product) {
         if (category != null && product['category'] != category) return false;
+        if (sellerId != null && sellerId.isNotEmpty) {
+          if (product['seller_id']?.toString() != sellerId) return false;
+        }
         if (query.isEmpty) return true;
 
         final name = product['name']?.toString().toLowerCase() ?? '';
@@ -148,6 +157,156 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
         _isSearching = false;
       });
     }
+  }
+
+  Future<void> _ensureSellersLoaded() async {
+    if (_sellers.isNotEmpty) return;
+    try {
+      final data = await ApiService.getSellers();
+      setState(() {
+        _sellers = List<Map<String, dynamic>>.from(data);
+      });
+    } catch (_) {
+      // Ignore; we will show an error when trying to open picker.
+    }
+  }
+
+  Future<void> _pickSeller() async {
+    await _ensureSellersLoaded();
+
+    if (_sellers.isEmpty) {
+      Get.snackbar(
+        'Ошибка',
+        'Не удалось загрузить продавцов',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    final selected = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      backgroundColor: Colors.grey[900],
+      isScrollControlled: true,
+      builder: (context) {
+        final q = TextEditingController();
+        List<Map<String, dynamic>> filtered = List<Map<String, dynamic>>.from(_sellers);
+
+        void applyFilter(String text) {
+          final s = text.trim().toLowerCase();
+          filtered = _sellers.where((e) {
+            final name = e['name']?.toString().toLowerCase() ?? '';
+            final email = e['email']?.toString().toLowerCase() ?? '';
+            return s.isEmpty || name.contains(s) || email.contains(s);
+          }).toList();
+        }
+
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: SafeArea(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 12),
+                    Container(
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[700],
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: TextField(
+                        controller: q,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          hintText: 'Поиск продавца',
+                          hintStyle: TextStyle(color: Colors.grey[500]),
+                          prefixIcon: Icon(Icons.store, color: Colors.grey[400]),
+                          filled: true,
+                          fillColor: Colors.grey[850],
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        onChanged: (v) {
+                          setModalState(() {
+                            applyFilter(v);
+                          });
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Flexible(
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: filtered.length + 1,
+                        separatorBuilder: (_, __) => Divider(color: Colors.grey[800], height: 1),
+                        itemBuilder: (context, index) {
+                          if (index == 0) {
+                            return ListTile(
+                              leading: const Icon(Icons.clear, color: Colors.white),
+                              title: const Text('Все продавцы', style: TextStyle(color: Colors.white)),
+                              onTap: () => Navigator.of(context).pop(<String, dynamic>{}),
+                            );
+                          }
+                          final seller = filtered[index - 1];
+                          return ListTile(
+                            leading: const Icon(Icons.store, color: Colors.white),
+                            title: Text(
+                              seller['name']?.toString() ?? 'Seller',
+                              style: const TextStyle(color: Colors.white),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            subtitle: seller['email'] != null
+                                ? Text(
+                                    seller['email'].toString(),
+                                    style: TextStyle(color: Colors.grey[500]),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  )
+                                : null,
+                            onTap: () => Navigator.of(context).pop(seller),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (!mounted) return;
+    if (selected == null) return;
+
+    final id = selected['id']?.toString();
+    if (id == null || id.isEmpty) {
+      // cleared
+      setState(() {
+        _selectedSellerId = null;
+        _selectedSellerName = null;
+      });
+      await _performSearch();
+      return;
+    }
+
+    setState(() {
+      _selectedSellerId = id;
+      _selectedSellerName = selected['name']?.toString();
+    });
+    await _performSearch();
   }
 
   void _selectSuggestion(String suggestion) {
@@ -192,6 +351,13 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Get.back(),
         ),
+        actions: [
+          IconButton(
+            tooltip: 'Продавец',
+            onPressed: _pickSeller,
+            icon: const Icon(Icons.store, color: Colors.white),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -231,6 +397,34 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   ),
                 ),
+
+                if (_selectedSellerId != null && _selectedSellerId!.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        Chip(
+                          backgroundColor: Colors.grey[850],
+                          label: Text(
+                            'Продавец: ${_selectedSellerName ?? _selectedSellerId}',
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                          deleteIcon: const Icon(Icons.close, color: Colors.white, size: 18),
+                          onDeleted: () async {
+                            setState(() {
+                              _selectedSellerId = null;
+                              _selectedSellerName = null;
+                            });
+                            await _performSearch();
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 
                 // Suggestions dropdown
                 if (_showSuggestions)
@@ -472,9 +666,8 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
   }
 
   String _formatPrice(dynamic price) {
-    if (price == null) return '0';
-    final numPrice = price is num ? price : double.tryParse(price.toString()) ?? 0;
-    return numPrice.toStringAsFixed(0).replaceAllMapped(
+    final n = asDouble(price);
+    return n.toStringAsFixed(0).replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
       (Match m) => '${m[1]} ',
     );
