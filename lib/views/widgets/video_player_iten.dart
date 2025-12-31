@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:video_player/video_player.dart';
+import 'package:tiktok_tutorial/utils/media_url.dart';
 
 class VideoPlayerItem extends StatefulWidget {
   final String videoUrl;
@@ -24,6 +25,11 @@ class _VideoPlayerItemState extends State<VideoPlayerItem> {
   void initState() {
     super.initState();
     final url = widget.videoUrl.trim();
+    if (!looksLikeAbsoluteHttpUrl(url)) {
+      _initError = 'Некорректный URL (нужен http/https): $url';
+      _isPausedByUser = true;
+      return;
+    }
     videoPlayerController = VideoPlayerController.networkUrl(Uri.parse(url));
 
     videoPlayerController.addListener(() {

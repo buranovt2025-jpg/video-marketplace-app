@@ -5,6 +5,7 @@ import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/product_detail_screen.dart';
 import 'package:tiktok_tutorial/views/widgets/video_player_iten.dart';
 import 'package:tiktok_tutorial/utils/formatters.dart';
+import 'package:tiktok_tutorial/utils/media_url.dart';
 
 /// Full-screen vertical reel viewer (TikTok-like).
 ///
@@ -71,8 +72,8 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
           return Stack(
             fit: StackFit.expand,
             children: [
-              if (videoUrl != null && videoUrl.trim().isNotEmpty)
-                VideoPlayerItem(videoUrl: videoUrl)
+              if (videoUrl != null && looksLikeVideoUrl(videoUrl))
+                VideoPlayerItem(videoUrl: videoUrl.trim())
               else
                 Container(
                   color: Colors.grey[900],
@@ -82,7 +83,25 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                       children: [
                         Icon(Icons.videocam_off, size: 64, color: Colors.grey[600]),
                         const SizedBox(height: 8),
-                        Text('Нет видео', style: TextStyle(color: Colors.grey[600])),
+                        Text(
+                          (videoUrl == null || videoUrl.trim().isEmpty)
+                              ? 'Нет видео'
+                              : 'Ссылка не на видео',
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                        if (videoUrl != null && videoUrl.trim().isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Text(
+                              videoUrl.trim(),
+                              style: TextStyle(color: Colors.grey[700], fontSize: 11),
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),

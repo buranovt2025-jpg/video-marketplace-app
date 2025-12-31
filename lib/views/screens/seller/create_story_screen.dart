@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/utils/formatters.dart';
+import 'package:tiktok_tutorial/utils/media_url.dart';
 
 class CreateStoryScreen extends StatefulWidget {
   const CreateStoryScreen({Key? key}) : super(key: key);
@@ -48,10 +49,23 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
       );
       return;
     }
+    
+    final videoUrl = hasVideo ? _videoUrlController.text.trim() : null;
+    if (videoUrl != null && videoUrl.isNotEmpty && !looksLikeVideoUrl(videoUrl)) {
+      Get.snackbar(
+        'Ошибка',
+        'Для видео нужна прямая ссылка (.mp4/.webm/.m3u8). Сейчас указана ссылка на страницу (HTML) или некорректный URL.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 5),
+      );
+      return;
+    }
 
     final story = await _controller.createStory(
       imageUrl: hasImage ? _imageUrlController.text.trim() : null,
-      videoUrl: hasVideo ? _videoUrlController.text.trim() : null,
+      videoUrl: videoUrl,
       caption: _captionController.text.isNotEmpty 
           ? _captionController.text.trim() 
           : null,
