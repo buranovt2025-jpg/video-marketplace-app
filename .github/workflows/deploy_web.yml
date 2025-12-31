@@ -10,7 +10,7 @@ on:
       branch:
         description: Branch to deploy (default: current)
         required: false
-        type: string
+        # Default input type is string; `type: string` is not supported here.
 
 concurrency:
   group: deploy-web-${{ github.ref }}
@@ -56,8 +56,9 @@ jobs:
           DEPLOY_PROJECT_DIR: ${{ secrets.DEPLOY_PROJECT_DIR }}
           DEPLOY_WEB_ROOT: ${{ secrets.DEPLOY_WEB_ROOT }}
           DEPLOY_FLUTTER_BIN: ${{ secrets.DEPLOY_FLUTTER_BIN }}
-          # `inputs` context is not available for `push` events; use `github.event.inputs`.
-          DEPLOY_BRANCH: ${{ github.event.inputs.branch || github.ref_name }}
+          # For `push` events, deploy the pushed branch. For manual runs, allow
+          # overriding via workflow_dispatch input.
+          DEPLOY_BRANCH: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.branch) || github.ref_name }}
         run: |
           set -euo pipefail
           echo "Deploying branch: ${DEPLOY_BRANCH}"
