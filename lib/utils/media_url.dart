@@ -5,6 +5,9 @@
 /// `video_player` and should be surfaced as a user-friendly error.
 library;
 
+const String kFallbackDemoMp4Url =
+    'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4';
+
 bool looksLikeAbsoluteHttpUrl(String? url) {
   final u = url?.trim();
   if (u == null || u.isEmpty) return false;
@@ -12,6 +15,29 @@ bool looksLikeAbsoluteHttpUrl(String? url) {
   if (uri == null) return false;
   if (!uri.hasScheme) return false;
   return uri.scheme == 'http' || uri.scheme == 'https';
+}
+
+bool isBlockedVideoHost(String? url) {
+  final u = url?.trim();
+  if (u == null || u.isEmpty) return false;
+  final uri = Uri.tryParse(u);
+  final host = uri?.host.toLowerCase();
+  if (host == null || host.isEmpty) return false;
+
+  // These demo hosts often fail in browsers (hotlink protection / missing
+  // headers / inconsistent availability) and cause MEDIA_ERR_SRC_NOT_SUPPORTED.
+  const blocked = <String>{
+    'sample-videos.com',
+    'www.sample-videos.com',
+  };
+  return blocked.contains(host);
+}
+
+String effectiveVideoUrlForPlayback(String url, {String fallback = kFallbackDemoMp4Url}) {
+  // If the host is known to break playback, use a known-good demo mp4 so the
+  // viewer UX can be verified. Backend should eventually store real video URLs.
+  if (isBlockedVideoHost(url)) return fallback;
+  return url.trim();
 }
 
 bool looksLikeVideoUrl(String? url) {

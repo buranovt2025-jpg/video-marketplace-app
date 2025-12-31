@@ -20,6 +20,7 @@ class _VideoPlayerItemState extends State<VideoPlayerItem> {
   bool _isPausedByUser = false;
   bool _isMuted = false;
   String? _initError;
+  String? _effectiveUrl;
 
   @override
   void initState() {
@@ -30,7 +31,10 @@ class _VideoPlayerItemState extends State<VideoPlayerItem> {
       _isPausedByUser = true;
       return;
     }
-    videoPlayerController = VideoPlayerController.networkUrl(Uri.parse(url));
+
+    final effective = effectiveVideoUrlForPlayback(url);
+    _effectiveUrl = effective;
+    videoPlayerController = VideoPlayerController.networkUrl(Uri.parse(effective));
 
     videoPlayerController.addListener(() {
       final v = videoPlayerController.value;
@@ -122,6 +126,18 @@ class _VideoPlayerItemState extends State<VideoPlayerItem> {
                         style: TextStyle(color: Colors.grey[400], fontSize: 12),
                         textAlign: TextAlign.center,
                       ),
+                      if (_effectiveUrl != null &&
+                          _effectiveUrl!.trim().isNotEmpty &&
+                          _effectiveUrl!.trim() != widget.videoUrl.trim()) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          'Для проверки UX показано демо-видео вместо исходного URL:\n${_effectiveUrl!}',
+                          style: TextStyle(color: Colors.orange[200], fontSize: 12),
+                          textAlign: TextAlign.center,
+                          maxLines: 4,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                       const SizedBox(height: 8),
                       Text(
                         _initError!,
@@ -130,6 +146,14 @@ class _VideoPlayerItemState extends State<VideoPlayerItem> {
                         maxLines: 4,
                         overflow: TextOverflow.ellipsis,
                       ),
+                      if (kIsWeb && isBlockedVideoHost(widget.videoUrl)) ...[
+                        const SizedBox(height: 10),
+                        Text(
+                          'Подсказка: этот хост часто блокирует воспроизведение (hotlink/headers). Лучше использовать другой CDN или загрузку видео на ваш backend/storage.',
+                          style: TextStyle(color: Colors.orange[200], fontSize: 12),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                       if (kIsWeb && widget.videoUrl.trim().startsWith('http://')) ...[
                         const SizedBox(height: 10),
                         Text(
