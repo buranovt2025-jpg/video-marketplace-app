@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:flutter/services.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/controllers/cart_controller.dart';
@@ -37,6 +38,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   final Set<String> _likedReelIds = <String>{};
   final Map<String, int> _reelLikeOverrides = <String, int>{};
   final Set<String> _viewedStoryIds = <String>{};
+  final Set<String> _savedReelIds = <String>{};
   String? _feedBigHeartReelId;
   bool _feedBigHeartVisible = false;
   
@@ -142,6 +144,100 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     });
 
     _controller.likeContent(contentId);
+  }
+
+  String _shareTextForReel(Map<String, dynamic> reel) {
+    final id = reel['id']?.toString();
+    final videoUrl = (reel['video_url'] ?? reel['media_url'])?.toString();
+    if (videoUrl != null && videoUrl.isNotEmpty) return videoUrl;
+    if (id != null && id.isNotEmpty) return 'reel:$id';
+    return 'reel';
+  }
+
+  Future<void> _copyReelLink(Map<String, dynamic> reel) async {
+    final text = _shareTextForReel(reel);
+    await Clipboard.setData(ClipboardData(text: text));
+    Get.snackbar(
+      'Готово',
+      'Ссылка скопирована',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.black87,
+      colorText: Colors.white,
+    );
+  }
+
+  void _openReelCommentsStub() {
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
+        decoration: BoxDecoration(
+          color: Colors.grey[900],
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 42,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[700],
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              const SizedBox(height: 14),
+              const Text(
+                'Комментарии',
+                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Скоро добавим комментарии для рилсов в marketplace.',
+                style: TextStyle(color: Colors.grey[400]),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => Get.back(),
+                  icon: const Icon(Icons.check),
+                  label: const Text('Ок'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      isScrollControlled: true,
+    );
+  }
+
+  void _toggleReelSaved(Map<String, dynamic> reel) {
+    final id = reel['id']?.toString();
+    if (id == null || id.isEmpty) return;
+    setState(() {
+      if (_savedReelIds.contains(id)) {
+        _savedReelIds.remove(id);
+      } else {
+        _savedReelIds.add(id);
+      }
+    });
+    Get.snackbar(
+      'Сохранено',
+      _savedReelIds.contains(id) ? 'Добавлено в сохранённые' : 'Убрано из сохранённых',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.black87,
+      colorText: Colors.white,
+    );
   }
 
   void _flashFeedBigHeart(String reelId) {
@@ -873,11 +969,11 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                   const SizedBox(width: 16),
                   IconButton(
                     icon: const Icon(Icons.comment_outlined, color: Colors.white),
-                    onPressed: () {},
+                    onPressed: _openReelCommentsStub,
                   ),
                   IconButton(
                     icon: const Icon(Icons.share_outlined, color: Colors.white),
-                    onPressed: () {},
+                    onPressed: () => _copyReelLink(reel),
                   ),
                   const Spacer(),
                   // Buy button for reels with linked product
@@ -897,9 +993,15 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                     ),
                     const SizedBox(width: 8),
                   ],
-                  IconButton(
-                    icon: const Icon(Icons.bookmark_border, color: Colors.white),
-                    onPressed: () {},
+                  Builder(
+                    builder: (context) {
+                      final id = reel['id']?.toString();
+                      final isSaved = id != null && _savedReelIds.contains(id);
+                      return IconButton(
+                        icon: Icon(isSaved ? Icons.bookmark : Icons.bookmark_border, color: Colors.white),
+                        onPressed: () => _toggleReelSaved(reel),
+                      );
+                    },
                   ),
                 ],
               ),
