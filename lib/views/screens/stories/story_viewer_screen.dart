@@ -128,8 +128,14 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
             // Story content
             PageView.builder(
               controller: _pageController,
-              physics: const NeverScrollableScrollPhysics(),
+              physics: const BouncingScrollPhysics(),
               itemCount: widget.stories.length,
+              onPageChanged: (i) {
+                setState(() {
+                  _currentIndex = i;
+                });
+                _startProgress();
+              },
               itemBuilder: (context, index) {
                 final story = widget.stories[index];
                 return _buildStoryContent(story);

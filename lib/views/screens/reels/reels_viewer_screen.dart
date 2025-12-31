@@ -149,6 +149,8 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      // readability gradient
+                      // (kept in front via padding below; video stays behind)
                       Text(
                         reel['author_name']?.toString() ?? 'User',
                         style: const TextStyle(
@@ -174,7 +176,13 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                             final productId = reel['product_id']?.toString();
                             if (productId == null || productId.isEmpty) return;
                             // Best effort: find product in loaded list.
-                            final p = _controller.products.firstWhereOrNull((e) => e['id']?.toString() == productId);
+                            Map<String, dynamic>? p;
+                            for (final e in _controller.products) {
+                              if (e['id']?.toString() == productId) {
+                                p = e;
+                                break;
+                              }
+                            }
                             if (p != null) {
                               Get.to(() => ProductDetailScreen(product: p));
                             } else {
@@ -189,6 +197,29 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                           },
                         ),
                     ],
+                  ),
+                ),
+              ),
+
+              // Bottom gradient for readability
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: 240,
+                child: IgnorePointer(
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black54,
+                          Colors.black87,
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
