@@ -8,11 +8,13 @@ import 'package:video_player/video_player.dart';
 class StoryViewerScreen extends StatefulWidget {
   final List<Map<String, dynamic>> stories;
   final int initialIndex;
+  final ValueChanged<int>? onIndexChanged;
 
   const StoryViewerScreen({
     Key? key,
     required this.stories,
     this.initialIndex = 0,
+    this.onIndexChanged,
   }) : super(key: key);
 
   @override
@@ -40,6 +42,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
     );
     _progressController.addStatusListener(_onProgressComplete);
     _prepareCurrentStory();
+    widget.onIndexChanged?.call(_currentIndex);
   }
 
   @override
@@ -147,6 +150,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
+      widget.onIndexChanged?.call(_currentIndex);
     } else {
       Get.back();
     }
@@ -159,6 +163,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
+      widget.onIndexChanged?.call(_currentIndex);
     }
   }
 
@@ -206,6 +211,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
               onPageChanged: (index) {
                 setState(() => _currentIndex = index);
                 _prepareCurrentStory();
+                widget.onIndexChanged?.call(_currentIndex);
               },
               itemCount: widget.stories.length,
               itemBuilder: (context, index) {

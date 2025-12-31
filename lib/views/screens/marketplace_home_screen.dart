@@ -36,6 +36,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   int _currentIndex = 0;
   final Set<String> _likedReelIds = <String>{};
   final Map<String, int> _reelLikeOverrides = <String, int>{};
+  final Set<String> _viewedStoryIds = <String>{};
   
   bool get _isGuestMode => widget.isGuestMode;
   bool get _isSeller => !_isGuestMode && _controller.currentUser.value?['role'] == 'seller';
@@ -484,14 +485,26 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   }
 
   Widget _buildStoryCircle(Map<String, dynamic> story) {
+    final storyId = story['id']?.toString();
+    final isViewed = storyId != null && _viewedStoryIds.contains(storyId);
+    final authorAvatar = story['author_avatar']?.toString();
+    final hasVideo = (story['video_url']?.toString().isNotEmpty ?? false);
+
     return GestureDetector(
       onTap: () {
         final stories = _controller.stories;
         final index = stories.indexWhere((s) => s['id'] == story['id']);
+        final storiesList = List<Map<String, dynamic>>.from(stories);
         Get.to(
           () => StoryViewerScreen(
-            stories: List<Map<String, dynamic>>.from(stories),
+            stories: storiesList,
             initialIndex: index >= 0 ? index : 0,
+            onIndexChanged: (i) {
+              if (i < 0 || i >= storiesList.length) return;
+              final id = storiesList[i]['id']?.toString();
+              if (id == null || id.isEmpty) return;
+              setState(() => _viewedStoryIds.add(id));
+            },
           ),
         );
       },
@@ -504,15 +517,18 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               height: 70,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.purple,
-                    Colors.pink,
-                    Colors.orange,
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                gradient: isViewed
+                    ? null
+                    : const LinearGradient(
+                        colors: [
+                          Colors.purple,
+                          Colors.pink,
+                          Colors.orange,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                border: isViewed ? Border.all(color: Colors.grey[700]!, width: 2) : null,
               ),
               padding: const EdgeInsets.all(3),
               child: Container(
@@ -521,14 +537,32 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                   color: backgroundColor,
                 ),
                 padding: const EdgeInsets.all(2),
-                child: CircleAvatar(
-                  backgroundImage: story['image_url'] != null
-                      ? NetworkImage(story['image_url'])
-                      : null,
-                  backgroundColor: Colors.grey[800],
-                  child: story['image_url'] == null
-                      ? const Icon(Icons.person, color: Colors.white)
-                      : null,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    CircleAvatar(
+                      backgroundImage: (authorAvatar != null && authorAvatar.isNotEmpty)
+                          ? NetworkImage(authorAvatar)
+                          : null,
+                      backgroundColor: Colors.grey[800],
+                      child: (authorAvatar == null || authorAvatar.isEmpty)
+                          ? const Icon(Icons.person, color: Colors.white)
+                          : null,
+                    ),
+                    if (hasVideo)
+                      Positioned(
+                        right: 2,
+                        bottom: 2,
+                        child: Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.65),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.play_arrow, color: Colors.white, size: 14),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ),
