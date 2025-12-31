@@ -18,15 +18,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup SSH agent
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
-
-      - name: Add server to known_hosts
+      - name: Prepare SSH key and known_hosts
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_SSH_KEY_B64: ${{ secrets.DEPLOY_SSH_KEY_B64 }}
         run: |
+          set -euo pipefail
           mkdir -p ~/.ssh
-          ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+          chmod 700 ~/.ssh
+
+          # Prefer base64 secret to avoid newline/format issues.
+          if [ -n "${DEPLOY_SSH_KEY_B64}" ]; then
+            echo "${DEPLOY_SSH_KEY_B64}" | base64 -d > ~/.ssh/deploy_key
+          else
+            # Fallback: raw key (must include correct newlines).
+            printf "%s" "${DEPLOY_SSH_KEY}" > ~/.ssh/deploy_key
+          fi
+
+          # Normalize potential Windows line endings.
+          tr -d "\r" < ~/.ssh/deploy_key > ~/.ssh/deploy_key.tmp
+          mv ~/.ssh/deploy_key.tmp ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+          ssh-keyscan -H "${DEPLOY_HOST}" >> ~/.ssh/known_hosts
 
       - name: Deploy on server
         env:
@@ -40,7 +55,7 @@ jobs:
           set -euo pipefail
           echo "Deploying branch: ${DEPLOY_BRANCH}"
           echo "Server: ${DEPLOY_USER}@${DEPLOY_HOST}"
-          ssh "${DEPLOY_USER}@${DEPLOY_HOST}" "bash -lc '
+          ssh -i ~/.ssh/deploy_key "${DEPLOY_USER}@${DEPLOY_HOST}" "bash -lc '
             set -euo pipefail
             PROJECT_DIR=\"${DEPLOY_PROJECT_DIR:-/root/projects/video-marketplace-app}\"
             WEB_ROOT=\"${DEPLOY_WEB_ROOT:-/var/www/gogomarket}\"
