@@ -111,7 +111,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     } else {
       Get.snackbar(
         'error'.tr,
-        'Товар не найден',
+        'product_not_found'.tr,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -792,7 +792,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 Icon(Icons.video_library, size: 64, color: Colors.grey[700]),
                 const SizedBox(height: 16),
                 Text(
-                  'Пока нет рилсов',
+                  'no_reels_yet'.tr,
                   style: TextStyle(color: Colors.grey[500], fontSize: 16),
                 ),
                 if (_controller.isSeller || _controller.isAdmin) ...[
@@ -1113,7 +1113,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
             child: TextField(
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
-                hintText: 'Поиск товаров и продавцов',
+                hintText: 'search_products_and_sellers'.tr,
                 hintStyle: TextStyle(color: Colors.grey[500]),
                 prefixIcon: Icon(Icons.search, color: Colors.grey[500]),
                 border: InputBorder.none,
@@ -1140,7 +1140,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                         Icon(Icons.inventory_2, size: 64, color: Colors.grey[700]),
                         const SizedBox(height: 16),
                         Text(
-                          'Пока нет товаров',
+                          'no_products_yet'.tr,
                           style: TextStyle(color: Colors.grey[500], fontSize: 16),
                         ),
                       ],
@@ -1214,7 +1214,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  '${product['price']?.toStringAsFixed(0) ?? '0'} сум',
+                  "${product['price']?.toStringAsFixed(0) ?? '0'} ${'currency_sum'.tr}",
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 10,

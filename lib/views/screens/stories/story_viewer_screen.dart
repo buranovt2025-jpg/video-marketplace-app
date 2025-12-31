@@ -135,7 +135,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
     } else {
       Get.snackbar(
         'error'.tr,
-        'Товар не найден',
+        'product_not_found'.tr,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -376,7 +376,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                       Icon(Icons.broken_image, size: 64, color: Colors.grey[600]),
                       const SizedBox(height: 16),
                       Text(
-                        'Не удалось загрузить изображение',
+                        'image_load_failed'.tr,
                         style: TextStyle(color: Colors.grey[500]),
                       ),
                     ],
@@ -393,7 +393,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                       Icon(Icons.image, size: 64, color: Colors.grey[600]),
                       const SizedBox(height: 16),
                       Text(
-                        'Нет контента',
+                        'no_content'.tr,
                         style: TextStyle(color: Colors.grey[500]),
                       ),
                     ],
@@ -445,10 +445,10 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
           );
 
     final hasProduct = product != null && product.isNotEmpty;
-    final productName = hasProduct ? (product['name'] ?? 'Товар').toString() : 'Посмотреть товар';
+    final productName = hasProduct ? (product['name'] ?? 'product'.tr).toString() : 'open_product'.tr;
     final productImage = hasProduct ? product['image_url']?.toString() : null;
     final price = hasProduct ? product['price'] : null;
-    final priceText = (price is num) ? '${price.toStringAsFixed(0)} сум' : null;
+    final priceText = (price is num) ? "${price.toStringAsFixed(0)} ${'currency_sum'.tr}" : null;
 
     return GestureDetector(
       onTap: () {
@@ -496,7 +496,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    priceText ?? 'Нажмите чтобы открыть',
+                    priceText ?? 'tap_to_open'.tr,
                     style: TextStyle(
                       color: Colors.grey[600],
                       fontSize: 12,

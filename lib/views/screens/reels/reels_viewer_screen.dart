@@ -233,7 +233,7 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
     } else {
       Get.snackbar(
         'error'.tr,
-        'Товар не найден',
+        'product_not_found'.tr,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -471,7 +471,7 @@ class _ProductMiniCard extends StatelessWidget {
     final name = (product['name'] ?? 'product'.tr).toString();
     final imageUrl = product['image_url']?.toString();
     final price = product['price'];
-    final priceText = (price is num) ? '${price.toStringAsFixed(0)} сум' : null;
+    final priceText = (price is num) ? "${price.toStringAsFixed(0)} ${'currency_sum'.tr}" : null;
 
     return InkWell(
       onTap: onTap,
