@@ -90,6 +90,19 @@ class AppTranslations extends Translations {
       'back': 'Назад',
       'next': 'Далее',
       'done': 'Готово',
+      'ok': 'Ок',
+
+      // Social / Reels / Stories (buyer UX)
+      'copy_link': 'Скопировать ссылку',
+      'link_copied': 'Ссылка скопирована',
+      'comments': 'Комментарии',
+      'comments_coming_soon': 'Скоро добавим комментарии для рилсов в marketplace.',
+      'saved': 'Сохранено',
+      'added_to_saved': 'Добавлено в сохранённые',
+      'removed_from_saved': 'Убрано из сохранённых',
+      'open_product': 'Открыть товар',
+      'no_reels_yet': 'Пока нет рилсов',
+      'product': 'Товар',
       'problem_with_order': 'Проблема с заказом',
       'report_problem': 'Сообщить о проблеме',
       
@@ -342,6 +355,19 @@ class AppTranslations extends Translations {
       'back': 'Orqaga',
       'next': 'Keyingi',
       'done': 'Tayyor',
+      'ok': 'Ok',
+
+      // Social / Reels / Stories (buyer UX)
+      'copy_link': 'Havolani nusxalash',
+      'link_copied': 'Havola nusxalandi',
+      'comments': 'Izohlar',
+      'comments_coming_soon': 'Tez orada marketplace rilslar uchun izohlarni qo\'shamiz.',
+      'saved': 'Saqlangan',
+      'added_to_saved': 'Saqlanganlarga qo\'shildi',
+      'removed_from_saved': 'Saqlanganlardan olib tashlandi',
+      'open_product': 'Mahsulotni ochish',
+      'no_reels_yet': 'Hali rilslar yo\'q',
+      'product': 'Mahsulot',
       'problem_with_order': 'Buyurtma bilan muammo',
       'report_problem': 'Muammo haqida xabar berish',
       
@@ -574,6 +600,19 @@ class AppTranslations extends Translations {
       'back': 'Back',
       'next': 'Next',
       'done': 'Done',
+      'ok': 'OK',
+
+      // Social / Reels / Stories (buyer UX)
+      'copy_link': 'Copy link',
+      'link_copied': 'Link copied',
+      'comments': 'Comments',
+      'comments_coming_soon': 'Comments for marketplace reels are coming soon.',
+      'saved': 'Saved',
+      'added_to_saved': 'Added to saved',
+      'removed_from_saved': 'Removed from saved',
+      'open_product': 'Open product',
+      'no_reels_yet': 'No reels yet',
+      'product': 'Product',
       'problem_with_order': 'Problem with order',
       'report_problem': 'Report Problem',
       

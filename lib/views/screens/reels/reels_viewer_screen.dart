@@ -58,8 +58,8 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
     final text = _shareTextForReel(reel);
     await Clipboard.setData(ClipboardData(text: text));
     Get.snackbar(
-      'Готово',
-      'Ссылка скопирована',
+      'success'.tr,
+      'link_copied'.tr,
       snackPosition: SnackPosition.BOTTOM,
       backgroundColor: Colors.black87,
       colorText: Colors.white,
@@ -88,13 +88,13 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                 ),
               ),
               const SizedBox(height: 14),
-              const Text(
-                'Комментарии',
+              Text(
+                'comments'.tr,
                 style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 10),
               Text(
-                'Скоро добавим комментарии для рилсов в marketplace.',
+                'comments_coming_soon'.tr,
                 style: TextStyle(color: Colors.grey[400]),
                 textAlign: TextAlign.center,
               ),
@@ -104,7 +104,7 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                 child: ElevatedButton.icon(
                   onPressed: () => Get.back(),
                   icon: const Icon(Icons.check),
-                  label: const Text('Ок'),
+                  label: Text('ok'.tr),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryColor,
                     foregroundColor: Colors.white,
@@ -145,7 +145,7 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
               const SizedBox(height: 14),
               ListTile(
                 leading: const Icon(Icons.link, color: Colors.white),
-                title: const Text('Скопировать ссылку', style: TextStyle(color: Colors.white)),
+                title: Text('copy_link'.tr, style: const TextStyle(color: Colors.white)),
                 onTap: () async {
                   Get.back();
                   await _copyReelLink(reel);
@@ -153,7 +153,7 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.report_outlined, color: Colors.redAccent),
-                title: const Text('Пожаловаться', style: TextStyle(color: Colors.white)),
+                title: Text('report_content'.tr, style: const TextStyle(color: Colors.white)),
                 onTap: () {
                   final id = reel['id']?.toString();
                   if (id == null || id.isEmpty) return;
@@ -172,7 +172,7 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                  child: const Text('Отмена'),
+                  child: Text('cancel'.tr),
                 ),
               ),
             ],
@@ -262,7 +262,7 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
           ? SafeArea(
               child: Center(
                 child: Text(
-                  'Пока нет рилсов',
+                  'no_reels_yet'.tr,
                   style: TextStyle(color: Colors.grey[400]),
                 ),
               ),
@@ -468,7 +468,7 @@ class _ProductMiniCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final name = (product['name'] ?? 'Товар').toString();
+    final name = (product['name'] ?? 'product'.tr).toString();
     final imageUrl = product['image_url']?.toString();
     final price = product['price'];
     final priceText = (price is num) ? '${price.toStringAsFixed(0)} сум' : null;
@@ -522,7 +522,7 @@ class _ProductMiniCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    priceText ?? 'Открыть товар',
+                    priceText ?? 'open_product'.tr,
                     style: TextStyle(
                       color: Colors.grey[800],
                       fontSize: 12,
