@@ -18,29 +18,50 @@ class _VideoPlayerItemState extends State<VideoPlayerItem> {
   bool _initialized = false;
   bool _isPausedByUser = false;
   bool _isMuted = false;
+  String? _initError;
 
   @override
   void initState() {
     super.initState();
-    videoPlayerController = VideoPlayerController.network(widget.videoUrl)
-      ..initialize().then((value) {
+    final url = widget.videoUrl.trim();
+    videoPlayerController = VideoPlayerController.networkUrl(Uri.parse(url));
+
+    videoPlayerController.addListener(() {
+      final v = videoPlayerController.value;
+      if (v.hasError && mounted) {
+        setState(() {
+          _initError ??= v.errorDescription ?? 'Video playback error';
+          _isPausedByUser = true;
+        });
+      }
+    });
+
+    videoPlayerController.initialize().then((_) {
+      if (!mounted) return;
+      setState(() {
+        _initialized = true;
+      });
+
+      // Browsers often block autoplay with sound. TikTok/IG autoplay muted.
+      _isMuted = kIsWeb;
+      videoPlayerController.setLooping(true);
+      videoPlayerController.setVolume(_isMuted ? 0 : 1);
+
+      // Attempt autoplay. If blocked, user can start via tap gesture.
+      videoPlayerController.play().catchError((e) {
         if (!mounted) return;
         setState(() {
-          _initialized = true;
-        });
-        // Browsers often block autoplay with sound. TikTok/IG autoplay muted.
-        _isMuted = kIsWeb;
-        videoPlayerController.setLooping(true);
-        videoPlayerController.setVolume(_isMuted ? 0 : 1);
-
-        // Attempt autoplay. If blocked, user can start via tap gesture.
-        videoPlayerController.play().catchError((_) {
-          if (!mounted) return;
-          setState(() {
-            _isPausedByUser = true;
-          });
+          _isPausedByUser = true;
+          _initError ??= e.toString();
         });
       });
+    }).catchError((e) {
+      if (!mounted) return;
+      setState(() {
+        _initError = e.toString();
+        _isPausedByUser = true;
+      });
+    });
   }
 
   @override
@@ -62,6 +83,7 @@ class _VideoPlayerItemState extends State<VideoPlayerItem> {
       child: GestureDetector(
         onTap: () {
           if (!_initialized) return;
+          if (_initError != null) return;
           setState(() {
             _isPausedByUser = !_isPausedByUser;
           });
@@ -74,7 +96,47 @@ class _VideoPlayerItemState extends State<VideoPlayerItem> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            if (!_initialized)
+            if (_initError != null)
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.videocam_off, size: 64, color: Colors.grey[600]),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Не удалось воспроизвести видео',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        widget.videoUrl,
+                        style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _initError!,
+                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                        textAlign: TextAlign.center,
+                        maxLines: 4,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (kIsWeb && widget.videoUrl.trim().startsWith('http://')) ...[
+                        const SizedBox(height: 10),
+                        Text(
+                          'Подсказка: браузер может блокировать http-видео на https-странице. Нужен https URL или корректные CORS/Range заголовки.',
+                          style: TextStyle(color: Colors.orange[200], fontSize: 12),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              )
+            else if (!_initialized)
               const Center(
                 child: SizedBox(
                   width: 28,
@@ -101,7 +163,7 @@ class _VideoPlayerItemState extends State<VideoPlayerItem> {
               ),
 
             // Mute indicator (web autoplay starts muted)
-            if (_initialized && _isMuted)
+            if (_initialized && _isMuted && _initError == null)
               Positioned(
                 right: 12,
                 bottom: 12,
