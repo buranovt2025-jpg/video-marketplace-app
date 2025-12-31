@@ -15,6 +15,7 @@ import 'package:tiktok_tutorial/views/screens/buyer/order_tracking_screen.dart';
 import 'package:tiktok_tutorial/views/screens/chat/chat_screen.dart';
 import 'package:tiktok_tutorial/views/screens/profile/edit_profile_screen.dart';
 import 'package:tiktok_tutorial/views/screens/stories/story_viewer_screen.dart';
+import 'package:tiktok_tutorial/views/screens/reels/reels_viewer_screen.dart';
 import 'package:tiktok_tutorial/views/screens/cabinets/seller_cabinet_screen.dart';
 import 'package:tiktok_tutorial/views/screens/cabinets/buyer_cabinet_screen.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/nearby_sellers_screen.dart';
@@ -559,143 +560,175 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         itemCount: reels.length,
         itemBuilder: (context, index) {
           final reel = reels[index];
-          return _buildReelCard(reel);
+          return _buildReelCard(reel, index: index);
         },
       );
     });
   }
 
-  Widget _buildReelCard(Map<String, dynamic> reel) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.grey[900],
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: Colors.grey[800],
-                  child: const Icon(Icons.person, color: Colors.white, size: 20),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildReelCard(Map<String, dynamic> reel, {required int index}) {
+    return GestureDetector(
+      onTap: () async {
+        final reels = List<Map<String, dynamic>>.from(_controller.reels);
+        final result = await Get.to(() => ReelsViewerScreen(reels: reels, initialIndex: index));
+        if (result is Map && result['open_product_from_reel'] is Map<String, dynamic>) {
+          _openProductFromReel(result['open_product_from_reel'] as Map<String, dynamic>);
+        }
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        decoration: BoxDecoration(
+          color: Colors.grey[900],
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 18,
+                    backgroundColor: Colors.grey[800],
+                    child: const Icon(Icons.person, color: Colors.white, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      reel['author_name'] ?? 'User',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.more_vert, color: Colors.white),
+                    onPressed: () {},
+                  ),
+                ],
+              ),
+            ),
+
+            // Preview (tap to open fullscreen viewer)
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final videoHeight = ResponsiveHelper.responsiveValue(
+                  context,
+                  mobile: 420.0,
+                  tablet: 520.0,
+                  desktop: 620.0,
+                );
+                return Container(
+                  height: videoHeight,
+                  width: double.infinity,
+                  color: Colors.black,
+                  child: Stack(
+                    fit: StackFit.expand,
                     children: [
-                      Text(
-                        reel['author_name'] ?? 'User',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                      Container(color: Colors.grey[900]),
+                      Center(
+                        child: Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.45),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.play_arrow, color: Colors.white, size: 34),
+                        ),
+                      ),
+                      Positioned(
+                        left: 12,
+                        right: 12,
+                        bottom: 10,
+                        child: Row(
+                          children: [
+                            Icon(Icons.touch_app, size: 14, color: Colors.grey[300]),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                'Нажмите, чтобы открыть',
+                                style: TextStyle(color: Colors.grey[300], fontSize: 12),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.more_vert, color: Colors.white),
-                  onPressed: () {},
-                ),
-              ],
+                );
+              },
             ),
-          ),
-          
-          // Video placeholder - responsive height
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final videoHeight = ResponsiveHelper.responsiveValue(
-                context,
-                mobile: 400.0,
-                tablet: 500.0,
-                desktop: 600.0,
-              );
-              return Container(
-                height: videoHeight,
-                width: double.infinity,
-                color: Colors.grey[800],
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.play_circle_outline, size: 64, color: Colors.grey[600]),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Видео',
-                        style: TextStyle(color: Colors.grey[600]),
-                      ),
-                    ],
+
+            // Actions
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.favorite_border, color: Colors.white),
+                    onPressed: () {
+                      final contentId = reel['id']?.toString();
+                      if (contentId == null || contentId.isEmpty) return;
+                      _controller.likeContent(contentId);
+                    },
                   ),
-                ),
-              );
-            },
-          ),
-          
-          // Actions
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.favorite_border, color: Colors.white),
-                  onPressed: () => _controller.likeContent(reel['id']),
-                ),
-                Text(
-                  '${reel['likes'] ?? 0}',
-                  style: const TextStyle(color: Colors.white),
-                ),
-                const SizedBox(width: 16),
-                IconButton(
-                  icon: const Icon(Icons.comment_outlined, color: Colors.white),
-                  onPressed: () {},
-                ),
-                IconButton(
-                  icon: const Icon(Icons.share_outlined, color: Colors.white),
-                  onPressed: () {},
-                ),
-                const Spacer(),
-                // Buy button for reels with linked product
-                if (reel['product_id'] != null) ...[
-                  ElevatedButton.icon(
-                    onPressed: () => _openProductFromReel(reel),
-                    icon: const Icon(Icons.shopping_cart, size: 18),
-                    label: Text('buy_now'.tr),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+                  Text(
+                    '${reel['likes'] ?? reel['likes_count'] ?? 0}',
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  const SizedBox(width: 16),
+                  IconButton(
+                    icon: const Icon(Icons.comment_outlined, color: Colors.white),
+                    onPressed: () {},
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.share_outlined, color: Colors.white),
+                    onPressed: () {},
+                  ),
+                  const Spacer(),
+                  // Buy button for reels with linked product
+                  if (reel['product_id'] != null) ...[
+                    ElevatedButton.icon(
+                      onPressed: () => _openProductFromReel(reel),
+                      icon: const Icon(Icons.shopping_cart, size: 18),
+                      label: Text('buy_now'.tr),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
                       ),
                     ),
+                    const SizedBox(width: 8),
+                  ],
+                  IconButton(
+                    icon: const Icon(Icons.bookmark_border, color: Colors.white),
+                    onPressed: () {},
                   ),
-                  const SizedBox(width: 8),
                 ],
-                IconButton(
-                  icon: const Icon(Icons.bookmark_border, color: Colors.white),
-                  onPressed: () {},
-                ),
-              ],
-            ),
-          ),
-          
-          // Caption
-          if (reel['caption'] != null && reel['caption'].isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Text(
-                reel['caption'],
-                style: const TextStyle(color: Colors.white),
               ),
             ),
-        ],
+
+            // Caption
+            if (reel['caption'] != null && reel['caption'].isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Text(
+                  reel['caption'],
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
