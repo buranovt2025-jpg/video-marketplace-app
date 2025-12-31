@@ -184,7 +184,7 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                               }
                             }
                             if (p != null) {
-                              Get.to(() => ProductDetailScreen(product: Map<String, dynamic>.from(p)));
+                              Get.to(() => ProductDetailScreen(product: Map<String, dynamic>.from(p!)));
                             } else {
                               Get.snackbar(
                                 'Товар',
