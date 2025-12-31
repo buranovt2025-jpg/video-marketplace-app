@@ -8,6 +8,7 @@ import 'package:tiktok_tutorial/views/screens/buyer/cart_screen.dart';
 import 'package:tiktok_tutorial/views/screens/chat/chat_screen.dart';
 import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
 import 'package:tiktok_tutorial/utils/formatters.dart';
+import 'package:tiktok_tutorial/utils/money.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final Map<String, dynamic> product;
@@ -161,7 +162,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
                   // Price
                   Text(
-                    '${_formatPrice(product['price'])} сум',
+                    _formatPrice(product['price']),
                     style: TextStyle(
                       color: buttonColor,
                       fontSize: 28,
@@ -253,7 +254,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             ),
                           ),
                           Text(
-                            '${_formatPrice(asDouble(product['price']) * _quantity)} сум',
+                            _formatPrice(asDouble(product['price']) * _quantity),
                             style: TextStyle(
                               color: buttonColor,
                               fontSize: 20,
@@ -462,14 +463,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   String _formatPrice(dynamic price) {
-    if (price == null) return '0';
-    final numPrice = asDouble(price);
-    if (numPrice >= 1000000) {
-      return '${(numPrice / 1000000).toStringAsFixed(1)}M';
-    } else if (numPrice >= 1000) {
-      return '${(numPrice / 1000).toStringAsFixed(0)}K';
-    }
-    return numPrice.toStringAsFixed(0);
+    final numPrice = asDouble(price, fallback: 0);
+    return formatShortMoneyWithCurrency(numPrice);
   }
 
   String _getCategoryName(String category) {

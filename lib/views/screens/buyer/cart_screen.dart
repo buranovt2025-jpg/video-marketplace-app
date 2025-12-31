@@ -4,6 +4,7 @@ import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/cart_controller.dart';
 import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/checkout_screen.dart';
+import 'package:tiktok_tutorial/utils/money.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({Key? key}) : super(key: key);
@@ -155,7 +156,7 @@ class _CartScreenState extends State<CartScreen> {
                   ),
                 ),
                 Text(
-                  '${_formatPrice(total)} сум',
+                  _formatPrice(total),
                   style: TextStyle(
                     color: buttonColor,
                     fontSize: 14,
@@ -237,7 +238,7 @@ class _CartScreenState extends State<CartScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${_formatPrice(item.price)} сум',
+                  _formatPrice(item.price),
                   style: TextStyle(
                     color: Colors.grey[400],
                     fontSize: 12,
@@ -269,7 +270,7 @@ class _CartScreenState extends State<CartScreen> {
                     ),
                     const Spacer(),
                     Text(
-                      '${_formatPrice(item.total)} сум',
+                      _formatPrice(item.total),
                       style: TextStyle(
                         color: buttonColor,
                         fontSize: 14,
@@ -337,7 +338,7 @@ class _CartScreenState extends State<CartScreen> {
                   ),
                   const SizedBox(height: 4),
                   Obx(() => Text(
-                    '${_formatPrice(_cartController.totalAmount)} сум',
+                    _formatPrice(_cartController.totalAmount),
                     style: TextStyle(
                       color: buttonColor,
                       fontSize: 20,
@@ -425,11 +426,6 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   String _formatPrice(double price) {
-    if (price >= 1000000) {
-      return '${(price / 1000000).toStringAsFixed(1)}M';
-    } else if (price >= 1000) {
-      return '${(price / 1000).toStringAsFixed(0)}K';
-    }
-    return price.toStringAsFixed(0);
+    return formatShortMoneyWithCurrency(price);
   }
 }

@@ -785,3 +785,36 @@ GET https://app-owphiuvd.fly.dev/api/auth/me
   - `lib/views/screens/marketplace_home_screen.dart` — превью рилсов показывает `thumbnail_url` и есть кнопка “Смотреть” (открывает `ReelsViewerScreen`).
 - **Что сейчас в работе / не доделано**:
   - Доработка `_buildReelCard` в `lib/views/screens/marketplace_home_screen.dart`: сделать tap по карточке/превью → открывать `ReelsViewerScreen`, и добавить “инста‑оверлеи” (ник/подпись/градиент) на превью. Мой большой patch на замену `_buildReelCard` не применился из‑за несовпадения контекста — нужно сделать это точечными правками по текущему коду.
+
+---
+
+## Сессия 1 января 2026 (Cursor) — Reels: видео не воспроизводится на Web (prod)
+
+### Симптом
+- На проде (`https://165.232.81.31/`) при нажатии **“Смотреть”** открывается полноэкранный viewer, но видео не проигрывается.
+
+### Диагностика
+- На экране плеера отображалась ошибка:
+  - `PlatformException(MEDIA_ERR_SRC_NOT_SUPPORTED, ... Format error, The video has been found to be unsuitable ...)`
+- Проблемный URL:
+  - `https://sample-videos.com/...big_buck_bunny_720p_2mb.mp4`
+- Вывод: часть demo‑хостов отдаёт mp4 с “плохими” заголовками/доступом (hotlink / Range / Content-Type / нестабильность), из‑за чего браузер (через `video_player_web`) отказывает в воспроизведении.
+
+### Что сделано (фиксы во фронте)
+1) Добавлен валидатор “похоже ли это на реальную ссылку на видео”, чтобы продавцы не могли случайно публиковать HTML/страницы вместо mp4:
+   - `lib/utils/media_url.dart`
+   - `CreateReelScreen`, `CreateStoryScreen`, `ReelsViewerScreen`
+2) Добавлен “предохранитель” для Web: если `video_url` на известном проблемном хосте — подменяем на **известно рабочий demo mp4** (чтобы UX можно было проверять, а не упираться в хост):
+   - `effectiveVideoUrlForPlayback()` → fallback: `https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4`
+   - `VideoPlayerItem` использует effective URL для `VideoPlayerController.networkUrl(...)`
+
+### Коммиты/деплой
+- `fdaf882` — валидация URL и понятные ошибки
+- `da4b78e` — fallback URL + блоклист проблемного видео‑хоста
+- После деплоя `da4b78e` пользователь подтвердил: **видео воспроизводится**.
+
+### Важно (техдолг / правильное решение)
+Fallback — временная мера для демо‑контента. Правильное решение:
+- хранить видео на своём storage (DO Spaces / S3 / R2 / Firebase Storage),
+- отдавать mp4 с корректными заголовками и поддержкой `Accept-Ranges: bytes`,
+- иметь стабильные `video_url`/`thumbnail_url` в backend.

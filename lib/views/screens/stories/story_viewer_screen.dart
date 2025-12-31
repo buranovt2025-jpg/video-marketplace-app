@@ -302,7 +302,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                       Icon(Icons.image, size: 64, color: Colors.grey[600]),
                       const SizedBox(height: 16),
                       Text(
-                        'Нет контента',
+                        'no_content'.tr,
                         style: TextStyle(color: Colors.grey[500]),
                       ),
                     ],

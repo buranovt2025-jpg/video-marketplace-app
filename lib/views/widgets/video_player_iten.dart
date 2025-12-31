@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:get/get.dart';
 import 'package:video_player/video_player.dart';
 import 'package:tiktok_tutorial/utils/media_url.dart';
 
@@ -32,7 +33,7 @@ class _VideoPlayerItemState extends State<VideoPlayerItem> {
       return;
     }
 
-    final effective = effectiveVideoUrlForPlayback(url);
+    final effective = kIsWeb ? effectiveVideoUrlForPlayback(url) : url;
     _effectiveUrl = effective;
     videoPlayerController = VideoPlayerController.networkUrl(Uri.parse(effective));
 
@@ -116,7 +117,7 @@ class _VideoPlayerItemState extends State<VideoPlayerItem> {
                       Icon(Icons.videocam_off, size: 64, color: Colors.grey[600]),
                       const SizedBox(height: 12),
                       Text(
-                        'Не удалось воспроизвести видео',
+                        'video_playback_failed'.tr,
                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                         textAlign: TextAlign.center,
                       ),

@@ -5,6 +5,7 @@ import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/views/screens/chat/chat_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:tiktok_tutorial/utils/formatters.dart';
+import 'package:tiktok_tutorial/utils/money.dart';
 
 class OrderTrackingScreen extends StatefulWidget {
   final Map<String, dynamic> order;
@@ -165,7 +166,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 style: TextStyle(color: Colors.grey[400]),
               ),
               Text(
-                '${_formatPrice(_order['total_amount'])} сум',
+                _formatPrice(_order['total_amount']),
                 style: TextStyle(
                   color: buttonColor,
                   fontSize: 18,
@@ -401,14 +402,14 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                         style: const TextStyle(color: Colors.white, fontSize: 14),
                       ),
                       Text(
-                        '${item['quantity']} x ${_formatPrice(item['price'])} сум',
+                        '${item['quantity']} x ${_formatPrice(item['price'])}',
                         style: TextStyle(color: Colors.grey[500], fontSize: 12),
                       ),
                     ],
                   ),
                 ),
                 Text(
-                  '${_formatPrice((item['quantity'] ?? 1) * (item['price'] ?? 0))} сум',
+                  _formatPrice((item['quantity'] ?? 1) * (item['price'] ?? 0)),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 14,
@@ -588,14 +589,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   }
 
   String _formatPrice(dynamic price) {
-    if (price == null) return '0';
-    final numPrice = asDouble(price);
-    if (numPrice >= 1000000) {
-      return '${(numPrice / 1000000).toStringAsFixed(1)}M';
-    } else if (numPrice >= 1000) {
-      return '${(numPrice / 1000).toStringAsFixed(0)}K';
-    }
-    return numPrice.toStringAsFixed(0);
+    final numPrice = asDouble(price, fallback: 0);
+    return formatShortMoneyWithCurrency(numPrice);
   }
 
   String _getStatusText(String? status) {

@@ -8,6 +8,7 @@ import 'package:tiktok_tutorial/views/screens/buyer/order_tracking_screen.dart';
 import 'package:tiktok_tutorial/views/screens/common/location_picker_screen.dart';
 import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
 import 'package:tiktok_tutorial/utils/formatters.dart';
+import 'package:tiktok_tutorial/utils/money.dart';
 
 class BuyerCabinetScreen extends StatefulWidget {
   const BuyerCabinetScreen({Key? key}) : super(key: key);
@@ -210,7 +211,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
               ),
               const SizedBox(height: 8),
               Text(
-                'Сумма: ${formatMoney(order['total_amount'], suffix: 'сум')}',
+                'Сумма: ${formatMoneyWithCurrency(order['total_amount'])}',
                 style: const TextStyle(color: Colors.white70),
               ),
               const SizedBox(height: 12),
@@ -402,7 +403,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  formatMoney(product['price'], suffix: 'сум'),
+                  formatMoneyWithCurrency(product['price']),
                   style: TextStyle(
                     color: primaryColor,
                     fontWeight: FontWeight.bold,

@@ -8,6 +8,11 @@ library;
 const String kFallbackDemoMp4Url =
     'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4';
 
+/// Feature flag: allows turning off the fallback without code changes.
+/// Build with: `--dart-define=ENABLE_VIDEO_FALLBACK=false`
+const bool kEnableVideoFallback =
+    bool.fromEnvironment('ENABLE_VIDEO_FALLBACK', defaultValue: true);
+
 bool looksLikeAbsoluteHttpUrl(String? url) {
   final u = url?.trim();
   if (u == null || u.isEmpty) return false;
@@ -36,7 +41,7 @@ bool isBlockedVideoHost(String? url) {
 String effectiveVideoUrlForPlayback(String url, {String fallback = kFallbackDemoMp4Url}) {
   // If the host is known to break playback, use a known-good demo mp4 so the
   // viewer UX can be verified. Backend should eventually store real video URLs.
-  if (isBlockedVideoHost(url)) return fallback;
+  if (kEnableVideoFallback && isBlockedVideoHost(url)) return fallback;
   return url.trim();
 }
 

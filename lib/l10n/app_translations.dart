@@ -42,6 +42,7 @@ class AppTranslations extends Translations {
       'add_product': 'Добавить товар',
       'product_name': 'Название товара',
       'price': 'Цена',
+      'currency_sum': 'сум',
       'description': 'Описание',
       'quantity': 'Количество',
       'in_stock': 'В наличии',
@@ -92,6 +93,41 @@ class AppTranslations extends Translations {
       'done': 'Готово',
       'problem_with_order': 'Проблема с заказом',
       'report_problem': 'Сообщить о проблеме',
+
+      // Reels & Stories
+      'reels': 'Рилсы',
+      'stories': 'Истории',
+      'new_reel': 'Новый рилс',
+      'new_story': 'Новая история',
+      'publish': 'Опубликовать',
+      'add_video': 'Добавить видео',
+      'add_photo': 'Добавить фото',
+      'video_url': 'URL видео',
+      'image_url': 'URL фото',
+      'video_url_required': 'URL видео *',
+      'image_url_optional': 'URL фото (опционально)',
+      'video_url_hint_mp4': 'https://example.com/video.mp4',
+      'reel_published': 'Рилс опубликован',
+      'story_published': 'История опубликована',
+      'choose_product_optional': 'Выберите товар (опционально)',
+      'no_product': 'Без товара',
+      'link_to_product': 'Привязать к товару',
+      'no_products_yet': 'У вас пока нет товаров.',
+      'reels_tips_title': 'Советы для рилсов',
+      'reels_tips_body':
+          '• Снимайте вертикальное видео (9:16)\n'
+          '• Первые 3 секунды - самые важные\n'
+          '• Покажите товар в действии\n'
+          '• Добавьте цену в описание',
+      'story_expires_24h': 'История исчезнет через 24 часа',
+      'stories_visible_24h': 'Истории видны 24 часа и отображаются в кружочках вверху ленты',
+      'video_url_invalid': 'Нужна прямая ссылка на видео (например .mp4/.webm/.m3u8).',
+      'media_missing': 'Добавьте фото или видео',
+      'reels_empty': 'Пока нет рилсов',
+      'no_video': 'Нет видео',
+      'video_link_not_video': 'Ссылка не на видео',
+      'no_content': 'Нет контента',
+      'video_playback_failed': 'Не удалось воспроизвести видео',
       
       // Location
       'select_location': 'Выбрать локацию',
@@ -294,6 +330,7 @@ class AppTranslations extends Translations {
       'add_product': 'Mahsulot qo\'shish',
       'product_name': 'Mahsulot nomi',
       'price': 'Narx',
+      'currency_sum': 'so\'m',
       'description': 'Tavsif',
       'quantity': 'Miqdor',
       'in_stock': 'Mavjud',
@@ -344,6 +381,41 @@ class AppTranslations extends Translations {
       'done': 'Tayyor',
       'problem_with_order': 'Buyurtma bilan muammo',
       'report_problem': 'Muammo haqida xabar berish',
+
+      // Reels & Stories
+      'reels': 'Reels',
+      'stories': 'Hikoyalar',
+      'new_reel': 'Yangi reel',
+      'new_story': 'Yangi hikoya',
+      'publish': 'Nashr qilish',
+      'add_video': 'Video qo‘shish',
+      'add_photo': 'Rasm qo‘shish',
+      'video_url': 'Video URL',
+      'image_url': 'Rasm URL',
+      'video_url_required': 'Video URL *',
+      'image_url_optional': 'Rasm URL (ixtiyoriy)',
+      'video_url_hint_mp4': 'https://example.com/video.mp4',
+      'reel_published': 'Reel eʼlon qilindi',
+      'story_published': 'Hikoya eʼlon qilindi',
+      'choose_product_optional': 'Mahsulotni tanlang (ixtiyoriy)',
+      'no_product': 'Mahsulotsiz',
+      'link_to_product': 'Mahsulotga bog‘lash',
+      'no_products_yet': 'Sizda hozircha mahsulot yo‘q.',
+      'reels_tips_title': 'Reels bo‘yicha maslahatlar',
+      'reels_tips_body':
+          '• Vertikal video oling (9:16)\n'
+          '• Birinchi 3 soniya eng muhim\n'
+          '• Mahsulotni amalda ko‘rsating\n'
+          '• Tavsifga narx qo‘shing',
+      'story_expires_24h': 'Hikoya 24 soatdan keyin yo‘qoladi',
+      'stories_visible_24h': 'Hikoyalar 24 soat ko‘rinadi va lentaning yuqorisida chiqadi',
+      'video_url_invalid': 'To‘g‘ridan-to‘g‘ri video havola kerak (.mp4/.webm/.m3u8).',
+      'media_missing': 'Rasm yoki video qo‘shing',
+      'reels_empty': 'Hozircha reels yo‘q',
+      'no_video': 'Video yo‘q',
+      'video_link_not_video': 'Havola video emas',
+      'no_content': 'Kontent yo‘q',
+      'video_playback_failed': 'Videoni ijro etib bo‘lmadi',
       
       // Location
       'select_location': 'Joylashuvni tanlash',
@@ -526,6 +598,7 @@ class AppTranslations extends Translations {
       'add_product': 'Add Product',
       'product_name': 'Product Name',
       'price': 'Price',
+      'currency_sum': 'UZS',
       'description': 'Description',
       'quantity': 'Quantity',
       'in_stock': 'In Stock',
@@ -576,6 +649,41 @@ class AppTranslations extends Translations {
       'done': 'Done',
       'problem_with_order': 'Problem with order',
       'report_problem': 'Report Problem',
+
+      // Reels & Stories
+      'reels': 'Reels',
+      'stories': 'Stories',
+      'new_reel': 'New reel',
+      'new_story': 'New story',
+      'publish': 'Publish',
+      'add_video': 'Add video',
+      'add_photo': 'Add photo',
+      'video_url': 'Video URL',
+      'image_url': 'Image URL',
+      'video_url_required': 'Video URL *',
+      'image_url_optional': 'Image URL (optional)',
+      'video_url_hint_mp4': 'https://example.com/video.mp4',
+      'reel_published': 'Reel published',
+      'story_published': 'Story published',
+      'choose_product_optional': 'Choose a product (optional)',
+      'no_product': 'No product',
+      'link_to_product': 'Link to product',
+      'no_products_yet': 'You have no products yet.',
+      'reels_tips_title': 'Reels tips',
+      'reels_tips_body':
+          '• Shoot vertical video (9:16)\n'
+          '• First 3 seconds are the most important\n'
+          '• Show the product in action\n'
+          '• Add the price to the description',
+      'story_expires_24h': 'Story will disappear in 24 hours',
+      'stories_visible_24h': 'Stories are visible for 24 hours and shown at the top of the feed',
+      'video_url_invalid': 'Please use a direct video link (.mp4/.webm/.m3u8).',
+      'media_missing': 'Add a photo or a video',
+      'reels_empty': 'No reels yet',
+      'no_video': 'No video',
+      'video_link_not_video': 'Link is not a video',
+      'no_content': 'No content',
+      'video_playback_failed': 'Failed to play video',
       
       // Location
       'select_location': 'Select Location',

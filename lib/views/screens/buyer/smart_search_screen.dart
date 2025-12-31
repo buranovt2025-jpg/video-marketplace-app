@@ -4,6 +4,7 @@ import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/services/api_service.dart';
 import 'package:tiktok_tutorial/utils/formatters.dart';
+import 'package:tiktok_tutorial/utils/money.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/product_detail_screen.dart';
 import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
 
@@ -907,7 +908,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${_formatPrice(product['price'])} сум',
+                      _formatPrice(product['price']),
                       style: TextStyle(
                         color: primaryColor,
                         fontWeight: FontWeight.bold,
@@ -941,10 +942,11 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
 
   String _formatPrice(dynamic price) {
     final n = asDouble(price);
-    return n.toStringAsFixed(0).replaceAllMapped(
+    final s = n.toStringAsFixed(0).replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
       (Match m) => '${m[1]} ',
     );
+    return '$s ${'currency_sum'.tr}';
   }
 }
 

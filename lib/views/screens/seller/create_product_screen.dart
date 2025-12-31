@@ -381,7 +381,7 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
               keyboardType: TextInputType.number,
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
-                labelText: 'Цена (сум) *',
+                labelText: '${'price'.tr} (${ 'currency_sum'.tr}) *',
                 labelStyle: TextStyle(color: Colors.grey[400]),
                 prefixIcon: Icon(Icons.attach_money, color: Colors.grey[400]),
                 enabledBorder: OutlineInputBorder(

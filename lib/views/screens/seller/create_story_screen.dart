@@ -4,6 +4,7 @@ import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/utils/formatters.dart';
 import 'package:tiktok_tutorial/utils/media_url.dart';
+import 'package:tiktok_tutorial/utils/money.dart';
 
 class CreateStoryScreen extends StatefulWidget {
   const CreateStoryScreen({Key? key}) : super(key: key);
@@ -41,8 +42,8 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
     
     if (!hasImage && !hasVideo) {
       Get.snackbar(
-        'Ошибка',
-        'Добавьте фото или видео',
+        'error'.tr,
+        'media_missing'.tr,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -53,8 +54,8 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
     final videoUrl = hasVideo ? _videoUrlController.text.trim() : null;
     if (videoUrl != null && videoUrl.isNotEmpty && !looksLikeVideoUrl(videoUrl)) {
       Get.snackbar(
-        'Ошибка',
-        'Для видео нужна прямая ссылка (.mp4/.webm/.m3u8). Сейчас указана ссылка на страницу (HTML) или некорректный URL.',
+        'error'.tr,
+        'video_url_invalid'.tr,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -75,15 +76,15 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
     if (story != null) {
       Get.back();
       Get.snackbar(
-        'Успешно',
-        'История опубликована',
+        'success'.tr,
+        'story_published'.tr,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
     } else {
       Get.snackbar(
-        'Ошибка',
+        'error'.tr,
         _controller.error.value.isNotEmpty 
             ? _controller.error.value 
             : 'Не удалось создать историю',
@@ -105,9 +106,9 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
           icon: const Icon(Icons.close, color: Colors.white),
           onPressed: () => Get.back(),
         ),
-        title: const Text(
-          'Новая история',
-          style: TextStyle(color: Colors.white),
+        title: Text(
+          'new_story'.tr,
+          style: const TextStyle(color: Colors.white),
         ),
         actions: [
           Obx(() => TextButton(
@@ -122,7 +123,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                     ),
                   )
                 : Text(
-                    'Опубликовать',
+                    'publish'.tr,
                     style: TextStyle(
                       color: buttonColor,
                       fontWeight: FontWeight.bold,
@@ -161,7 +162,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Фото',
+                            'add_photo'.tr,
                             style: TextStyle(
                               color: !_isVideo ? Colors.white : Colors.grey[500],
                               fontWeight: FontWeight.bold,
@@ -194,7 +195,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Видео',
+                            'add_video'.tr,
                             style: TextStyle(
                               color: _isVideo ? Colors.white : Colors.grey[500],
                               fontWeight: FontWeight.bold,
@@ -231,7 +232,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      _isVideo ? 'Добавить видео' : 'Добавить фото',
+                      _isVideo ? 'add_video'.tr : 'add_photo'.tr,
                       style: TextStyle(
                         color: Colors.grey[500],
                         fontSize: 16,
@@ -239,7 +240,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'История исчезнет через 24 часа',
+                      'story_expires_24h'.tr,
                       style: TextStyle(
                         color: Colors.grey[600],
                         fontSize: 12,
@@ -327,7 +328,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
             
             // Link to product
             Text(
-              'Привязать к товару',
+              'link_to_product'.tr,
               style: TextStyle(
                 color: Colors.grey[300],
                 fontWeight: FontWeight.bold,
@@ -375,7 +376,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                     dropdownColor: Colors.grey[900],
                     icon: Icon(Icons.arrow_drop_down, color: Colors.grey[400]),
                     hint: Text(
-                      'Выберите товар (опционально)',
+                      'choose_product_optional'.tr,
                       style: TextStyle(color: Colors.grey[500]),
                     ),
                     style: const TextStyle(color: Colors.white),
@@ -383,7 +384,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                       DropdownMenuItem<String?>(
                         value: null,
                         child: Text(
-                          'Без товара',
+                          'no_product'.tr,
                           style: TextStyle(color: Colors.grey[500]),
                         ),
                       ),
@@ -396,7 +397,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
-                                  '${product['name']} - ${formatMoney(product['price'])} сум',
+                                  '${product['name']} - ${formatMoneyWithCurrency(product['price'])}',
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
@@ -431,7 +432,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Истории видны 24 часа и отображаются в кружочках вверху ленты',
+                      'stories_visible_24h'.tr,
                       style: TextStyle(color: Colors.orange[300], fontSize: 13),
                     ),
                   ),

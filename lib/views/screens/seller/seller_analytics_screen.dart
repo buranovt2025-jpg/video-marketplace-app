@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/utils/formatters.dart';
+import 'package:tiktok_tutorial/utils/money.dart';
 
 class SellerAnalyticsScreen extends StatefulWidget {
   const SellerAnalyticsScreen({Key? key}) : super(key: key);
@@ -619,12 +620,7 @@ class _SellerAnalyticsScreenState extends State<SellerAnalyticsScreen> {
   }
 
   String _formatPrice(double price) {
-    if (price >= 1000000) {
-      return '${(price / 1000000).toStringAsFixed(1)}M сум';
-    } else if (price >= 1000) {
-      return '${(price / 1000).toStringAsFixed(0)}K сум';
-    }
-    return '${price.toStringAsFixed(0)} сум';
+    return formatShortMoneyWithCurrency(price);
   }
 
   String _formatShortPrice(double price) {

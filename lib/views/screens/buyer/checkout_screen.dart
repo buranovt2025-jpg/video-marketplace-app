@@ -6,6 +6,7 @@ import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/order_success_screen.dart';
 import 'package:tiktok_tutorial/views/screens/common/location_picker_screen.dart';
+import 'package:tiktok_tutorial/utils/money.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final String sellerId;
@@ -262,7 +263,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  '${item.quantity} x ${_formatPrice(item.price)} сум',
+                  '${item.quantity} x ${_formatPrice(item.price)}',
                   style: TextStyle(
                     color: Colors.grey[500],
                     fontSize: 12,
@@ -272,7 +273,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
           ),
           Text(
-            '${_formatPrice(item.total)} сум',
+            _formatPrice(item.total),
             style: const TextStyle(
               color: Colors.white,
               fontSize: 14,
@@ -492,7 +493,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
                 ),
                 Text(
-                  isFreeDelivery ? 'Бесплатно' : '${_formatPrice(_standardDeliveryFee)} сум',
+                  isFreeDelivery ? 'Бесплатно' : _formatPrice(_standardDeliveryFee),
                   style: TextStyle(
                     color: isFreeDelivery ? Colors.green : Colors.white,
                     fontWeight: FontWeight.bold,
@@ -555,7 +556,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
                 ),
                 Text(
-                  '${_formatPrice(_expressDeliveryFee)} сум',
+                  _formatPrice(_expressDeliveryFee),
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -588,7 +589,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Бесплатная доставка от ${_formatPrice(_freeDeliveryThreshold)} сум',
+                      'Бесплатная доставка от ${_formatPrice(_freeDeliveryThreshold)}',
                       style: const TextStyle(color: Colors.green, fontSize: 12),
                     ),
                   ),
@@ -620,17 +621,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ),
       child: Column(
         children: [
-          _buildSummaryRow('Товары (${items.length})', '${_formatPrice(itemsTotal)} сум'),
+          _buildSummaryRow('Товары (${items.length})', _formatPrice(itemsTotal)),
           const SizedBox(height: 8),
           _buildSummaryRow(
             'Доставка (${_selectedTariff == 'express' ? 'экспресс' : 'стандарт'})',
-            deliveryFee == 0 ? 'Бесплатно' : '${_formatPrice(deliveryFee)} сум',
+            deliveryFee == 0 ? 'Бесплатно' : _formatPrice(deliveryFee),
             valueColor: deliveryFee == 0 ? Colors.green : null,
           ),
           const Divider(color: Colors.grey, height: 24),
           _buildSummaryRow(
             'Итого',
-            '${_formatPrice(grandTotal)} сум',
+            _formatPrice(grandTotal),
             isBold: true,
             valueColor: primaryColor,
           ),
@@ -699,7 +700,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     ),
                   )
                 : Text(
-                    'Заказать за ${_formatPrice(grandTotal)} сум',
+                    'Заказать за ${_formatPrice(grandTotal)}',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -762,11 +763,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   String _formatPrice(double price) {
-    if (price >= 1000000) {
-      return '${(price / 1000000).toStringAsFixed(1)}M';
-    } else if (price >= 1000) {
-      return '${(price / 1000).toStringAsFixed(0)}K';
-    }
-    return price.toStringAsFixed(0);
+    return formatShortMoneyWithCurrency(price);
   }
 }

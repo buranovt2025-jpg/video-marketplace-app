@@ -51,7 +51,7 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
         body: SafeArea(
           child: Center(
             child: Text(
-              'Пока нет рилсов',
+              'reels_empty'.tr,
               style: TextStyle(color: Colors.grey[500]),
             ),
           ),
@@ -85,8 +85,8 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                         const SizedBox(height: 8),
                         Text(
                           (videoUrl == null || videoUrl.trim().isEmpty)
-                              ? 'Нет видео'
-                              : 'Ссылка не на видео',
+                              ? 'no_video'.tr
+                              : 'video_link_not_video'.tr,
                           style: TextStyle(color: Colors.grey[600]),
                         ),
                         if (videoUrl != null && videoUrl.trim().isNotEmpty) ...[

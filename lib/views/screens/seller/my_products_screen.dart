@@ -4,6 +4,7 @@ import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
 import 'package:tiktok_tutorial/utils/formatters.dart';
+import 'package:tiktok_tutorial/utils/money.dart';
 import 'package:tiktok_tutorial/views/screens/seller/create_product_screen.dart';
 
 class MyProductsScreen extends StatefulWidget {
@@ -184,7 +185,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
 
                 // Price
                 Text(
-                  formatMoney(product['price'], suffix: 'сум'),
+                  formatMoneyWithCurrency(product['price']),
                   style: TextStyle(
                     color: buttonColor,
                     fontSize: 20,

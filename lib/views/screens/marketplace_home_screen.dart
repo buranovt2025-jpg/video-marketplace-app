@@ -28,6 +28,7 @@ import 'package:tiktok_tutorial/views/screens/reels/reels_viewer_screen.dart';
 import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
 import 'package:tiktok_tutorial/utils/web_image_policy.dart';
 import 'package:tiktok_tutorial/utils/formatters.dart';
+import 'package:tiktok_tutorial/utils/money.dart';
 
 class MarketplaceHomeScreen extends StatefulWidget {
   final bool isGuestMode;
@@ -905,7 +906,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  formatMoney(product['price'], suffix: 'сум'),
+                  formatMoneyWithCurrency(product['price']),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 10,
@@ -1207,7 +1208,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Сумма: ${formatMoney(totalAmountNum, suffix: 'сум')}',
+                'Сумма: ${formatMoneyWithCurrency(totalAmountNum)}',
                 style: TextStyle(color: Colors.grey[400]),
               ),
               if (order['delivery_address'] != null) ...[

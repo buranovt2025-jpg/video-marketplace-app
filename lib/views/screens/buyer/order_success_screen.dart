@@ -4,6 +4,7 @@ import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/order_tracking_screen.dart';
 import 'package:tiktok_tutorial/views/screens/marketplace_home_screen.dart';
 import 'package:tiktok_tutorial/utils/formatters.dart';
+import 'package:tiktok_tutorial/utils/money.dart';
 
 class OrderSuccessScreen extends StatelessWidget {
   final Map<String, dynamic> order;
@@ -67,7 +68,7 @@ class OrderSuccessScreen extends StatelessWidget {
                     _buildInfoRow(
                       Icons.attach_money,
                       'Сумма',
-                      '${_formatPrice(order['total_amount'])} сум',
+                      _formatPrice(order['total_amount']),
                     ),
                     const SizedBox(height: 16),
                     _buildInfoRow(
@@ -204,14 +205,8 @@ class OrderSuccessScreen extends StatelessWidget {
   }
 
   String _formatPrice(dynamic price) {
-    if (price == null) return '0';
-    final numPrice = asDouble(price);
-    if (numPrice >= 1000000) {
-      return '${(numPrice / 1000000).toStringAsFixed(1)}M';
-    } else if (numPrice >= 1000) {
-      return '${(numPrice / 1000).toStringAsFixed(0)}K';
-    }
-    return numPrice.toStringAsFixed(0);
+    final numPrice = asDouble(price, fallback: 0);
+    return formatShortMoneyWithCurrency(numPrice);
   }
 
   String _getStatusText(String? status) {

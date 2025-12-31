@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/utils/formatters.dart';
+import 'package:tiktok_tutorial/utils/money.dart';
 
 class AdminOrdersScreen extends StatefulWidget {
   const AdminOrdersScreen({Key? key}) : super(key: key);
@@ -218,7 +219,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                 Icon(Icons.payments_outlined, size: 18, color: Colors.green[400]),
                 const SizedBox(width: 8),
                 Text(
-                  formatMoney(totalAmount, suffix: 'сум'),
+                  formatMoneyWithCurrency(totalAmount),
                   style: TextStyle(
                     color: Colors.green[400],
                     fontWeight: FontWeight.bold,
@@ -407,10 +408,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                       ),
                     ),
                     Text(
-                      formatMoney(
-                        asDouble(item['price']) * asInt(item['quantity'], fallback: 1),
-                        suffix: 'сум',
-                      ),
+                      formatMoneyWithCurrency(asDouble(item['price']) * asInt(item['quantity'], fallback: 1)),
                       style: TextStyle(color: Colors.grey[400]),
                     ),
                   ],
@@ -434,7 +432,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                     ),
                   ),
                   Text(
-                    formatMoney(order['total_amount'], suffix: 'сум'),
+                    formatMoneyWithCurrency(order['total_amount']),
                     style: TextStyle(
                       color: Colors.green[400],
                       fontWeight: FontWeight.bold,

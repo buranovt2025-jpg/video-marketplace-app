@@ -5,6 +5,7 @@ import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
 import 'package:tiktok_tutorial/utils/formatters.dart';
+import 'package:tiktok_tutorial/utils/money.dart';
 import 'package:tiktok_tutorial/views/screens/seller/my_products_screen.dart';
 import 'package:tiktok_tutorial/views/screens/common/qr_code_screen.dart';
 import 'package:tiktok_tutorial/views/screens/seller/seller_analytics_screen.dart';
@@ -239,7 +240,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
             
             const SizedBox(height: 12),
             Text(
-              'Сумма: ${formatMoney(order['total_amount'], suffix: 'сум')}',
+              'Сумма: ${formatMoneyWithCurrency(order['total_amount'])}',
               style: const TextStyle(color: Colors.white70),
             ),
             const SizedBox(height: 4),
@@ -437,7 +438,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
                 Expanded(
                   child: _buildStatCard(
                     'Выручка',
-                    '${totalRevenue.toStringAsFixed(0)} сум',
+                    formatMoneyWithCurrency(totalRevenue),
                     Icons.attach_money,
                     Colors.green,
                   ),
@@ -610,7 +611,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
-                        formatMoney(product['price'], suffix: 'сум'),
+                        formatMoneyWithCurrency(product['price']),
                         style: TextStyle(color: Colors.grey[500], fontSize: 13),
                       ),
                     ],
@@ -717,7 +718,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    formatMoney(product['price'], suffix: 'сум'),
+                    formatMoneyWithCurrency(product['price']),
                     style: TextStyle(color: Colors.grey[500]),
                   ),
                 ],

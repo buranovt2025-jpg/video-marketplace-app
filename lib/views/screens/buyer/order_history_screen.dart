@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/order_tracking_screen.dart';
+import 'package:tiktok_tutorial/utils/money.dart';
 
 class OrderHistoryScreen extends StatefulWidget {
   const OrderHistoryScreen({Key? key}) : super(key: key);
@@ -316,7 +317,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               children: [
                 const SizedBox(height: 8),
                 Text(
-                  '${totalNum.toStringAsFixed(0)} сум',
+                  formatMoneyWithCurrency(totalNum),
                   style: const TextStyle(
                     color: primaryColor,
                     fontSize: 18,

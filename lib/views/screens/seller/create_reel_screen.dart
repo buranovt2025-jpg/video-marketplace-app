@@ -4,6 +4,7 @@ import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/utils/formatters.dart';
 import 'package:tiktok_tutorial/utils/media_url.dart';
+import 'package:tiktok_tutorial/utils/money.dart';
 
 class CreateReelScreen extends StatefulWidget {
   const CreateReelScreen({Key? key}) : super(key: key);
@@ -35,8 +36,8 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
   Future<void> _createReel() async {
     if (_videoUrlController.text.isEmpty) {
       Get.snackbar(
-        'Ошибка',
-        'Добавьте ссылку на видео',
+        'error'.tr,
+        'video_url_required'.tr,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -47,8 +48,8 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
     final url = _videoUrlController.text.trim();
     if (!looksLikeVideoUrl(url)) {
       Get.snackbar(
-        'Ошибка',
-        'Нужна прямая ссылка на видео (например .mp4). Сейчас указана ссылка на страницу (HTML) или некорректный URL.',
+        'error'.tr,
+        'video_url_invalid'.tr,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -68,15 +69,15 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
     if (reel != null) {
       Get.back();
       Get.snackbar(
-        'Успешно',
-        'Рилс опубликован',
+        'success'.tr,
+        'reel_published'.tr,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
     } else {
       Get.snackbar(
-        'Ошибка',
+        'error'.tr,
         _controller.error.value.isNotEmpty 
             ? _controller.error.value 
             : 'Не удалось создать рилс',
@@ -98,9 +99,9 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
           icon: const Icon(Icons.close, color: Colors.white),
           onPressed: () => Get.back(),
         ),
-        title: const Text(
-          'Новый рилс',
-          style: TextStyle(color: Colors.white),
+        title: Text(
+          'new_reel'.tr,
+          style: const TextStyle(color: Colors.white),
         ),
         actions: [
           Obx(() => TextButton(
@@ -115,7 +116,7 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
                     ),
                   )
                 : Text(
-                    'Опубликовать',
+                    'publish'.tr,
                     style: TextStyle(
                       color: buttonColor,
                       fontWeight: FontWeight.bold,
@@ -148,7 +149,7 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
                     Icon(Icons.video_call, size: 64, color: Colors.grey[600]),
                     const SizedBox(height: 16),
                     Text(
-                      'Добавить видео',
+                      'add_video'.tr,
                       style: TextStyle(
                         color: Colors.grey[500],
                         fontSize: 16,
@@ -173,9 +174,9 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
               controller: _videoUrlController,
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
-                labelText: 'URL видео *',
+                labelText: 'video_url_required'.tr,
                 labelStyle: TextStyle(color: Colors.grey[400]),
-                hintText: 'https://example.com/video.mp4',
+                hintText: 'video_url_hint_mp4'.tr,
                 hintStyle: TextStyle(color: Colors.grey[600]),
                 prefixIcon: Icon(Icons.link, color: Colors.grey[400]),
                 enabledBorder: OutlineInputBorder(
@@ -199,7 +200,7 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
               maxLines: 3,
               maxLength: 500,
               decoration: InputDecoration(
-                labelText: 'Описание',
+                labelText: 'description'.tr,
                 labelStyle: TextStyle(color: Colors.grey[400]),
                 hintText: 'Расскажите о вашем товаре...',
                 hintStyle: TextStyle(color: Colors.grey[600]),
@@ -221,7 +222,7 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
             
             // Link to product
             Text(
-              'Привязать к товару',
+              'link_to_product'.tr,
               style: TextStyle(
                 color: Colors.grey[300],
                 fontWeight: FontWeight.bold,
@@ -269,7 +270,7 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
                     dropdownColor: Colors.grey[900],
                     icon: Icon(Icons.arrow_drop_down, color: Colors.grey[400]),
                     hint: Text(
-                      'Выберите товар (опционально)',
+                      'choose_product_optional'.tr,
                       style: TextStyle(color: Colors.grey[500]),
                     ),
                     style: const TextStyle(color: Colors.white),
@@ -277,7 +278,7 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
                       DropdownMenuItem<String?>(
                         value: null,
                         child: Text(
-                          'Без товара',
+                          'no_product'.tr,
                           style: TextStyle(color: Colors.grey[500]),
                         ),
                       ),
@@ -290,7 +291,7 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
-                                  '${product['name']} - ${formatMoney(product['price'])} сум',
+                                  '${product['name']} - ${formatMoneyWithCurrency(product['price'])}',
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
@@ -327,7 +328,7 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
                       Icon(Icons.tips_and_updates, color: Colors.purple[300]),
                       const SizedBox(width: 8),
                       Text(
-                        'Советы для рилсов',
+                        'reels_tips_title'.tr,
                         style: TextStyle(
                           color: Colors.purple[300],
                           fontWeight: FontWeight.bold,
@@ -337,10 +338,7 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '• Снимайте вертикальное видео (9:16)\n'
-                    '• Первые 3 секунды - самые важные\n'
-                    '• Покажите товар в действии\n'
-                    '• Добавьте цену в описание',
+                    'reels_tips_body'.tr,
                     style: TextStyle(color: Colors.purple[300], fontSize: 13),
                   ),
                 ],

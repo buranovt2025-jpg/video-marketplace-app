@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/utils/formatters.dart';
+import 'package:tiktok_tutorial/utils/money.dart';
 import 'package:tiktok_tutorial/views/screens/courier/courier_order_detail_screen.dart';
 import 'package:tiktok_tutorial/views/screens/auth/marketplace_login_screen.dart';
 
@@ -223,7 +224,7 @@ class _CourierHomeScreenState extends State<CourierHomeScreen> with SingleTicker
                 Icon(Icons.payments_outlined, size: 18, color: Colors.green[400]),
                 const SizedBox(width: 8),
                 Text(
-                  '${formatMoney(totalAmount)} сум (наличка)',
+                  '${formatMoneyWithCurrency(totalAmount)} (наличка)',
                   style: TextStyle(
                     color: Colors.green[400],
                     fontWeight: FontWeight.bold,
@@ -337,7 +338,7 @@ class _CourierHomeScreenState extends State<CourierHomeScreen> with SingleTicker
           style: TextStyle(color: Colors.white),
         ),
         content: Text(
-          'Вы берёте заказ #$orderIdShort на сумму ${formatMoney(order['total_amount'])} сум',
+          'Вы берёте заказ #$orderIdShort на сумму ${formatMoneyWithCurrency(order['total_amount'])}',
           style: TextStyle(color: Colors.grey[400]),
         ),
         actions: [
