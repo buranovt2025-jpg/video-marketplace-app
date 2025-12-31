@@ -17,6 +17,12 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
 
   final List<String> _filters = ['all', 'pending', 'accepted', 'in_delivery', 'delivered', 'cancelled'];
 
+  String _shortId(dynamic id) {
+    final s = id?.toString() ?? '';
+    if (s.isEmpty) return '';
+    return s.length > 8 ? s.substring(0, 8) : s;
+  }
+
   String _getFilterLabel(String filter) {
     switch (filter) {
       case 'all':
@@ -76,7 +82,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               style: const TextStyle(color: Colors.white),
               maxLines: 3,
               decoration: InputDecoration(
-                hintText: 'Укажите причину отмены...',
+                hintText: 'cancel_reason_hint'.tr,
                 hintStyle: TextStyle(color: Colors.grey[600]),
                 filled: true,
                 fillColor: Colors.grey[800],
@@ -256,7 +262,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Заказ #${order['id']?.substring(0, 8) ?? ''}',
+                  'order_number'.trParams({'id': _shortId(order['id'])}),
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -284,7 +290,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               children: [
                 const SizedBox(height: 8),
                 Text(
-                  '${order['total']?.toStringAsFixed(0) ?? '0'} сум',
+                  "${order['total']?.toStringAsFixed(0) ?? '0'} ${'currency_sum'.tr}",
                   style: const TextStyle(
                     color: primaryColor,
                     fontSize: 18,
@@ -293,7 +299,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  order['delivery_address'] ?? 'Адрес не указан',
+                  order['delivery_address'] ?? 'address_not_specified'.tr,
                   style: TextStyle(color: Colors.grey[400]),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -315,7 +321,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                       foregroundColor: Colors.white,
                       side: BorderSide(color: Colors.grey[700]!),
                     ),
-                    child: Text('Подробнее'),
+                    child: Text('details'.tr),
                   ),
                 ),
                 if (canCancel) ...[

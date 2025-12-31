@@ -9,6 +9,12 @@ class OrderSuccessScreen extends StatelessWidget {
 
   const OrderSuccessScreen({Key? key, required this.order}) : super(key: key);
 
+  String _shortId(dynamic id) {
+    final s = id?.toString() ?? '';
+    if (s.isEmpty) return 'N/A';
+    return s.length > 8 ? s.substring(0, 8) : s;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -36,8 +42,8 @@ class OrderSuccessScreen extends StatelessWidget {
               const SizedBox(height: 32),
 
               // Success message
-              const Text(
-                'Заказ оформлен!',
+              Text(
+                'order_placed'.tr,
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 28,
@@ -46,7 +52,7 @@ class OrderSuccessScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'Номер заказа: ${order['id']?.substring(0, 8) ?? 'N/A'}',
+                'order_number_label'.trParams({'id': _shortId(order['id'])}),
                 style: TextStyle(
                   color: Colors.grey[400],
                   fontSize: 16,
@@ -65,25 +71,25 @@ class OrderSuccessScreen extends StatelessWidget {
                   children: [
                     _buildInfoRow(
                       Icons.attach_money,
-                      'Сумма',
-                      '${_formatPrice(order['total_amount'])} сум',
+                      'order_total'.tr,
+                      "${_formatPrice(order['total_amount'])} ${'currency_sum'.tr}",
                     ),
                     const SizedBox(height: 16),
                     _buildInfoRow(
                       Icons.location_on,
-                      'Адрес',
-                      order['delivery_address'] ?? 'Не указан',
+                      'address'.tr,
+                      order['delivery_address'] ?? 'address_not_specified'.tr,
                     ),
                     const SizedBox(height: 16),
                     _buildInfoRow(
                       Icons.payment,
-                      'Оплата',
-                      'Наличными курьеру',
+                      'payment'.tr,
+                      'cash_to_courier'.tr,
                     ),
                     const SizedBox(height: 16),
                     _buildInfoRow(
                       Icons.local_shipping,
-                      'Статус',
+                      'order_status_title'.tr,
                       _getStatusText(order['status']),
                       valueColor: _getStatusColor(order['status']),
                     ),
@@ -106,7 +112,7 @@ class OrderSuccessScreen extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Продавец получил ваш заказ. Курьер скоро заберёт его и доставит вам.',
+                        'seller_got_order_info'.tr,
                         style: TextStyle(
                           color: Colors.grey[300],
                           fontSize: 14,
@@ -128,13 +134,7 @@ class OrderSuccessScreen extends StatelessWidget {
                     backgroundColor: buttonColor,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: const Text(
-                    'Отследить заказ',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  child: Text('track_order'.tr, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
               ),
               const SizedBox(height: 12),
@@ -147,10 +147,7 @@ class OrderSuccessScreen extends StatelessWidget {
                     side: BorderSide(color: Colors.grey[700]!),
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: const Text(
-                    'На главную',
-                    style: TextStyle(fontSize: 16),
-                  ),
+                  child: Text('to_home'.tr, style: const TextStyle(fontSize: 16)),
                 ),
               ),
             ],
@@ -214,17 +211,18 @@ class OrderSuccessScreen extends StatelessWidget {
   }
 
   String _getStatusText(String? status) {
-    final statuses = {
-      'created': 'Создан',
-      'accepted': 'Принят продавцом',
-      'ready': 'Готов к отправке',
-      'picked_up': 'Забран курьером',
-      'in_transit': 'В пути',
-      'delivered': 'Доставлен',
-      'completed': 'Завершён',
-      'cancelled': 'Отменён',
+    final key = switch (status) {
+      'created' => 'status_created',
+      'accepted' => 'status_accepted',
+      'ready' => 'status_ready',
+      'picked_up' => 'status_picked_up',
+      'in_transit' => 'status_in_transit',
+      'delivered' => 'status_delivered',
+      'completed' => 'status_completed',
+      'cancelled' => 'status_cancelled',
+      _ => null,
     };
-    return statuses[status] ?? status ?? 'Неизвестно';
+    return key == null ? (status?.toString() ?? '-') : key.tr;
   }
 
   Color _getStatusColor(String? status) {
