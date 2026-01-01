@@ -10,6 +10,8 @@ import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
 import 'package:tiktok_tutorial/utils/formatters.dart';
 import 'package:tiktok_tutorial/utils/money.dart';
 import 'package:tiktok_tutorial/utils/share_utils.dart';
+import 'package:tiktok_tutorial/utils/feature_flags.dart';
+import 'package:tiktok_tutorial/views/widgets/product_reviews_sheet.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final Map<String, dynamic> product;
@@ -218,6 +220,54 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         color: Colors.grey[400],
                         fontSize: 14,
                         height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+
+                  // Reviews (feature-flagged, backend-dependent)
+                  if (kEnableProductReviews) ...[
+                    Text(
+                      'reviews'.tr,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[900],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.star, color: Colors.amber[400], size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'no_reviews_yet'.tr,
+                              style: TextStyle(color: Colors.grey[300]),
+                            ),
+                          ),
+                          OutlinedButton(
+                            onPressed: () {
+                              final productId = (product['id'] ?? '').toString();
+                              if (productId.trim().isEmpty) return;
+                              Get.bottomSheet(
+                                ProductReviewsSheet(
+                                  productId: productId,
+                                  productName: (product['name'] ?? 'product'.tr).toString(),
+                                ),
+                                isScrollControlled: true,
+                              );
+                            },
+                            style: OutlinedButton.styleFrom(foregroundColor: Colors.white),
+                            child: Text('reviews'.tr),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 24),

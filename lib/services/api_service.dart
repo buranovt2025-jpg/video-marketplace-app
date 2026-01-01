@@ -566,6 +566,40 @@ class ApiService {
       return await _throwApi(response, fallbackMessage: 'Failed to get sellers');
     }
   }
+
+  // Reviews (products)
+  static Future<Map<String, dynamic>> getProductReviews(String productId, {int limit = 50, String? cursor}) async {
+    final qp = <String, String>{'limit': '$limit'};
+    if (cursor != null && cursor.trim().isNotEmpty) qp['cursor'] = cursor.trim();
+    final uri = Uri.parse('$baseUrl/api/products/$productId/reviews').replace(queryParameters: qp);
+    final response = await http.get(uri, headers: _headers).timeout(_defaultTimeout);
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    }
+    return await _throwApi(response, fallbackMessage: 'Failed to get product reviews');
+  }
+
+  static Future<Map<String, dynamic>> createProductReview(
+    String productId, {
+    required int rating,
+    String? text,
+  }) async {
+    final response = await http
+        .post(
+          Uri.parse('$baseUrl/api/products/$productId/reviews'),
+          headers: _headers,
+          body: jsonEncode({
+            'rating': rating,
+            'text': (text != null && text.trim().isNotEmpty) ? text.trim() : null,
+          }),
+        )
+        .timeout(_defaultTimeout);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    }
+    return await _throwApi(response, fallbackMessage: 'Failed to create review');
+  }
   
   // Admin endpoints
   static Future<List<dynamic>> getUsers() async {

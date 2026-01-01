@@ -519,6 +519,9 @@ class AppTranslations extends Translations {
       'write_review': 'Написать отзыв',
       'your_rating': 'Ваша оценка',
       'reviews': 'Отзывы',
+      'no_reviews_yet': 'Пока нет отзывов',
+      'send_review': 'Отправить отзыв',
+      'reviews_not_supported': 'Отзывы пока недоступны',
       'no_reviews': 'Пока нет отзывов',
       'thank_you_review': 'Спасибо за отзыв!',
       
@@ -1226,6 +1229,9 @@ class AppTranslations extends Translations {
       'write_review': 'Sharh yozish',
       'your_rating': 'Sizning bahoyingiz',
       'reviews': 'Sharhlar',
+      'no_reviews_yet': 'Hozircha sharh yo‘q',
+      'send_review': 'Sharh yuborish',
+      'reviews_not_supported': 'Sharhlar hozircha mavjud emas',
       'no_reviews': 'Hali sharhlar yo\'q',
       'thank_you_review': 'Sharh uchun rahmat!',
       
@@ -1928,6 +1934,9 @@ class AppTranslations extends Translations {
       'write_review': 'Write review',
       'your_rating': 'Your rating',
       'reviews': 'Reviews',
+      'no_reviews_yet': 'No reviews yet',
+      'send_review': 'Submit review',
+      'reviews_not_supported': 'Reviews are not available yet',
       'no_reviews': 'No reviews yet',
       'thank_you_review': 'Thank you for your review!',
       
