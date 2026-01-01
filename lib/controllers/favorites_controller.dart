@@ -66,6 +66,7 @@ class FavoritesController extends GetxController {
         'image_url': product['image_url'],
         'seller_id': product['seller_id'],
         'seller_name': product['seller_name'],
+        'category': product['category'],
         'added_at': DateTime.now().toIso8601String(),
       });
       Get.snackbar(
