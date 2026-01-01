@@ -7,15 +7,19 @@ import 'package:http/http.dart' as http;
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/controllers/cart_controller.dart';
+import 'package:tiktok_tutorial/controllers/favorites_controller.dart';
 import 'package:tiktok_tutorial/utils/responsive_helper.dart';
 import 'package:tiktok_tutorial/views/screens/seller/create_product_screen.dart';
 import 'package:tiktok_tutorial/views/screens/seller/create_reel_screen.dart';
 import 'package:tiktok_tutorial/views/screens/seller/create_story_screen.dart';
 import 'package:tiktok_tutorial/views/screens/seller/my_products_screen.dart';
 import 'package:tiktok_tutorial/views/screens/auth/marketplace_login_screen.dart';
+import 'package:tiktok_tutorial/views/screens/auth/marketplace_register_screen.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/product_detail_screen.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/cart_screen.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/order_tracking_screen.dart';
+import 'package:tiktok_tutorial/views/screens/buyer/favorites_screen.dart';
+import 'package:tiktok_tutorial/views/screens/buyer/smart_search_screen.dart';
 import 'package:tiktok_tutorial/views/screens/chat/chat_screen.dart';
 import 'package:tiktok_tutorial/views/screens/profile/edit_profile_screen.dart';
 import 'package:tiktok_tutorial/views/screens/stories/story_viewer_screen.dart';
@@ -47,6 +51,7 @@ class MarketplaceHomeScreen extends StatefulWidget {
 class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   final MarketplaceController _controller = Get.find<MarketplaceController>();
   late final CartController _cartController;
+  late final FavoritesController _favoritesController;
   int _currentIndex = 0;
   final String _gitSha = const String.fromEnvironment('GIT_SHA', defaultValue: '');
   
@@ -55,7 +60,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   bool get _isBuyer => _isGuestMode || _controller.currentUser.value?['role'] == 'buyer';
   
   // Get max valid index based on role (Guest mode = 3 tabs like buyer)
-  int get _maxIndex => _isSeller ? 4 : 3; // Seller: 5 tabs (0-4), Buyer/Guest: 4 tabs (0-3)
+  int get _maxIndex => _isSeller ? 4 : 4; // Seller: 5 tabs (0-4), Buyer/Guest: 5 tabs (0-4)
   
   // Ensure currentIndex is within bounds
   int get _safeCurrentIndex => _currentIndex > _maxIndex ? _maxIndex : _currentIndex;
@@ -88,6 +93,14 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     );
   }
 
+  void _openCart() {
+    if (_isSeller) {
+      Get.to(() => const CartScreen());
+      return;
+    }
+    setState(() => _currentIndex = 2);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -95,6 +108,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
       Get.put(CartController());
     }
     _cartController = Get.find<CartController>();
+    _favoritesController = Get.find<FavoritesController>();
     _loadData();
   }
 
@@ -199,12 +213,13 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 ],
               );
             } else {
-              // Buyer: no Create tab
+              // Buyer: no Create tab, but has Cart tab
               return IndexedStack(
                 index: _safeCurrentIndex,
                 children: [
                   _buildFeedTab(),
                   _buildExploreTab(),
+                  const CartScreen(embedded: true),
                   _buildOrdersTab(),
                   _buildProfileTab(),
                 ],
@@ -223,7 +238,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               // Important: when user opens Orders tab for the first time,
               // the list may be empty if fetchOrders wasn't called yet.
               // Fetch orders when entering the tab.
-              final isOrdersTab = _isSeller ? index == 3 : index == 2;
+              final isOrdersTab = _isSeller ? index == 3 : index == 3;
               if (isOrdersTab && _controller.isLoggedIn) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   _controller.fetchOrders();
@@ -265,6 +280,34 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 label: 'search'.tr,
               ),
               BottomNavigationBarItem(
+                icon: Obx(() {
+                  final count = _cartController.itemCount;
+                  return Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      const Icon(Icons.shopping_cart_outlined),
+                      if (count > 0)
+                        Positioned(
+                          right: -6,
+                          top: -6,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: primaryColor,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              '$count',
+                              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                }),
+                label: 'cart'.tr,
+              ),
+              BottomNavigationBarItem(
                 icon: const Icon(Icons.shopping_bag),
                 label: 'orders'.tr,
               ),
@@ -284,6 +327,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
       children: [
         _buildFeedTab(),
         _buildExploreTab(),
+        const CartScreen(embedded: true),
         _buildGuestOrdersTab(),
         _buildGuestProfileTab(),
       ],
@@ -311,6 +355,34 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         BottomNavigationBarItem(
           icon: const Icon(Icons.search),
           label: 'search'.tr,
+        ),
+        BottomNavigationBarItem(
+          icon: Obx(() {
+            final count = _cartController.itemCount;
+            return Stack(
+              clipBehavior: Clip.none,
+              children: [
+                const Icon(Icons.shopping_cart_outlined),
+                if (count > 0)
+                  Positioned(
+                    right: -6,
+                    top: -6,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: primaryColor,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        '$count',
+                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          }),
+          label: 'cart'.tr,
         ),
         BottomNavigationBarItem(
           icon: const Icon(Icons.shopping_bag),
@@ -400,7 +472,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
-                onPressed: () => Get.to(() => const MarketplaceLoginScreen()),
+                onPressed: () => Get.to(() => const MarketplaceRegisterScreen()),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: primaryColor,
                   side: const BorderSide(color: primaryColor),
@@ -419,46 +491,80 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   }
 
   Widget _buildFeedTab() {
-    return CustomScrollView(
-      slivers: [
-        SliverAppBar(
-          floating: true,
-          backgroundColor: backgroundColor,
-          title: const Text(
-            'Video Marketplace',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
+    return RefreshIndicator(
+      onRefresh: _loadData,
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverAppBar(
+            floating: true,
+            backgroundColor: backgroundColor,
+            title: const Text(
+              'GoGoMarket',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
+            actions: [
+              if (!_isSeller)
+                IconButton(
+                  tooltip: 'cart'.tr,
+                  onPressed: _openCart,
+                  icon: Obx(() {
+                    final count = _cartController.itemCount;
+                    return Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        const Icon(Icons.shopping_cart_outlined, color: Colors.white),
+                        if (count > 0)
+                          Positioned(
+                            right: -6,
+                            top: -6,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: primaryColor,
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                '$count',
+                                style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  }),
+                ),
+              IconButton(
+                icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+                onPressed: () => Get.to(() => const NotificationsScreen()),
+              ),
+              IconButton(
+                icon: const Icon(Icons.message_outlined, color: Colors.white),
+                onPressed: () {
+                  if (_controller.isLoggedIn) {
+                    Get.to(() => const ConversationsScreen());
+                  } else {
+                    _promptLogin('chat'.tr);
+                  }
+                },
+              ),
+            ],
           ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-              onPressed: () => Get.to(() => const NotificationsScreen()),
-            ),
-            IconButton(
-              icon: const Icon(Icons.message_outlined, color: Colors.white),
-              onPressed: () {
-                if (_controller.isLoggedIn) {
-                  Get.to(() => const ConversationsScreen());
-                } else {
-                  _promptLogin('chat'.tr);
-                }
-              },
-            ),
-          ],
-        ),
-        
-        // Stories row
-        SliverToBoxAdapter(
-          child: _buildStoriesRow(),
-        ),
-        
-        // Reels feed
-        SliverToBoxAdapter(
-          child: _buildReelsFeed(),
-        ),
-      ],
+          
+          // Stories row
+          SliverToBoxAdapter(
+            child: _buildStoriesRow(),
+          ),
+          
+          // Reels feed
+          SliverToBoxAdapter(
+            child: _buildReelsFeed(),
+          ),
+        ],
+      ),
     );
   }
 
@@ -831,14 +937,31 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                   const SizedBox(width: 8),
                 ],
                 IconButton(
-                  icon: const Icon(Icons.bookmark_border, color: Colors.white),
                   onPressed: () {
-                    Get.snackbar(
-                      'coming_soon'.tr,
-                      'favorites_coming_soon'.tr,
-                      snackPosition: SnackPosition.BOTTOM,
-                    );
+                    final productId = reel['product_id']?.toString();
+                    if (productId == null || productId.trim().isEmpty) {
+                      Get.to(() => const FavoritesScreen());
+                      return;
+                    }
+                    final p = _findProductById(productId);
+                    if (p == null) {
+                      Get.to(() => const FavoritesScreen());
+                      return;
+                    }
+                    _favoritesController.toggleFavorite(p);
                   },
+                  icon: Obx(() {
+                    final productId = reel['product_id']?.toString();
+                    if (productId == null || productId.trim().isEmpty) {
+                      return const Icon(Icons.bookmark_border, color: Colors.white);
+                    }
+                    final p = _findProductById(productId);
+                    if (p == null) {
+                      return const Icon(Icons.bookmark_border, color: Colors.white);
+                    }
+                    final isFav = _favoritesController.isFavorite((p['id'] ?? '').toString());
+                    return Icon(isFav ? Icons.bookmark : Icons.bookmark_border, color: Colors.white);
+                  }),
                 ),
               ],
             ),
@@ -864,20 +987,57 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         SliverAppBar(
           floating: true,
           backgroundColor: backgroundColor,
+          actions: [
+            if (!_isSeller)
+              IconButton(
+                tooltip: 'cart'.tr,
+                onPressed: _openCart,
+                icon: Obx(() {
+                  final count = _cartController.itemCount;
+                  return Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      const Icon(Icons.shopping_cart_outlined, color: Colors.white),
+                      if (count > 0)
+                        Positioned(
+                          right: -6,
+                          top: -6,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: primaryColor,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              '$count',
+                              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                }),
+              ),
+          ],
           title: Container(
             height: 40,
             decoration: BoxDecoration(
               color: Colors.grey[900],
               borderRadius: BorderRadius.circular(10),
             ),
-            child: TextField(
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: 'search_products_and_sellers'.tr,
-                hintStyle: TextStyle(color: Colors.grey[500]),
-                prefixIcon: Icon(Icons.search, color: Colors.grey[500]),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+            child: InkWell(
+              onTap: () => Get.to(() => const SmartSearchScreen()),
+              child: IgnorePointer(
+                child: TextField(
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: 'search_products_and_sellers'.tr,
+                    hintStyle: TextStyle(color: Colors.grey[500]),
+                    prefixIcon: Icon(Icons.search, color: Colors.grey[500]),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                ),
               ),
             ),
           ),

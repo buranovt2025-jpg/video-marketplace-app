@@ -195,6 +195,7 @@ class AppTranslations extends Translations {
       'clear_cart_confirm': 'Все товары будут удалены из корзины',
       'delete_item_question': 'Удалить товар?',
       'delete_item_from_cart_confirm': 'Удалить "{name}" из корзины?',
+      'choose_seller_for_checkout': 'Выберите продавца для оформления заказа',
       
       'order_tracking': 'Отслеживание заказа',
       'order_created_step': 'Заказ создан',
@@ -905,6 +906,7 @@ class AppTranslations extends Translations {
       'clear_cart_confirm': 'Savatdagi barcha mahsulotlar o‘chiriladi',
       'delete_item_question': 'Mahsulot o‘chirilsinmi?',
       'delete_item_from_cart_confirm': '"{name}" savatdan o‘chirilsinmi?',
+      'choose_seller_for_checkout': 'Buyurtma berish uchun sotuvchini tanlang',
       
       'order_tracking': 'Buyurtmani kuzatish',
       'order_created_step': 'Buyurtma yaratildi',
@@ -1610,6 +1612,7 @@ class AppTranslations extends Translations {
       'clear_cart_confirm': 'All items will be removed from the cart',
       'delete_item_question': 'Delete item?',
       'delete_item_from_cart_confirm': 'Remove "{name}" from cart?',
+      'choose_seller_for_checkout': 'Choose a seller to checkout',
       
       'order_tracking': 'Order tracking',
       'order_created_step': 'Order created',

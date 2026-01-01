@@ -25,7 +25,7 @@ class FavoritesController extends GetxController {
         _favorites.value = decoded.map((e) => Map<String, dynamic>.from(e)).toList();
       }
     } catch (e) {
-      print('Error loading favorites: $e');
+      // ignore
     }
   }
   
@@ -34,20 +34,24 @@ class FavoritesController extends GetxController {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('favorites', json.encode(_favorites));
     } catch (e) {
-      print('Error saving favorites: $e');
+      // ignore
     }
   }
   
+  String _normalizeId(dynamic v) => (v ?? '').toString();
+
   bool isFavorite(String productId) {
-    return _favorites.any((item) => item['id'] == productId);
+    final id = _normalizeId(productId);
+    if (id.trim().isEmpty) return false;
+    return _favorites.any((item) => _normalizeId(item['id']) == id);
   }
   
   Future<void> toggleFavorite(Map<String, dynamic> product) async {
-    final productId = product['id'];
-    if (productId == null) return;
+    final productId = _normalizeId(product['id']);
+    if (productId.trim().isEmpty) return;
     
     if (isFavorite(productId)) {
-      _favorites.removeWhere((item) => item['id'] == productId);
+      _favorites.removeWhere((item) => _normalizeId(item['id']) == productId);
       Get.snackbar(
         'remove_from_favorites'.tr,
         product['name'] ?? 'Product',
@@ -76,13 +80,14 @@ class FavoritesController extends GetxController {
   }
   
   Future<void> addToFavorites(Map<String, dynamic> product) async {
-    if (!isFavorite(product['id'])) {
+    if (!isFavorite(_normalizeId(product['id']))) {
       await toggleFavorite(product);
     }
   }
   
   Future<void> removeFromFavorites(String productId) async {
-    _favorites.removeWhere((item) => item['id'] == productId);
+    final id = _normalizeId(productId);
+    _favorites.removeWhere((item) => _normalizeId(item['id']) == id);
     await _saveFavorites();
   }
   

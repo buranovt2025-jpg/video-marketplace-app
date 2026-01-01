@@ -5,10 +5,12 @@ import 'package:tiktok_tutorial/controllers/cart_controller.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/checkout_screen.dart';
+import 'package:tiktok_tutorial/views/screens/auth/marketplace_login_screen.dart';
 import 'package:tiktok_tutorial/utils/money.dart';
 
 class CartScreen extends StatefulWidget {
-  const CartScreen({Key? key}) : super(key: key);
+  final bool embedded;
+  const CartScreen({Key? key, this.embedded = false}) : super(key: key);
 
   @override
   State<CartScreen> createState() => _CartScreenState();
@@ -37,10 +39,12 @@ class _CartScreenState extends State<CartScreen> {
           'cart'.tr,
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Get.back(),
-        ),
+        leading: widget.embedded
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: () => Get.back(),
+              ),
         actions: [
           Obx(() => _cartController.items.isNotEmpty
               ? TextButton(
@@ -95,14 +99,15 @@ class _CartScreenState extends State<CartScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: () => Get.back(),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: buttonColor,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+          if (!widget.embedded)
+            ElevatedButton(
+              onPressed: () => Get.back(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: buttonColor,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+              ),
+              child: Text('to_shopping'.tr),
             ),
-            child: Text('to_shopping'.tr),
-          ),
         ],
       ),
     );
@@ -319,6 +324,7 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Widget _buildBottomBar() {
+    final canCheckout = _marketplaceController.isLoggedIn;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -358,16 +364,111 @@ class _CartScreenState extends State<CartScreen> {
                 ],
               ),
             ),
+            const SizedBox(width: 12),
             Obx(() => Text(
-              'items_count'.trParams({'count': _cartController.itemCount.toString()}),
-              style: TextStyle(
-                color: Colors.grey[400],
-                fontSize: 14,
+                  'items_count'.trParams({'count': _cartController.itemCount.toString()}),
+                  style: TextStyle(
+                    color: Colors.grey[400],
+                    fontSize: 14,
+                  ),
+                )),
+            const SizedBox(width: 12),
+            SizedBox(
+              height: 44,
+              child: ElevatedButton(
+                onPressed: () async {
+                  if (!canCheckout) {
+                    Get.snackbar(
+                      'login_required'.tr,
+                      'login_to_continue'.tr,
+                      snackPosition: SnackPosition.BOTTOM,
+                    );
+                    Get.to(() => const MarketplaceLoginScreen());
+                    return;
+                  }
+                  await _openCheckoutSelector();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: buttonColor,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: Text('checkout'.tr),
               ),
-            )),
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _openCheckoutSelector() async {
+    final sellerIds = _cartController.sellerIds;
+    if (sellerIds.isEmpty) return;
+
+    if (sellerIds.length == 1) {
+      Get.to(() => CheckoutScreen(sellerId: sellerIds.first));
+      return;
+    }
+
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.all(16),
+        decoration: const BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'choose_seller_for_checkout'.tr,
+                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              ...sellerIds.map((sellerId) {
+                final items = _cartController.getItemsBySeller(sellerId);
+                final total = _cartController.getTotalBySeller(sellerId);
+                final sellerName = items.isNotEmpty ? items.first.sellerName : 'seller_fallback'.tr;
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: CircleAvatar(
+                    radius: 18,
+                    backgroundColor: Colors.grey[800],
+                    child: const Icon(Icons.store, color: Colors.white, size: 18),
+                  ),
+                  title: Text(sellerName, style: const TextStyle(color: Colors.white)),
+                  subtitle: Text(
+                    'items_title'.trParams({'count': items.length.toString()}),
+                    style: TextStyle(color: Colors.grey[500]),
+                  ),
+                  trailing: Text(_formatPrice(total), style: TextStyle(color: buttonColor, fontWeight: FontWeight.bold)),
+                  onTap: () {
+                    Get.back();
+                    Get.to(() => CheckoutScreen(sellerId: sellerId));
+                  },
+                );
+              }),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () => Get.back(),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: BorderSide(color: Colors.grey[700]!),
+                  ),
+                  child: Text('cancel'.tr),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      isScrollControlled: true,
     );
   }
 
