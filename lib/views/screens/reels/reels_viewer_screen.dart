@@ -13,6 +13,7 @@ import 'package:tiktok_tutorial/utils/money.dart';
 import 'package:tiktok_tutorial/utils/share_utils.dart';
 import 'package:tiktok_tutorial/views/widgets/comments_coming_soon_sheet.dart';
 import 'package:tiktok_tutorial/views/widgets/product_quick_buy_sheet.dart';
+import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
 
 /// Full-screen vertical reel viewer (TikTok-like).
 ///
@@ -39,6 +40,8 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
   int _index = 0;
   late List<Map<String, dynamic>> _reels;
   final Set<String> _viewed = <String>{};
+  final Set<String> _followingAuthorIds = <String>{};
+  String? _likeBurstForReelId;
 
   @override
   void initState() {
@@ -88,6 +91,8 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
         itemBuilder: (context, i) {
           final reel = _reels[i];
           final videoUrl = reel['video_url']?.toString();
+          final reelId = reel['id']?.toString() ?? '';
+          final authorId = reel['author_id']?.toString() ?? '';
           return Stack(
             fit: StackFit.expand,
             children: [
@@ -122,6 +127,39 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                           ),
                         ],
                       ],
+                    ),
+                  ),
+                ),
+
+              // Bottom gradient for readability (behind UI)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: 280,
+                child: IgnorePointer(
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black45,
+                          Colors.black87,
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Like burst animation (on tap like)
+              if (_likeBurstForReelId != null && _likeBurstForReelId == reelId)
+                const Positioned.fill(
+                  child: IgnorePointer(
+                    child: Center(
+                      child: Icon(Icons.favorite, color: Colors.white70, size: 96),
                     ),
                   ),
                 ),
@@ -181,13 +219,20 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                 bottom: 110,
                 child: Column(
                   children: [
-                    _ActionButton(
+                    _CircleActionButton(
                       icon: Icons.favorite,
                       label: '${asInt(reel['likes_count'] ?? reel['likes'] ?? 0)}',
-                      color: Colors.white,
+                      iconColor: Colors.white,
                       onTap: () async {
                         final id = reel['id']?.toString() ?? '';
                         if (id.trim().isEmpty) return;
+                        if (mounted) {
+                          setState(() => _likeBurstForReelId = id);
+                          Future<void>.delayed(const Duration(milliseconds: 260)).then((_) {
+                            if (!mounted) return;
+                            if (_likeBurstForReelId == id) setState(() => _likeBurstForReelId = null);
+                          });
+                        }
                         await _controller.toggleLikeOnReel(id);
                         // Refresh local copy from controller if present.
                         final idx = _controller.reels.indexWhere((r) => r['id']?.toString() == id);
@@ -198,10 +243,10 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                       },
                     ),
                     const SizedBox(height: 18),
-                    _ActionButton(
+                    _CircleActionButton(
                       icon: Icons.comment,
                       label: '${asInt(reel['comments_count'] ?? 0)}',
-                      color: Colors.white,
+                      iconColor: Colors.white,
                       onTap: () {
                         Get.bottomSheet(
                           CommentsComingSoonSheet(reel: reel),
@@ -210,12 +255,22 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                       },
                     ),
                     const SizedBox(height: 18),
-                    _ActionButton(
+                    _CircleActionButton(
                       icon: Icons.share,
                       label: 'share'.tr,
-                      color: Colors.white,
+                      iconColor: Colors.white,
                       onTap: () async {
                         await copyToClipboardWithToast(buildReelShareText(reel));
+                      },
+                    ),
+                    const SizedBox(height: 18),
+                    _CircleActionButton(
+                      icon: Icons.volume_up,
+                      label: '',
+                      iconColor: Colors.white,
+                      onTap: () {
+                        // Mute/unmute button is already available inside VideoPlayerItem on bottom-right.
+                        // Here we keep a familiar affordance (no-op for now).
                       },
                     ),
                   ],
@@ -233,17 +288,33 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // readability gradient
-                      // (kept in front via padding below; video stays behind)
-                      Text(
-                        reel['author_name']?.toString() ?? 'User',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
+                      Row(
+                        children: [
+                          Text(
+                            '@${reel['author_name']?.toString() ?? 'User'}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          if (authorId.trim().isNotEmpty)
+                            _FollowButton(
+                              isFollowing: _followingAuthorIds.contains(authorId),
+                              onTap: () {
+                                setState(() {
+                                  if (_followingAuthorIds.contains(authorId)) {
+                                    _followingAuthorIds.remove(authorId);
+                                  } else {
+                                    _followingAuthorIds.add(authorId);
+                                  }
+                                });
+                              },
+                            ),
+                        ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 10),
                       if ((reel['caption']?.toString() ?? '').trim().isNotEmpty)
                         Text(
                           reel['caption'].toString(),
@@ -253,53 +324,24 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                         ),
                       const SizedBox(height: 10),
                       if (reel['product_id'] != null)
-                        _ProductPill(
-                          title: _productTitleFor(reel),
-                          subtitle: _productSubtitleFor(reel),
-                          onTap: () {
+                        _ReelProductCard(
+                          badgeText: 'best_product'.tr,
+                          product: _findProduct((reel['product_id'] ?? '').toString()),
+                          onOpen: () {
                             final productId = reel['product_id']?.toString();
-                            if (productId == null || productId.isEmpty) return;
+                            if (productId == null || productId.trim().isEmpty) return;
                             final p = _findProduct(productId);
-                            if (p != null) {
-                              Get.bottomSheet(
-                                ProductQuickBuySheet(product: Map<String, dynamic>.from(p)),
-                                isScrollControlled: true,
-                              );
+                            if (p == null) {
+                              Get.snackbar('product'.tr, 'product_not_found'.tr, snackPosition: SnackPosition.BOTTOM);
                               return;
                             }
-                            // Fallback: open a lightweight "product not found" toast.
-                            Get.snackbar(
-                              'product'.tr,
-                              'product_not_found'.tr,
-                              snackPosition: SnackPosition.BOTTOM,
+                            Get.bottomSheet(
+                              ProductQuickBuySheet(product: Map<String, dynamic>.from(p)),
+                              isScrollControlled: true,
                             );
                           },
-                          trailing: _buildAddToCartTrailing(reel),
                         ),
                     ],
-                  ),
-                ),
-              ),
-
-              // Bottom gradient for readability
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                height: 240,
-                child: IgnorePointer(
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black54,
-                          Colors.black87,
-                        ],
-                      ),
-                    ),
                   ),
                 ),
               ),
@@ -375,16 +417,16 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
   }
 }
 
-class _ActionButton extends StatelessWidget {
+class _CircleActionButton extends StatelessWidget {
   final IconData icon;
   final String label;
-  final Color color;
+  final Color iconColor;
   final VoidCallback onTap;
 
-  const _ActionButton({
+  const _CircleActionButton({
     required this.icon,
     required this.label,
-    required this.color,
+    required this.iconColor,
     required this.onTap,
   });
 
@@ -394,61 +436,148 @@ class _ActionButton extends StatelessWidget {
       onTap: onTap,
       child: Column(
         children: [
-          Icon(icon, color: color, size: 36),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            style: const TextStyle(color: Colors.white, fontSize: 12),
-            textAlign: TextAlign.center,
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: Colors.black45,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: Colors.white10),
+            ),
+            child: Icon(icon, color: iconColor, size: 26),
           ),
+          const SizedBox(height: 6),
+          if (label.trim().isNotEmpty)
+            Text(
+              label,
+              style: const TextStyle(color: Colors.white, fontSize: 12),
+              textAlign: TextAlign.center,
+            ),
         ],
       ),
     );
   }
 }
 
-class _ProductPill extends StatelessWidget {
-  final String title;
-  final String subtitle;
+class _FollowButton extends StatelessWidget {
+  final bool isFollowing;
   final VoidCallback onTap;
-  final Widget? trailing;
 
-  const _ProductPill({
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-    this.trailing,
+  const _FollowButton({required this.isFollowing, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = isFollowing ? Colors.white12 : primaryColor;
+    final fg = isFollowing ? Colors.white : Colors.black;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: isFollowing ? Colors.white24 : Colors.transparent),
+        ),
+        child: Text(
+          (isFollowing ? 'following' : 'follow').tr,
+          style: TextStyle(color: fg, fontSize: 12, fontWeight: FontWeight.w700),
+        ),
+      ),
+    );
+  }
+}
+
+class _ReelProductCard extends StatelessWidget {
+  final String badgeText;
+  final Map<String, dynamic>? product;
+  final VoidCallback onOpen;
+
+  const _ReelProductCard({
+    required this.badgeText,
+    required this.product,
+    required this.onOpen,
   });
 
   @override
   Widget build(BuildContext context) {
+    final p = product;
+    final name = (p?['name'] ?? 'product'.tr).toString();
+    final subtitle = p == null ? 'open_product_card'.tr : formatMoneyWithCurrency(p['price']);
+
     return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.92),
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.shopping_bag, color: Colors.black, size: 18),
-            const SizedBox(width: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
+      onTap: onOpen,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.black54,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: Colors.white12),
+            ),
+            child: Text(
+              badgeText,
+              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.4),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.black54,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white12),
+            ),
+            child: Row(
               children: [
-                Text(title, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 12)),
-                Text(subtitle, style: TextStyle(color: Colors.grey[700], fontSize: 11)),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: SizedBox(
+                    width: 54,
+                    height: 54,
+                    child: AppNetworkImage(
+                      url: p?['image_url']?.toString(),
+                      fit: BoxFit.cover,
+                      errorWidget: Container(
+                        color: Colors.grey[850],
+                        child: Icon(Icons.inventory_2, color: Colors.grey[600]),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        subtitle,
+                        style: TextStyle(color: Colors.grey[200], fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: primaryColor,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(Icons.shopping_cart, color: Colors.black, size: 18),
+                ),
               ],
             ),
-            if (trailing != null) ...[
-              const SizedBox(width: 6),
-              trailing!,
-            ],
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

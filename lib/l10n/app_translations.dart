@@ -77,6 +77,9 @@ class AppTranslations extends Translations {
       'new_categories': 'Новые категории',
       'hi_user': 'Привет, {name}',
       'how_feeling_today': 'Как настроение сегодня?',
+      'follow': 'Подписаться',
+      'following': 'Вы подписаны',
+      'best_product': 'ЛУЧШИЙ ТОВАР',
       
       // Admin
       'dashboard': 'Дашборд',
@@ -795,6 +798,9 @@ class AppTranslations extends Translations {
       'new_categories': 'Yangi kategoriyalar',
       'hi_user': 'Salom, {name}',
       'how_feeling_today': 'Bugun kayfiyatingiz qanday?',
+      'follow': 'Kuzatish',
+      'following': 'Kuzatyapsiz',
+      'best_product': 'ENG YAXSHI MAHSULOT',
       
       // Admin
       'dashboard': 'Dashboard',
@@ -1508,6 +1514,9 @@ class AppTranslations extends Translations {
       'new_categories': 'New categories',
       'hi_user': 'Hi, {name}',
       'how_feeling_today': 'How are you feeling today?',
+      'follow': 'Follow',
+      'following': 'Following',
+      'best_product': 'OUR BEST PRODUCT',
       
       // Admin
       'dashboard': 'Dashboard',
