@@ -115,3 +115,9 @@ bash scripts/smoke_test_prod.sh
 RUN_BACKEND_CHECKS=1 bash scripts/smoke_test_prod.sh
 ```
 
+## 5) Если backend будет на том же сервере (165.232.81.31)
+
+Готовые файлы для systemd + инструкции:
+- `backend/deploy/README_SERVER.md`
+- `backend/deploy/gogomarket-backend.service`
+
