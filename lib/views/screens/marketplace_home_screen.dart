@@ -61,8 +61,10 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   bool get _isSeller => !_isGuestMode && _controller.currentUser.value?['role'] == 'seller';
   bool get _isBuyer => _isGuestMode || _controller.currentUser.value?['role'] == 'buyer';
   
-  // Get max valid index based on role (Guest mode = 3 tabs like buyer)
-  int get _maxIndex => _isSeller ? 4 : 5; // Seller: 5 tabs (0-4), Buyer/Guest: 6 tabs (0-5)
+  // Get max valid index based on role
+  // Seller: 5 tabs (0-4)
+  // Buyer/Guest: 5 tabs (0-4) — reels replaces search, orders moved into profile
+  int get _maxIndex => 4;
   
   // Ensure currentIndex is within bounds
   int get _safeCurrentIndex => _currentIndex > _maxIndex ? _maxIndex : _currentIndex;
@@ -121,6 +123,15 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     if (_controller.isLoggedIn) {
       await _controller.fetchOrders();
     }
+  }
+
+  Widget _buildReelsTab() {
+    return Obx(() {
+      final reels = _controller.reels
+          .map<Map<String, dynamic>>((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+      return ReelsViewerScreen(reels: reels);
+    });
   }
 
   void _openProductFromReel(Map<String, dynamic> reel) {
@@ -215,15 +226,14 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 ],
               );
             } else {
-              // Buyer: no Create tab, but has Cart + Favorites tabs
+              // Buyer: no Create tab, has Reels + Cart + Favorites tabs (orders live inside profile)
               return IndexedStack(
                 index: _safeCurrentIndex,
                 children: [
                   _buildFeedTab(),
-                  _buildExploreTab(),
+                  _buildReelsTab(),
                   const CartScreen(embedded: true),
                   const FavoritesScreen(embedded: true),
-                  _buildOrdersTab(),
                   _buildProfileTab(),
                 ],
               );
@@ -238,11 +248,8 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 _currentIndex = index;
               });
 
-              // Important: when user opens Orders tab for the first time,
-              // the list may be empty if fetchOrders wasn't called yet.
-              // Fetch orders when entering the tab.
-              final isOrdersTab = _isSeller ? index == 3 : index == 4;
-              if (isOrdersTab && _controller.isLoggedIn) {
+              // Fetch orders when entering the seller Orders tab.
+              if (_isSeller && index == 3 && _controller.isLoggedIn) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   _controller.fetchOrders();
                 });
@@ -279,8 +286,8 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 label: 'feed'.tr,
               ),
               BottomNavigationBarItem(
-                icon: const Icon(Icons.search),
-                label: 'search'.tr,
+                icon: const Icon(Icons.play_circle_outline),
+                label: 'shorts'.tr,
               ),
               BottomNavigationBarItem(
                 icon: Obx(() {
@@ -315,10 +322,6 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 label: 'favorites'.tr,
               ),
               BottomNavigationBarItem(
-                icon: const Icon(Icons.shopping_bag),
-                label: 'orders'.tr,
-              ),
-              BottomNavigationBarItem(
                 icon: const Icon(Icons.person),
                 label: 'profile'.tr,
               ),
@@ -327,16 +330,15 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     );
   }
   
-  // Guest mode body - shows feed and explore without login
+  // Guest mode body - shows buyer tabs without login
   Widget _buildGuestModeBody() {
     return IndexedStack(
       index: _safeCurrentIndex,
       children: [
         _buildFeedTab(),
-        _buildExploreTab(),
+        _buildReelsTab(),
         const CartScreen(embedded: true),
         const FavoritesScreen(embedded: true),
-        _buildGuestOrdersTab(),
         _buildGuestProfileTab(),
       ],
     );
@@ -361,8 +363,8 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
           label: 'feed'.tr,
         ),
         BottomNavigationBarItem(
-          icon: const Icon(Icons.search),
-          label: 'search'.tr,
+          icon: const Icon(Icons.play_circle_outline),
+          label: 'shorts'.tr,
         ),
         BottomNavigationBarItem(
           icon: Obx(() {
@@ -397,43 +399,10 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
           label: 'favorites'.tr,
         ),
         BottomNavigationBarItem(
-          icon: const Icon(Icons.shopping_bag),
-          label: 'orders'.tr,
-        ),
-        BottomNavigationBarItem(
           icon: const Icon(Icons.login),
           label: 'login'.tr,
         ),
       ],
-    );
-  }
-  
-  // Guest orders tab - prompts login
-  Widget _buildGuestOrdersTab() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.shopping_bag_outlined, size: 80, color: Colors.grey[600]),
-          const SizedBox(height: 24),
-          Text(
-            'login_to_view_orders'.tr,
-            style: TextStyle(color: Colors.grey[400], fontSize: 18),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: () => Get.to(() => const MarketplaceLoginScreen()),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primaryColor,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: Text('login'.tr, style: const TextStyle(fontSize: 16)),
-          ),
-        ],
-      ),
     );
   }
   
@@ -2067,6 +2036,27 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                       ),
                     ),
                   ),
+
+                  // Orders lives inside Profile for buyers (no bottom tab)
+                  if (_isBuyer) ...[
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () => Get.to(() => const BuyerCabinetScreen()),
+                        icon: const Icon(Icons.shopping_bag_outlined),
+                        label: Text('orders'.tr),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: BorderSide(color: Colors.grey[700]!),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                   
                   const SizedBox(height: 16),
                   
