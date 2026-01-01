@@ -140,7 +140,7 @@ class _BootErrorScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, color: Colors.red, size: 72),
+              const Icon(Icons.error_outline, color: primaryColor, size: 72),
               const SizedBox(height: 16),
               Text(
                 title,

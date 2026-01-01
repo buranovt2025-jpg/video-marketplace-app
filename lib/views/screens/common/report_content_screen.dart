@@ -40,7 +40,7 @@ class _ReportContentScreenState extends State<ReportContentScreen> {
         'error'.tr,
         'select_report_reason'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
       return;
@@ -129,8 +129,8 @@ class _ReportContentScreenState extends State<ReportContentScreen> {
               child: ElevatedButton(
                 onPressed: _isSubmitting ? null : _submitReport,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
+                  backgroundColor: primaryColor,
+                  foregroundColor: Colors.black,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -176,7 +176,7 @@ class _ReportContentScreenState extends State<ReportContentScreen> {
           color: Colors.grey[900],
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? Colors.red : Colors.transparent,
+            color: isSelected ? primaryColor : Colors.transparent,
             width: 2,
           ),
         ),
@@ -188,10 +188,10 @@ class _ReportContentScreenState extends State<ReportContentScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected ? Colors.red : Colors.grey[600]!,
+                  color: isSelected ? primaryColor : Colors.grey[600]!,
                   width: 2,
                 ),
-                color: isSelected ? Colors.red : Colors.transparent,
+                color: isSelected ? primaryColor : Colors.transparent,
               ),
               child: isSelected
                   ? const Icon(Icons.check, size: 16, color: Colors.white)

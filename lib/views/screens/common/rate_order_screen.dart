@@ -33,7 +33,7 @@ class _RateOrderScreenState extends State<RateOrderScreen> {
         'error'.tr,
         'select_rating'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+      backgroundColor: primaryColor,
         colorText: Colors.white,
       );
       return;

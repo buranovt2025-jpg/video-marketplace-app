@@ -68,7 +68,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Color _getNotificationColor(String type) {
     switch (type) {
       case 'order':
-        return Colors.blue;
+        return accentColor;
       case 'delivery':
         return Colors.green;
       case 'review':

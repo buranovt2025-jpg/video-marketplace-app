@@ -139,7 +139,7 @@ class _SellerVerificationScreenState extends State<SellerVerificationScreen> {
           ),
           ElevatedButton(
             onPressed: () => Get.back(result: reasonController.text),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: primaryColor, foregroundColor: Colors.black),
             child: Text('reject_action'.tr),
           ),
         ],
@@ -168,7 +168,7 @@ class _SellerVerificationScreenState extends State<SellerVerificationScreen> {
       'info'.tr,
       'verification_request_rejected'.tr,
       snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.orange,
+      backgroundColor: Colors.black87,
       colorText: Colors.white,
     );
   }
@@ -219,7 +219,7 @@ class _SellerVerificationScreenState extends State<SellerVerificationScreen> {
                 _buildStat(
                   _verificationRequests.where((r) => r['status'] == 'pending').length.toString(),
                   'awaiting'.tr,
-                  Colors.orange,
+                  primaryColor,
                 ),
                 _buildStat(
                   _verificationRequests.where((r) => r['status'] == 'verified').length.toString(),
@@ -229,7 +229,7 @@ class _SellerVerificationScreenState extends State<SellerVerificationScreen> {
                 _buildStat(
                   _verificationRequests.where((r) => r['status'] == 'rejected').length.toString(),
                   'rejected_plural'.tr,
-                  Colors.red,
+                  primaryColor,
                 ),
               ],
             ),
@@ -325,8 +325,11 @@ class _SellerVerificationScreenState extends State<SellerVerificationScreen> {
 
   Widget _buildRequestCard(Map<String, dynamic> request) {
     final status = request['status'];
-    final statusColor = status == 'pending' ? Colors.orange :
-                        status == 'verified' ? Colors.green : Colors.red;
+    final statusColor = status == 'pending'
+        ? primaryColor
+        : status == 'verified'
+            ? Colors.green
+            : primaryColor;
     
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -421,8 +424,8 @@ class _SellerVerificationScreenState extends State<SellerVerificationScreen> {
                       icon: const Icon(Icons.close, size: 18),
                       label: Text('reject_action'.tr),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
-                        side: const BorderSide(color: Colors.red),
+                        foregroundColor: primaryColor,
+                        side: const BorderSide(color: primaryColor),
                       ),
                     ),
                   ),
@@ -462,7 +465,7 @@ class _SellerVerificationScreenState extends State<SellerVerificationScreen> {
             child: Text(
               value,
               style: TextStyle(
-                color: isError ? Colors.red : Colors.white,
+                color: isError ? primaryColor : Colors.white,
                 fontSize: 14,
               ),
             ),

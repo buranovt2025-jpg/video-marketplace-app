@@ -164,13 +164,13 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                       decoration: BoxDecoration(
                         color: inStock
                             ? Colors.green.withOpacity(0.2)
-                            : Colors.red.withOpacity(0.2),
+                            : primaryColor.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         (inStock ? 'in_stock' : 'out_of_stock').tr,
                         style: TextStyle(
-                          color: inStock ? Colors.green : Colors.red,
+                          color: inStock ? Colors.green : primaryColor,
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
@@ -246,7 +246,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                     IconButton(
                       onPressed: () => _showDeleteDialog(product),
                       icon: const Icon(Icons.delete_outline),
-                      color: Colors.red[400],
+                      color: primaryColor,
                     ),
                   ],
                 ),
@@ -310,7 +310,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                 colorText: Colors.white,
               );
             },
-            child: Text('delete'.tr, style: const TextStyle(color: Colors.red)),
+            child: Text('delete'.tr, style: const TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
           ),
         ],
       ),

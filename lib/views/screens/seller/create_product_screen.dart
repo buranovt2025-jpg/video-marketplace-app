@@ -75,7 +75,7 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
         'error'.tr,
         'image_pick_failed'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
     } finally {
@@ -133,10 +133,10 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
               leading: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.2),
+                  color: accentColor.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.camera_alt, color: Colors.blue),
+                child: const Icon(Icons.camera_alt, color: accentColor),
               ),
               title: Text('camera'.tr, style: const TextStyle(color: Colors.white)),
               subtitle: Text('take_photo'.tr, style: TextStyle(color: Colors.grey[500])),
@@ -158,7 +158,7 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
         'error'.tr,
         'fill_name_and_price'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
       return;
@@ -170,7 +170,7 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
         'error'.tr,
         'enter_valid_price'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
       return;

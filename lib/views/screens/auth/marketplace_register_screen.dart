@@ -61,7 +61,7 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
         'error'.tr,
         'fill_required_fields'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
       return;
@@ -72,7 +72,7 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
         'error'.tr,
         'password_min_6'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
       return;
@@ -96,7 +96,7 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
             ? _controller.error.value 
             : 'registration_failed'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
     }

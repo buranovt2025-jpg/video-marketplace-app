@@ -42,7 +42,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
         'error'.tr,
         'confirm_account_deletion'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
       return;
@@ -53,7 +53,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
         'error'.tr,
         'enter_password_to_confirm'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
       return;
@@ -72,7 +72,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
           ),
           ElevatedButton(
             onPressed: () => Get.back(result: true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: primaryColor, foregroundColor: Colors.black),
             child: Text('delete'.tr),
           ),
         ],
@@ -106,7 +106,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
         'error'.tr,
         'account_delete_failed'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
     } finally {
@@ -140,13 +140,13 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
               child: Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
+                  color: primaryColor.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.warning_amber_rounded,
                   size: 60,
-                  color: Colors.red,
+                  color: primaryColor,
                 ),
               ),
             ),
@@ -268,7 +268,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                   onChanged: (value) {
                     setState(() => _confirmChecked = value ?? false);
                   },
-                  activeColor: Colors.red,
+                  activeColor: primaryColor,
                 ),
                 Expanded(
                   child: Text(
@@ -288,7 +288,8 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _deleteAccount,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
+                  backgroundColor: primaryColor,
+                  foregroundColor: Colors.black,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -336,7 +337,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          const Icon(Icons.remove_circle, color: Colors.red, size: 20),
+          const Icon(Icons.remove_circle, color: primaryColor, size: 20),
           const SizedBox(width: 12),
           Text(text, style: const TextStyle(color: Colors.white70)),
         ],

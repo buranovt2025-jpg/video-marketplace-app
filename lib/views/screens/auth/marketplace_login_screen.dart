@@ -40,7 +40,7 @@ class _MarketplaceLoginScreenState extends State<MarketplaceLoginScreen> {
         'error'.tr,
         'fill_required_fields'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
       return;
@@ -67,7 +67,7 @@ class _MarketplaceLoginScreenState extends State<MarketplaceLoginScreen> {
             ? _controller.error.value 
             : 'invalid_email_or_password'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
     }
