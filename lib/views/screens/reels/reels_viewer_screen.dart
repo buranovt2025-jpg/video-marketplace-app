@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
@@ -33,7 +35,7 @@ class ReelsViewerScreen extends StatefulWidget {
   State<ReelsViewerScreen> createState() => _ReelsViewerScreenState();
 }
 
-class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
+class _ReelsViewerScreenState extends State<ReelsViewerScreen> with TickerProviderStateMixin {
   final MarketplaceController _controller = Get.find<MarketplaceController>();
   late final CartController _cartController;
   late final PageController _pageController;
@@ -42,6 +44,7 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
   final Set<String> _viewed = <String>{};
   final Set<String> _followingAuthorIds = <String>{};
   String? _likeBurstForReelId;
+  final _heartsKey = GlobalKey<_HeartsOverlayState>();
 
   @override
   void initState() {
@@ -93,6 +96,7 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
           final videoUrl = reel['video_url']?.toString();
           final reelId = reel['id']?.toString() ?? '';
           final authorId = reel['author_id']?.toString() ?? '';
+          final liked = (reel['liked_by_me'] == true) || (reel['liked'] == true);
           return Stack(
             fit: StackFit.expand,
             children: [
@@ -164,6 +168,13 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                   ),
                 ),
 
+              // Floating hearts overlay (TikTok-like)
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: HeartsOverlay(key: _heartsKey),
+                ),
+              ),
+
               // Top bar
               SafeArea(
                 child: Padding(
@@ -220,14 +231,15 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                 child: Column(
                   children: [
                     _CircleActionButton(
-                      icon: Icons.favorite,
+                      icon: liked ? Icons.favorite : Icons.favorite_border,
                       label: '${asInt(reel['likes_count'] ?? reel['likes'] ?? 0)}',
-                      iconColor: Colors.white,
+                      iconColor: liked ? Colors.redAccent : Colors.white,
                       onTap: () async {
                         final id = reel['id']?.toString() ?? '';
                         if (id.trim().isEmpty) return;
                         if (mounted) {
                           setState(() => _likeBurstForReelId = id);
+                          _heartsKey.currentState?.burst();
                           Future<void>.delayed(const Duration(milliseconds: 260)).then((_) {
                             if (!mounted) return;
                             if (_likeBurstForReelId == id) setState(() => _likeBurstForReelId = null);
@@ -338,6 +350,21 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                             Get.bottomSheet(
                               ProductQuickBuySheet(product: Map<String, dynamic>.from(p)),
                               isScrollControlled: true,
+                            );
+                          },
+                          onAddToCart: () {
+                            final productId = reel['product_id']?.toString();
+                            if (productId == null || productId.trim().isEmpty) return;
+                            final p = _findProduct(productId);
+                            if (p == null) return;
+                            _cartController.addToCart(p, quantity: 1);
+                            Get.snackbar(
+                              'added'.tr,
+                              'added_to_cart_named'.trParams({'name': (p['name'] ?? '').toString()}),
+                              snackPosition: SnackPosition.BOTTOM,
+                              backgroundColor: Colors.green,
+                              colorText: Colors.white,
+                              duration: const Duration(seconds: 2),
                             );
                           },
                         ),
@@ -491,18 +518,22 @@ class _ReelProductCard extends StatelessWidget {
   final String badgeText;
   final Map<String, dynamic>? product;
   final VoidCallback onOpen;
+  final VoidCallback onAddToCart;
 
   const _ReelProductCard({
     required this.badgeText,
     required this.product,
     required this.onOpen,
+    required this.onAddToCart,
   });
 
   @override
   Widget build(BuildContext context) {
     final p = product;
     final name = (p?['name'] ?? 'product'.tr).toString();
-    final subtitle = p == null ? 'open_product_card'.tr : formatMoneyWithCurrency(p['price']);
+    final currentPrice = p == null ? null : formatMoneyWithCurrency(p['price']);
+    final oldPriceRaw = p == null ? null : (p['old_price'] ?? p['price_old'] ?? p['previous_price']);
+    final oldPrice = oldPriceRaw == null ? null : formatMoneyWithCurrency(oldPriceRaw);
 
     return GestureDetector(
       onTap: onOpen,
@@ -558,21 +589,45 @@ class _ReelProductCard extends StatelessWidget {
                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 3),
-                      Text(
-                        subtitle,
-                        style: TextStyle(color: Colors.grey[200], fontSize: 12),
-                      ),
+                      if (p == null)
+                        Text(
+                          'open_product_card'.tr,
+                          style: TextStyle(color: Colors.grey[200], fontSize: 12),
+                        )
+                      else
+                        Row(
+                          children: [
+                            Text(
+                              currentPrice ?? '',
+                              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+                            ),
+                            if (oldPrice != null && oldPrice.trim().isNotEmpty) ...[
+                              const SizedBox(width: 8),
+                              Text(
+                                oldPrice,
+                                style: TextStyle(
+                                  color: Colors.grey[300],
+                                  fontSize: 12,
+                                  decoration: TextDecoration.lineThrough,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
                     ],
                   ),
                 ),
                 const SizedBox(width: 10),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: primaryColor,
-                    borderRadius: BorderRadius.circular(14),
+                GestureDetector(
+                  onTap: onAddToCart,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: primaryColor,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(Icons.shopping_cart, color: Colors.black, size: 18),
                   ),
-                  child: const Icon(Icons.shopping_cart, color: Colors.black, size: 18),
                 ),
               ],
             ),
@@ -581,5 +636,114 @@ class _ReelProductCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class HeartsOverlay extends StatefulWidget {
+  const HeartsOverlay({super.key});
+
+  @override
+  State<HeartsOverlay> createState() => _HeartsOverlayState();
+}
+
+class _HeartsOverlayState extends State<HeartsOverlay> with TickerProviderStateMixin {
+  final List<_FloatingHeart> _hearts = <_FloatingHeart>[];
+  final Random _rng = Random();
+
+  @override
+  void dispose() {
+    for (final h in _hearts) {
+      h.controller.dispose();
+    }
+    _hearts.clear();
+    super.dispose();
+  }
+
+  void burst({int count = 6}) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    for (int i = 0; i < count; i++) {
+      final c = AnimationController(vsync: this, duration: Duration(milliseconds: 900 + _rng.nextInt(400)));
+      final t = CurvedAnimation(parent: c, curve: Curves.easeOutCubic);
+      final size = 18.0 + _rng.nextDouble() * 18.0;
+      final dx = 0.78 + _rng.nextDouble() * 0.18; // right side
+      final drift = (_rng.nextDouble() - 0.5) * 0.12; // sideways drift
+      final rotation = (_rng.nextDouble() - 0.5) * 0.7;
+
+      final heart = _FloatingHeart(
+        key: '$now-$i',
+        controller: c,
+        t: t,
+        size: size,
+        startDx: dx,
+        drift: drift,
+        rotation: rotation,
+        color: _rng.nextBool() ? Colors.redAccent : Colors.pinkAccent,
+      );
+      _hearts.add(heart);
+      c.addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          c.dispose();
+          if (!mounted) return;
+          setState(() {
+            _hearts.removeWhere((e) => e.key == heart.key);
+          });
+        }
+      });
+      c.forward();
+    }
+    if (mounted) setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: Listenable.merge(_hearts.map((e) => e.controller)),
+      builder: (context, _) {
+        return Stack(
+          children: [
+            for (final h in _hearts)
+              Positioned.fill(
+                child: Align(
+                  alignment: Alignment(
+                    // Drift over time.
+                    (h.startDx + h.drift * h.t.value).clamp(-1.0, 1.0),
+                    // Start near bottom and float up.
+                    (0.45 - 1.35 * h.t.value).clamp(-1.0, 1.0),
+                  ),
+                  child: Opacity(
+                    opacity: (1.0 - h.t.value).clamp(0.0, 1.0),
+                    child: Transform.rotate(
+                      angle: h.rotation * h.t.value,
+                      child: Icon(Icons.favorite, color: h.color, size: h.size),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _FloatingHeart {
+  final String key;
+  final AnimationController controller;
+  final Animation<double> t;
+  final double size;
+  final double startDx;
+  final double drift;
+  final double rotation;
+  final Color color;
+
+  _FloatingHeart({
+    required this.key,
+    required this.controller,
+    required this.t,
+    required this.size,
+    required this.startDx,
+    required this.drift,
+    required this.rotation,
+    required this.color,
+  });
 }
 
