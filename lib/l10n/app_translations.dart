@@ -80,6 +80,8 @@ class AppTranslations extends Translations {
       'follow': 'Подписаться',
       'following': 'Вы подписаны',
       'best_product': 'ЛУЧШИЙ ТОВАР',
+      'new_collection': 'Новая коллекция',
+      'just_for_you': 'Для вас',
       
       // Admin
       'dashboard': 'Дашборд',
@@ -801,6 +803,8 @@ class AppTranslations extends Translations {
       'follow': 'Kuzatish',
       'following': 'Kuzatyapsiz',
       'best_product': 'ENG YAXSHI MAHSULOT',
+      'new_collection': 'Yangi kolleksiya',
+      'just_for_you': 'Siz uchun',
       
       // Admin
       'dashboard': 'Dashboard',
@@ -1517,6 +1521,8 @@ class AppTranslations extends Translations {
       'follow': 'Follow',
       'following': 'Following',
       'best_product': 'OUR BEST PRODUCT',
+      'new_collection': 'New collection',
+      'just_for_you': 'Just for you',
       
       // Admin
       'dashboard': 'Dashboard',

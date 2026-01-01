@@ -500,6 +500,56 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         slivers: [
           _buildHomeHeader(),
 
+          // Search bar (like the Figma home)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+              child: GestureDetector(
+                onTap: () => Get.to(() => const SmartSearchScreen()),
+                child: Container(
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[900],
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.white10),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Row(
+                    children: [
+                      Icon(Icons.search, color: Colors.grey[500]),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          '${'search'.tr}...',
+                          style: TextStyle(color: Colors.grey[500], fontSize: 14),
+                        ),
+                      ),
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.35),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white10),
+                        ),
+                        child: const Icon(Icons.tune, color: Colors.white70, size: 18),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // New collection (2 large cards)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
+              child: Text('new_collection'.tr, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            ),
+          ),
+          SliverToBoxAdapter(child: _buildNewCollectionRow()),
+
           // Live selling (stories)
           SliverToBoxAdapter(
             child: Padding(
@@ -515,10 +565,10 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
           ),
           SliverToBoxAdapter(child: _buildStoriesRow()),
 
-          // Shorts (reels preview row)
+          // Shorts (reels preview row) — keep as a lightweight section
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
               child: Row(
                 children: [
                   const Icon(Icons.flash_on, color: Colors.white, size: 18),
@@ -539,21 +589,165 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
           ),
           SliverToBoxAdapter(child: _buildShortsRow()),
 
-          // Categories chips
+          // Just for you (list)
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-              child: Text('new_categories'.tr, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              child: Text('just_for_you'.tr, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
             ),
           ),
-          SliverToBoxAdapter(child: _buildCategoryChips()),
-
-          // Products grid
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-            sliver: _buildHomeProductsGrid(),
-          ),
+          _buildJustForYouList(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildNewCollectionRow() {
+    return Obx(() {
+      final products = _controller.products;
+      if (products.isEmpty) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text('no_products'.tr, style: TextStyle(color: Colors.grey[500])),
+        );
+      }
+
+      final picks = products.take(6).toList();
+      final left = picks[0];
+      final right = picks.length > 1 ? picks[1] : picks[0];
+      final cards = <Map<String, dynamic>>[left, right];
+
+      return SizedBox(
+        height: 210,
+        child: ListView.separated(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          scrollDirection: Axis.horizontal,
+          itemCount: cards.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 12),
+          itemBuilder: (context, idx) {
+            final p = cards[idx];
+            final id = (p['id'] ?? '').toString();
+            final isFav = _favoritesController.isFavorite(id);
+            return GestureDetector(
+              onTap: () => Get.to(() => ProductDetailScreen(product: p)),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(18),
+                child: Container(
+                  width: 160,
+                  color: Colors.grey[900],
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      AppNetworkImage(
+                        url: p['image_url']?.toString(),
+                        fit: BoxFit.cover,
+                        errorWidget: Container(
+                          color: Colors.grey[850],
+                          child: Center(child: Icon(Icons.inventory_2, color: Colors.grey[600])),
+                        ),
+                      ),
+                      Positioned(
+                        top: 10,
+                        right: 10,
+                        child: GestureDetector(
+                          onTap: () => _favoritesController.toggleFavorite(p),
+                          child: Container(
+                            width: 34,
+                            height: 34,
+                            decoration: const BoxDecoration(color: Colors.black45, shape: BoxShape.circle),
+                            child: Icon(isFav ? Icons.favorite : Icons.favorite_border, color: isFav ? Colors.redAccent : Colors.white, size: 18),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        left: 10,
+                        right: 10,
+                        bottom: 10,
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.55),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                (p['name'] ?? 'product'.tr).toString(),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                formatMoneyWithCurrency(p['price']),
+                                style: TextStyle(color: Colors.grey[200], fontSize: 12, fontWeight: FontWeight.w600),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      );
+    });
+  }
+
+  SliverList _buildJustForYouList() {
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, idx) {
+          final products = _controller.products;
+          if (products.isEmpty) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text('no_products'.tr, style: TextStyle(color: Colors.grey[500])),
+            );
+          }
+          final p = products[idx % products.length];
+          final id = (p['id'] ?? '').toString();
+          final isFav = _favoritesController.isFavorite(id);
+          return ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            leading: ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: SizedBox(
+                width: 54,
+                height: 54,
+                child: AppNetworkImage(
+                  url: p['image_url']?.toString(),
+                  fit: BoxFit.cover,
+                  errorWidget: Container(
+                    color: Colors.grey[850],
+                    child: Center(child: Icon(Icons.inventory_2, color: Colors.grey[600])),
+                  ),
+                ),
+              ),
+            ),
+            title: Text(
+              (p['name'] ?? 'product'.tr).toString(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+            ),
+            subtitle: Text(
+              formatMoneyWithCurrency(p['price']),
+              style: TextStyle(color: Colors.grey[400]),
+            ),
+            trailing: IconButton(
+              onPressed: () => _favoritesController.toggleFavorite(p),
+              icon: Icon(isFav ? Icons.favorite : Icons.favorite_border, color: isFav ? Colors.redAccent : Colors.white),
+            ),
+            onTap: () => Get.to(() => ProductDetailScreen(product: p)),
+          );
+        },
+        childCount: 8,
       ),
     );
   }
