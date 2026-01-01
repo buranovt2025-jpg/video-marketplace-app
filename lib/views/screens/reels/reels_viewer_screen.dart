@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/services/api_service.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/product_detail_screen.dart';
 import 'package:tiktok_tutorial/views/widgets/video_player_iten.dart';
 import 'package:tiktok_tutorial/utils/formatters.dart';
 import 'package:tiktok_tutorial/utils/media_url.dart';
+import 'package:tiktok_tutorial/utils/share_utils.dart';
 
 /// Full-screen vertical reel viewer (TikTok-like).
 ///
@@ -29,12 +31,16 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
   final MarketplaceController _controller = Get.find<MarketplaceController>();
   late final PageController _pageController;
   int _index = 0;
+  late List<Map<String, dynamic>> _reels;
+  final Set<String> _viewed = <String>{};
 
   @override
   void initState() {
     super.initState();
-    _index = widget.initialIndex.clamp(0, widget.reels.isEmpty ? 0 : widget.reels.length - 1);
+    _reels = widget.reels.map((e) => Map<String, dynamic>.from(e)).toList();
+    _index = widget.initialIndex.clamp(0, _reels.isEmpty ? 0 : _reels.length - 1);
     _pageController = PageController(initialPage: _index);
+    _markViewed(_index);
   }
 
   @override
@@ -45,7 +51,7 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.reels.isEmpty) {
+    if (_reels.isEmpty) {
       return Scaffold(
         backgroundColor: Colors.black,
         body: SafeArea(
@@ -64,10 +70,13 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
       body: PageView.builder(
         controller: _pageController,
         scrollDirection: Axis.vertical,
-        onPageChanged: (i) => setState(() => _index = i),
-        itemCount: widget.reels.length,
+        onPageChanged: (i) {
+          setState(() => _index = i);
+          _markViewed(i);
+        },
+        itemCount: _reels.length,
         itemBuilder: (context, i) {
-          final reel = widget.reels[i];
+          final reel = _reels[i];
           final videoUrl = reel['video_url']?.toString();
           return Stack(
             fit: StackFit.expand,
@@ -119,7 +128,9 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                       ),
                       const Spacer(),
                       IconButton(
-                        onPressed: () {},
+                        onPressed: () async {
+                          await copyToClipboardWithToast(buildReelShareText(reel));
+                        },
                         icon: const Icon(Icons.more_vert, color: Colors.white),
                       ),
                     ],
@@ -137,21 +148,39 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                       icon: Icons.favorite,
                       label: '${asInt(reel['likes_count'] ?? reel['likes'] ?? 0)}',
                       color: Colors.white,
-                      onTap: () => _controller.likeContent(reel['id']?.toString() ?? ''),
+                      onTap: () async {
+                        final id = reel['id']?.toString() ?? '';
+                        if (id.trim().isEmpty) return;
+                        await _controller.toggleLikeOnReel(id);
+                        // Refresh local copy from controller if present.
+                        final idx = _controller.reels.indexWhere((r) => r['id']?.toString() == id);
+                        if (!mounted) return;
+                        setState(() {
+                          if (idx != -1) _reels[i] = Map<String, dynamic>.from(_controller.reels[idx]);
+                        });
+                      },
                     ),
                     const SizedBox(height: 18),
                     _ActionButton(
                       icon: Icons.comment,
                       label: '${asInt(reel['comments_count'] ?? 0)}',
                       color: Colors.white,
-                      onTap: () {},
+                      onTap: () {
+                        Get.snackbar(
+                          'coming_soon'.tr,
+                          'comments_coming_soon'.tr,
+                          snackPosition: SnackPosition.BOTTOM,
+                        );
+                      },
                     ),
                     const SizedBox(height: 18),
                     _ActionButton(
                       icon: Icons.share,
                       label: 'share'.tr,
                       color: Colors.white,
-                      onTap: () {},
+                      onTap: () async {
+                        await copyToClipboardWithToast(buildReelShareText(reel));
+                      },
                     ),
                   ],
                 ),
@@ -247,6 +276,17 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
         },
       ),
     );
+  }
+
+  void _markViewed(int index) {
+    if (index < 0 || index >= _reels.length) return;
+    final id = _reels[index]['id']?.toString().trim();
+    if (id == null || id.isEmpty) return;
+    if (_viewed.contains(id)) return;
+    _viewed.add(id);
+    // Fire-and-forget.
+    // ignore: discarded_futures
+    ApiService.viewContent(id);
   }
 }
 

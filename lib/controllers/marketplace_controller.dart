@@ -344,9 +344,46 @@ class MarketplaceController extends GetxController {
   }
   
   Future<void> likeContent(String contentId) async {
+    // Keep backward compatibility for existing call sites.
+    await toggleLikeOnReel(contentId);
+  }
+
+  Future<void> toggleLikeOnReel(String contentId) async {
+    final id = contentId.trim();
+    if (id.isEmpty) return;
+
+    final idx = reels.indexWhere((r) => (r['id']?.toString() ?? '') == id);
+    Map<String, dynamic>? before;
+    if (idx != -1) {
+      before = Map<String, dynamic>.from(reels[idx]);
+      final liked = (before['liked_by_me'] == true) || (before['liked'] == true);
+      final likes0 = (before['likes_count'] ?? before['likes'] ?? 0);
+      final likes = likes0 is num ? likes0.toInt() : int.tryParse(likes0.toString()) ?? 0;
+      final nextLikes = (liked ? (likes - 1) : (likes + 1)).clamp(0, 1 << 30);
+
+      final updated = Map<String, dynamic>.from(before);
+      updated['liked_by_me'] = !liked;
+      updated['liked'] = !liked;
+      updated['likes_count'] = nextLikes;
+      updated['likes'] = nextLikes;
+      reels[idx] = updated;
+    }
+
     try {
-      await ApiService.likeContent(contentId);
+      final updated = await ApiService.likeContent(id);
+      if (idx != -1) {
+        // Merge server response over local optimistic state.
+        final merged = <String, dynamic>{
+          ...reels[idx],
+          ...updated,
+        };
+        reels[idx] = merged;
+      }
     } catch (e) {
+      // Revert optimistic update.
+      if (idx != -1 && before != null) {
+        reels[idx] = before;
+      }
       await _handleApiError(e, fallbackMessage: 'Не удалось поставить лайк', ignore: true);
     }
   }

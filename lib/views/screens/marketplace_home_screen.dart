@@ -29,6 +29,9 @@ import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
 import 'package:tiktok_tutorial/utils/web_image_policy.dart';
 import 'package:tiktok_tutorial/utils/formatters.dart';
 import 'package:tiktok_tutorial/utils/money.dart';
+import 'package:tiktok_tutorial/utils/share_utils.dart';
+import 'package:tiktok_tutorial/views/screens/chat/conversations_screen.dart';
+import 'package:tiktok_tutorial/views/screens/common/notifications_screen.dart';
 
 class MarketplaceHomeScreen extends StatefulWidget {
   final bool isGuestMode;
@@ -417,11 +420,17 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
           actions: [
             IconButton(
               icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-              onPressed: () {},
+              onPressed: () => Get.to(() => const NotificationsScreen()),
             ),
             IconButton(
               icon: const Icon(Icons.message_outlined, color: Colors.white),
-              onPressed: () {},
+              onPressed: () {
+                if (_controller.isLoggedIn) {
+                  Get.to(() => const ConversationsScreen());
+                } else {
+                  _promptLogin('chat'.tr);
+                }
+              },
             ),
           ],
         ),
@@ -728,7 +737,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               children: [
                 IconButton(
                   icon: const Icon(Icons.favorite_border, color: Colors.white),
-                  onPressed: () => _controller.likeContent(reel['id']),
+                  onPressed: () => _controller.toggleLikeOnReel(reel['id']?.toString() ?? ''),
                 ),
                 Text(
                   '${reel['likes'] ?? 0}',
@@ -737,11 +746,19 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 const SizedBox(width: 16),
                 IconButton(
                   icon: const Icon(Icons.comment_outlined, color: Colors.white),
-                  onPressed: () {},
+                  onPressed: () {
+                    Get.snackbar(
+                      'coming_soon'.tr,
+                      'comments_coming_soon'.tr,
+                      snackPosition: SnackPosition.BOTTOM,
+                    );
+                  },
                 ),
                 IconButton(
                   icon: const Icon(Icons.share_outlined, color: Colors.white),
-                  onPressed: () {},
+                  onPressed: () async {
+                    await copyToClipboardWithToast(buildReelShareText(reel));
+                  },
                 ),
                 const Spacer(),
                 TextButton(
@@ -770,7 +787,13 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 ],
                 IconButton(
                   icon: const Icon(Icons.bookmark_border, color: Colors.white),
-                  onPressed: () {},
+                  onPressed: () {
+                    Get.snackbar(
+                      'coming_soon'.tr,
+                      'favorites_coming_soon'.tr,
+                      snackPosition: SnackPosition.BOTTOM,
+                    );
+                  },
                 ),
               ],
             ),

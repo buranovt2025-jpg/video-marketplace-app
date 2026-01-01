@@ -9,6 +9,7 @@ import 'package:tiktok_tutorial/views/screens/chat/chat_screen.dart';
 import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
 import 'package:tiktok_tutorial/utils/formatters.dart';
 import 'package:tiktok_tutorial/utils/money.dart';
+import 'package:tiktok_tutorial/utils/share_utils.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final Map<String, dynamic> product;
@@ -76,7 +77,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   ),
                   child: const Icon(Icons.share, color: Colors.white),
                 ),
-                onPressed: () {},
+                onPressed: () async {
+                  await copyToClipboardWithToast(buildProductShareText(product));
+                },
               ),
               Obx(() => Stack(
                 children: [
