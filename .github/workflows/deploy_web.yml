@@ -31,7 +31,7 @@ jobs:
       - name: Flutter version
         run: flutter --version
 
-      - name: Guard: no const + .tr
+      - name: "Guard - no const + .tr"
         run: python3 scripts/check_no_const_tr.py
 
       - name: Build web (release)
