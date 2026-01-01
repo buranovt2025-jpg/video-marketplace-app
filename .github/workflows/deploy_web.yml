@@ -31,11 +31,21 @@ jobs:
       - name: Flutter version
         run: flutter --version
 
+      - name: Guard: no const + .tr
+        run: python3 scripts/check_no_const_tr.py
+
       - name: Build web (release)
         env:
           # Self-signed HTTPS in prod breaks SW registration; keep it off.
           PWA_STRATEGY: none
         run: bash scripts/build_web.sh
+
+      - name: Upload pubspec.lock (from CI)
+        uses: actions/upload-artifact@v4
+        with:
+          name: pubspec-lock
+          path: pubspec.lock
+          if-no-files-found: error
 
   deploy:
     runs-on: ubuntu-latest
