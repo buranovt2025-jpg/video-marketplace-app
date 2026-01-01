@@ -38,6 +38,10 @@ jobs:
         env:
           # Self-signed HTTPS in prod breaks SW registration; keep it off.
           PWA_STRATEGY: none
+          # Optional feature flags, space-separated KEY=VALUE pairs.
+          # Configure in GitHub repo variables: Settings → Secrets and variables → Actions → Variables
+          # Example: ENABLE_MEDIA_UPLOAD=true ENABLE_PRODUCT_REVIEWS=true
+          DART_DEFINES: ${{ vars.DART_DEFINES }}
         run: bash scripts/build_web.sh
 
       - name: Upload pubspec.lock (from CI)
@@ -88,6 +92,7 @@ jobs:
           DEPLOY_WEB_ROOT: ${{ secrets.DEPLOY_WEB_ROOT }}
           DEPLOY_FLUTTER_BIN: ${{ secrets.DEPLOY_FLUTTER_BIN }}
           DEPLOY_BRANCH: ${{ github.ref_name }}
+          DEPLOY_DART_DEFINES: ${{ vars.DART_DEFINES }}
         run: |
           set -euo pipefail
           echo "Deploying branch: ${DEPLOY_BRANCH}"
@@ -97,6 +102,7 @@ jobs:
             PROJECT_DIR=\"${DEPLOY_PROJECT_DIR:-/root/projects/video-marketplace-app}\"
             WEB_ROOT=\"${DEPLOY_WEB_ROOT:-/var/www/gogomarket}\"
             FLUTTER_BIN=\"${DEPLOY_FLUTTER_BIN:-/opt/flutter/bin/flutter}\"
+            DART_DEFINES=\"${DEPLOY_DART_DEFINES:-}\"
             cd \"\${PROJECT_DIR}\"
             git fetch origin
             # Ensure a clean working tree on the server (CI-managed deploy checkout).
@@ -106,6 +112,6 @@ jobs:
             git checkout -B \"${DEPLOY_BRANCH}\" \"origin/${DEPLOY_BRANCH}\"
             git reset --hard \"origin/${DEPLOY_BRANCH}\"
             git clean -fd
-            PROJECT_DIR=\"\${PROJECT_DIR}\" WEB_ROOT=\"\${WEB_ROOT}\" FLUTTER_BIN=\"\${FLUTTER_BIN}\" bash scripts/deploy_web.sh
+            PROJECT_DIR=\"\${PROJECT_DIR}\" WEB_ROOT=\"\${WEB_ROOT}\" FLUTTER_BIN=\"\${FLUTTER_BIN}\" DART_DEFINES=\"\${DART_DEFINES}\" bash scripts/deploy_web.sh
           '"
 

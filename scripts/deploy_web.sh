@@ -11,16 +11,19 @@ set -euo pipefail
 #   WEB_ROOT=/var/www/gogomarket
 #   FLUTTER_BIN=/root/flutter/bin/flutter
 #   BRANCH=feature/initial-upload
+#   DART_DEFINES="KEY=VALUE KEY2=VALUE2" (optional)
 
 PROJECT_DIR="${PROJECT_DIR:-/root/projects/video-marketplace-app}"
 WEB_ROOT="${WEB_ROOT:-/var/www/gogomarket}"
 FLUTTER_BIN="${FLUTTER_BIN:-/root/flutter/bin/flutter}"
 BRANCH="${BRANCH:-}"
+DART_DEFINES="${DART_DEFINES:-}"
 
 echo "== Deploy Flutter Web =="
 echo "PROJECT_DIR=$PROJECT_DIR"
 echo "WEB_ROOT=$WEB_ROOT"
 echo "FLUTTER_BIN=$FLUTTER_BIN"
+echo "DART_DEFINES=$DART_DEFINES"
 
 cd "$PROJECT_DIR"
 
@@ -51,7 +54,7 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 echo "== Build web =="
-PROJECT_DIR="$PROJECT_DIR" FLUTTER_BIN="$FLUTTER_BIN" bash scripts/build_web.sh
+PROJECT_DIR="$PROJECT_DIR" FLUTTER_BIN="$FLUTTER_BIN" DART_DEFINES="$DART_DEFINES" bash scripts/build_web.sh
 
 echo "== Deploy web build to nginx root =="
 $SUDO mkdir -p "$WEB_ROOT"
