@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'dart:async';
 
 class ChatScreen extends StatefulWidget {
   final String userId;
@@ -26,18 +27,98 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _isLoading = true;
   bool _isSending = false;
   bool _loadFailed = false;
+  bool _pollInFlight = false;
+  bool _isAtBottom = true;
+  Timer? _pollTimer;
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_handleScroll);
     _loadMessages();
+    _startPolling();
   }
 
   @override
   void dispose() {
+    _pollTimer?.cancel();
+    _scrollController.removeListener(_handleScroll);
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _startPolling() {
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(const Duration(seconds: 12), (_) => _pollMessages());
+  }
+
+  void _handleScroll() {
+    if (!_scrollController.hasClients) return;
+    final atBottom = (_scrollController.position.maxScrollExtent - _scrollController.offset) < 80;
+    if (atBottom != _isAtBottom) {
+      setState(() => _isAtBottom = atBottom);
+    }
+  }
+
+  Future<void> _pollMessages() async {
+    if (!mounted) return;
+    if (_isLoading || _isSending || _pollInFlight) return;
+    if (widget.userId.trim().isEmpty) return;
+
+    _pollInFlight = true;
+    try {
+      final messages = await _controller
+          .getChatMessages(widget.userId, throwOnError: true)
+          .timeout(const Duration(seconds: 12));
+      if (!mounted) return;
+
+      final merged = _mergeMessages(_messages, messages);
+      final changed = merged.length != _messages.length;
+      if (changed) {
+        setState(() {
+          _messages = merged;
+          _loadFailed = false;
+        });
+        if (_isAtBottom) _scrollToBottom();
+      }
+    } catch (_) {
+      // Silent: polling failures should not spam the user.
+    } finally {
+      _pollInFlight = false;
+    }
+  }
+
+  String _messageKey(Map<String, dynamic> m) {
+    final id = m['id'];
+    if (id != null) return 'id:$id';
+    final sender = m['sender_id']?.toString() ?? '';
+    final created = m['created_at']?.toString() ?? '';
+    final content = m['content']?.toString() ?? '';
+    return 'fallback:$sender|$created|$content';
+  }
+
+  List<Map<String, dynamic>> _mergeMessages(
+    List<Map<String, dynamic>> oldList,
+    List<Map<String, dynamic>> newList,
+  ) {
+    final seen = <String, Map<String, dynamic>>{};
+    for (final m in oldList) {
+      seen[_messageKey(m)] = m;
+    }
+    for (final m in newList) {
+      seen[_messageKey(m)] = m;
+    }
+    final merged = seen.values.toList();
+    merged.sort((a, b) {
+      final da = DateTime.tryParse(a['created_at']?.toString() ?? '');
+      final db = DateTime.tryParse(b['created_at']?.toString() ?? '');
+      if (da == null && db == null) return 0;
+      if (da == null) return -1;
+      if (db == null) return 1;
+      return da.compareTo(db);
+    });
+    return merged;
   }
 
   Future<void> _loadMessages() async {
@@ -55,7 +136,7 @@ class _ChatScreenState extends State<ChatScreen> {
         _messages = messages;
         _isLoading = false;
       });
-      _scrollToBottom();
+      if (_isAtBottom) _scrollToBottom();
     } catch (e) {
       if (!mounted) return;
       setState(() {
