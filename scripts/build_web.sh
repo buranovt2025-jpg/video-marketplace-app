@@ -78,22 +78,19 @@ PY
     return 0
   fi
 
-  local ms_pub="$mobile_scanner_dir/pubspec.yaml"
-  local ms_bak="/tmp/mobile_scanner_pubspec.yaml.bak.$$"
-  cp "$ms_pub" "$ms_bak"
+  # NOTE:
+  # We must not use `local` vars referenced by an EXIT trap with `set -u`,
+  # because the trap runs at script exit when locals may be out of scope.
+  local ms_pub_path="$mobile_scanner_dir/pubspec.yaml"
+  local ms_bak_path="/tmp/mobile_scanner_pubspec.yaml.bak.$$"
+  cp "$ms_pub_path" "$ms_bak_path"
 
-  restore_mobile_scanner_pubspec() {
-    if [ -f "$ms_bak" ]; then
-      cp "$ms_bak" "$ms_pub" || true
-      rm -f "$ms_bak" || true
-    fi
-  }
-  trap restore_mobile_scanner_pubspec EXIT
+  trap "if [ -f \"$ms_bak_path\" ]; then cp \"$ms_bak_path\" \"$ms_pub_path\" || true; rm -f \"$ms_bak_path\" || true; fi" EXIT
 
   python3 - <<PY
 from pathlib import Path
 
-p = Path("$ms_pub")
+p = Path("$ms_pub_path")
 lines = p.read_text().splitlines(True)
 out = []
 i = 0
@@ -110,7 +107,7 @@ while i < len(lines):
 p.write_text("".join(out))
 PY
 
-  echo "Patched: $ms_pub"
+  echo "Patched: $ms_pub_path"
 }
 
 echo "== Build Flutter Web =="
