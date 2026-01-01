@@ -294,7 +294,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             child: const Icon(Icons.cancel, color: Colors.red, size: 30),
           ),
           const SizedBox(width: 16),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

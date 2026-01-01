@@ -347,9 +347,9 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
           ),
           if (isUrgent) ...[
             const SizedBox(width: 8),
-            const Text(
+            Text(
               'urgent'.tr,
-              style: TextStyle(
+              style: const TextStyle(
                 color: Colors.red,
                 fontWeight: FontWeight.bold,
                 fontSize: 12,
@@ -500,9 +500,9 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
               ),
             
               const SizedBox(height: 32),
-              const Text(
+              Text(
                 'top_products'.tr,
-                style: TextStyle(
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
