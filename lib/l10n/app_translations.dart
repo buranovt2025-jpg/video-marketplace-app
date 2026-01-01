@@ -70,6 +70,13 @@ class AppTranslations extends Translations {
       'product_number': 'Товар #{id}',
       'details': 'Подробнее',
       'cancel_reason_hint': 'Укажите причину отмены...',
+
+      // Home (buyer)
+      'live_selling': 'Прямые эфиры',
+      'shorts': 'Short',
+      'new_categories': 'Новые категории',
+      'hi_user': 'Привет, {name}',
+      'how_feeling_today': 'Как настроение сегодня?',
       
       // Admin
       'dashboard': 'Дашборд',
@@ -781,6 +788,13 @@ class AppTranslations extends Translations {
       'product_number': 'Mahsulot #{id}',
       'details': 'Batafsil',
       'cancel_reason_hint': 'Bekor qilish sababini yozing...',
+
+      // Home (buyer)
+      'live_selling': 'Jonli efirlar',
+      'shorts': 'Short',
+      'new_categories': 'Yangi kategoriyalar',
+      'hi_user': 'Salom, {name}',
+      'how_feeling_today': 'Bugun kayfiyatingiz qanday?',
       
       // Admin
       'dashboard': 'Dashboard',
@@ -1487,6 +1501,13 @@ class AppTranslations extends Translations {
       'product_number': 'Product #{id}',
       'details': 'Details',
       'cancel_reason_hint': 'Enter cancellation reason...',
+
+      // Home (buyer)
+      'live_selling': 'Live selling',
+      'shorts': 'Short',
+      'new_categories': 'New categories',
+      'hi_user': 'Hi, {name}',
+      'how_feeling_today': 'How are you feeling today?',
       
       // Admin
       'dashboard': 'Dashboard',

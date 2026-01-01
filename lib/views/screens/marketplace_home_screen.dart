@@ -55,6 +55,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   late final FavoritesController _favoritesController;
   int _currentIndex = 0;
   final String _gitSha = const String.fromEnvironment('GIT_SHA', defaultValue: '');
+  String _selectedCategory = 'all';
   
   bool get _isGuestMode => widget.isGuestMode;
   bool get _isSeller => !_isGuestMode && _controller.currentUser.value?['role'] == 'seller';
@@ -497,68 +498,347 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
-          SliverAppBar(
-            floating: true,
-            backgroundColor: backgroundColor,
-            title: const AppBrandTitle(),
-            actions: [
-              if (!_isSeller)
-                IconButton(
-                  tooltip: 'cart'.tr,
-                  onPressed: _openCart,
-                  icon: Obx(() {
-                    final count = _cartController.itemCount;
-                    return Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        const Icon(Icons.shopping_cart_outlined, color: Colors.white),
-                        if (count > 0)
-                          Positioned(
-                            right: -6,
-                            top: -6,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: primaryColor,
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                              child: Text(
-                                '$count',
-                                style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ),
-                      ],
-                    );
-                  }),
-                ),
-              IconButton(
-                icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-                onPressed: () => Get.to(() => const NotificationsScreen()),
-              ),
-              IconButton(
-                icon: const Icon(Icons.message_outlined, color: Colors.white),
-                onPressed: () {
-                  if (_controller.isLoggedIn) {
-                    Get.to(() => const ConversationsScreen());
-                  } else {
-                    _promptLogin('chat'.tr);
-                  }
-                },
-              ),
-            ],
-          ),
-          
-          // Stories row
+          _buildHomeHeader(),
+
+          // Live selling (stories)
           SliverToBoxAdapter(
-            child: _buildStoriesRow(),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+              child: Row(
+                children: [
+                  const Icon(Icons.auto_awesome, color: Colors.white, size: 18),
+                  const SizedBox(width: 8),
+                  Text('live_selling'.tr, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ),
           ),
-          
-          // Reels feed
+          SliverToBoxAdapter(child: _buildStoriesRow()),
+
+          // Shorts (reels preview row)
           SliverToBoxAdapter(
-            child: _buildReelsFeed(),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+              child: Row(
+                children: [
+                  const Icon(Icons.flash_on, color: Colors.white, size: 18),
+                  const SizedBox(width: 8),
+                  Text('shorts'.tr, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: () {
+                      final reels = List<Map<String, dynamic>>.from(_controller.reels);
+                      if (reels.isEmpty) return;
+                      Get.to(() => ReelsViewerScreen(reels: reels, initialIndex: 0));
+                    },
+                    child: Text('all'.tr, style: const TextStyle(color: primaryColor)),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(child: _buildShortsRow()),
+
+          // Categories chips
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+              child: Text('new_categories'.tr, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+            ),
+          ),
+          SliverToBoxAdapter(child: _buildCategoryChips()),
+
+          // Products grid
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            sliver: _buildHomeProductsGrid(),
           ),
         ],
+      ),
+    );
+  }
+
+  SliverAppBar _buildHomeHeader() {
+    return SliverAppBar(
+      pinned: true,
+      backgroundColor: backgroundColor,
+      titleSpacing: 16,
+      title: Row(
+        children: [
+          CircleAvatar(
+            radius: 18,
+            backgroundColor: Colors.grey[800],
+            backgroundImage: (_controller.userAvatar.isNotEmpty) ? networkImageProviderOrNull(_controller.userAvatar) : null,
+            child: _controller.userAvatar.isEmpty ? const Icon(Icons.person, color: Colors.white, size: 18) : null,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _controller.isLoggedIn ? 'hi_user'.trParams({'name': _controller.userName}) : 'welcome'.tr,
+                  style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  'how_feeling_today'.tr,
+                  style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        IconButton(
+          tooltip: 'search'.tr,
+          onPressed: () => Get.to(() => const SmartSearchScreen()),
+          icon: const Icon(Icons.search, color: Colors.white),
+        ),
+        if (!_isSeller)
+          IconButton(
+            tooltip: 'cart'.tr,
+            onPressed: _openCart,
+            icon: Obx(() {
+              final count = _cartController.itemCount;
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  const Icon(Icons.shopping_cart_outlined, color: Colors.white),
+                  if (count > 0)
+                    Positioned(
+                      right: -6,
+                      top: -6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: primaryColor,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          '$count',
+                          style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            }),
+          ),
+        IconButton(
+          icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+          onPressed: () => Get.to(() => const NotificationsScreen()),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildShortsRow() {
+    return Obx(() {
+      final reels = _controller.reels;
+      if (reels.isEmpty) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: Text('reels_empty'.tr, style: TextStyle(color: Colors.grey[500])),
+        );
+      }
+
+      final list = reels.take(12).toList();
+      return SizedBox(
+        height: 180,
+        child: ListView.separated(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          scrollDirection: Axis.horizontal,
+          itemCount: list.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 12),
+          itemBuilder: (context, idx) {
+            final reel = list[idx];
+            final thumb = reel['thumbnail_url']?.toString();
+            return GestureDetector(
+              onTap: () {
+                final full = List<Map<String, dynamic>>.from(_controller.reels);
+                final initialIndex = full.indexWhere((r) => (r['id']?.toString() ?? '') == (reel['id']?.toString() ?? ''));
+                Get.to(() => ReelsViewerScreen(reels: full, initialIndex: initialIndex >= 0 ? initialIndex : 0));
+              },
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  width: 120,
+                  color: Colors.grey[900],
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      if (thumb != null && thumb.trim().isNotEmpty)
+                        AppNetworkImage(
+                          url: thumb,
+                          fit: BoxFit.cover,
+                          errorWidget: Center(child: Icon(Icons.video_library, color: Colors.grey[600])),
+                        )
+                      else
+                        Center(child: Icon(Icons.video_library, color: Colors.grey[600])),
+                      const Align(
+                        alignment: Alignment.center,
+                        child: Icon(Icons.play_arrow, color: Colors.white70, size: 34),
+                      ),
+                      Positioned(
+                        left: 8,
+                        right: 8,
+                        bottom: 8,
+                        child: Text(
+                          (reel['caption'] ?? '').toString(),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600, shadows: [
+                            Shadow(color: Colors.black87, blurRadius: 12),
+                          ]),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      );
+    });
+  }
+
+  Widget _buildCategoryChips() {
+    return Obx(() {
+      final products = _controller.products;
+      final categories = <String>{};
+      for (final p in products) {
+        final c = (p['category'] ?? '').toString().trim();
+        if (c.isNotEmpty) categories.add(c);
+      }
+      final list = <String>['all', ...categories.toList()..sort()];
+
+      return SizedBox(
+        height: 44,
+        child: ListView.separated(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          scrollDirection: Axis.horizontal,
+          itemCount: list.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 10),
+          itemBuilder: (context, idx) {
+            final c = list[idx];
+            final selected = _selectedCategory == c;
+            final label = (c == 'all') ? 'all'.tr : c.tr;
+            return ChoiceChip(
+              label: Text(label),
+              selected: selected,
+              onSelected: (_) => setState(() => _selectedCategory = c),
+              selectedColor: primaryColor,
+              backgroundColor: Colors.grey[850],
+              labelStyle: TextStyle(
+                color: selected ? Colors.black : Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            );
+          },
+        ),
+      );
+    });
+  }
+
+  SliverGrid _buildHomeProductsGrid() {
+    final cols = ResponsiveHelper.responsiveValue(context, mobile: 2, tablet: 3, desktop: 4);
+    return SliverGrid(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: cols,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 0.78,
+      ),
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          final products = _controller.products.where((p) {
+            if (_selectedCategory == 'all') return true;
+            return (p['category'] ?? '').toString() == _selectedCategory;
+          }).toList();
+
+          if (products.isEmpty) {
+            return Container(
+              decoration: BoxDecoration(color: Colors.grey[900], borderRadius: BorderRadius.circular(16)),
+              child: Center(child: Text('no_products'.tr, style: TextStyle(color: Colors.grey[500]))),
+            );
+          }
+          final product = products[index % products.length];
+          final id = (product['id'] ?? '').toString();
+          final isFav = _favoritesController.isFavorite(id);
+
+          return GestureDetector(
+            onTap: () => Get.to(() => ProductDetailScreen(product: product)),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                color: Colors.grey[900],
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    AppNetworkImage(
+                      url: product['image_url']?.toString(),
+                      fit: BoxFit.cover,
+                      errorWidget: Container(
+                        color: Colors.grey[850],
+                        child: Center(child: Icon(Icons.inventory_2, color: Colors.grey[600])),
+                      ),
+                    ),
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: GestureDetector(
+                        onTap: () => _favoritesController.toggleFavorite(product),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                          child: Icon(isFav ? Icons.favorite : Icons.favorite_border, color: isFav ? Colors.redAccent : Colors.white, size: 18),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      left: 10,
+                      right: 10,
+                      bottom: 10,
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.65),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              (product['name'] ?? 'product'.tr).toString(),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              formatMoneyWithCurrency(product['price']),
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+        childCount: 12,
       ),
     );
   }
