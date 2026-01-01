@@ -38,6 +38,7 @@ import 'package:tiktok_tutorial/views/screens/chat/conversations_screen.dart';
 import 'package:tiktok_tutorial/views/screens/common/notifications_screen.dart';
 import 'package:tiktok_tutorial/views/widgets/comments_coming_soon_sheet.dart';
 import 'package:tiktok_tutorial/views/widgets/product_quick_buy_sheet.dart';
+import 'package:tiktok_tutorial/views/widgets/app_brand_title.dart';
 
 class MarketplaceHomeScreen extends StatefulWidget {
   final bool isGuestMode;
@@ -499,13 +500,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
           SliverAppBar(
             floating: true,
             backgroundColor: backgroundColor,
-            title: const Text(
-              'GoGoMarket',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            title: const AppBrandTitle(),
             actions: [
               if (!_isSeller)
                 IconButton(
@@ -987,6 +982,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         SliverAppBar(
           floating: true,
           backgroundColor: backgroundColor,
+          title: const AppBrandTitle(),
           actions: [
             if (!_isSeller)
               IconButton(
@@ -1019,23 +1015,29 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 }),
               ),
           ],
-          title: Container(
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(56),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+              child: Container(
             height: 40,
             decoration: BoxDecoration(
               color: Colors.grey[900],
               borderRadius: BorderRadius.circular(10),
             ),
-            child: InkWell(
-              onTap: () => Get.to(() => const SmartSearchScreen()),
-              child: IgnorePointer(
-                child: TextField(
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    hintText: 'search_products_and_sellers'.tr,
-                    hintStyle: TextStyle(color: Colors.grey[500]),
-                    prefixIcon: Icon(Icons.search, color: Colors.grey[500]),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                child: InkWell(
+                  onTap: () => Get.to(() => const SmartSearchScreen()),
+                  child: IgnorePointer(
+                    child: TextField(
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        hintText: 'search_products_and_sellers'.tr,
+                        hintStyle: TextStyle(color: Colors.grey[500]),
+                        prefixIcon: Icon(Icons.search, color: Colors.grey[500]),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                      ),
+                    ),
                   ),
                 ),
               ),

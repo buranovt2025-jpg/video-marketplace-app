@@ -168,7 +168,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Video Marketplace',
+      title: 'GoGoMarket',
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: backgroundColor,
         primaryColor: primaryColor,
