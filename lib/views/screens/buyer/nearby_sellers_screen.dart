@@ -81,7 +81,7 @@ class _NearbySellersScreenState extends State<NearbySellersScreen> {
 
         sellersMap[sellerId] = {
           'id': sellerId,
-          'name': product['seller_name'] ?? 'Продавец',
+          'name': product['seller_name'] ?? 'seller'.tr,
           'latitude': sellerLat,
           'longitude': sellerLng,
           'distance': distance,
@@ -135,7 +135,7 @@ class _NearbySellersScreenState extends State<NearbySellersScreen> {
                 Icon(Icons.location_on, color: primaryColor),
                 const SizedBox(width: 8),
                 Text(
-                  'Радиус: ${_maxDistance.toInt()} км',
+                  'radius_km'.trParams({'km': _maxDistance.toInt().toString()}),
                   style: const TextStyle(color: Colors.white),
                 ),
                 Expanded(
@@ -176,7 +176,7 @@ class _NearbySellersScreenState extends State<NearbySellersScreen> {
             CircularProgressIndicator(color: primaryColor),
             SizedBox(height: 16),
             Text(
-              'Поиск продавцов рядом...',
+              'searching_nearby_sellers'.tr,
               style: TextStyle(color: Colors.white),
             ),
           ],
@@ -200,7 +200,7 @@ class _NearbySellersScreenState extends State<NearbySellersScreen> {
             ElevatedButton(
               onPressed: _loadLocation,
               style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
-              child: const Text('Повторить'),
+              child: Text('retry'.tr),
             ),
           ],
         ),
@@ -215,12 +215,12 @@ class _NearbySellersScreenState extends State<NearbySellersScreen> {
             Icon(Icons.store_mall_directory, size: 80, color: Colors.grey[600]),
             const SizedBox(height: 16),
             Text(
-              'Нет продавцов в радиусе ${_maxDistance.toInt()} км',
+              'no_sellers_within_radius'.trParams({'km': _maxDistance.toInt().toString()}),
               style: TextStyle(color: Colors.grey[400], fontSize: 16),
             ),
             const SizedBox(height: 8),
             Text(
-              'Попробуйте увеличить радиус поиска',
+              'try_increasing_search_radius'.tr,
               style: TextStyle(color: Colors.grey[600], fontSize: 14),
             ),
           ],
@@ -320,7 +320,7 @@ class _NearbySellersScreenState extends State<NearbySellersScreen> {
                 Icon(Icons.inventory_2, size: 16, color: Colors.grey[500]),
                 const SizedBox(width: 4),
                 Text(
-                  '${seller['products_count']} товаров',
+                  'items_count'.trParams({'count': seller['products_count'].toString()}),
                   style: TextStyle(color: Colors.grey[500]),
                 ),
               ],
@@ -339,7 +339,7 @@ class _NearbySellersScreenState extends State<NearbySellersScreen> {
           // Navigate to seller's products
           Get.snackbar(
             seller['name'],
-            'Показать товары продавца',
+            'show_seller_products'.tr,
             snackPosition: SnackPosition.BOTTOM,
           );
         },
@@ -349,8 +349,8 @@ class _NearbySellersScreenState extends State<NearbySellersScreen> {
 
   String _formatDistance(double distance) {
     if (distance < 1) {
-      return '${(distance * 1000).toInt()} м';
+      return '${(distance * 1000).toInt()} ${'meters_short'.tr}';
     }
-    return '${distance.toStringAsFixed(1)} км';
+    return '${distance.toStringAsFixed(1)} ${'kilometers_short'.tr}';
   }
 }

@@ -44,7 +44,7 @@ class QRScannerScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               Text(
-                'QR сканер недоступен в веб-версии',
+                'qr_scanner_unavailable_on_web'.tr,
                 style: TextStyle(
                   color: Colors.grey[400],
                   fontSize: 18,
@@ -53,7 +53,7 @@ class QRScannerScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                'Используйте мобильное приложение для сканирования QR-кодов',
+                'use_mobile_app_for_qr_scanning'.tr,
                 style: TextStyle(
                   color: Colors.grey[600],
                   fontSize: 14,
@@ -67,7 +67,7 @@ class QRScannerScreen extends StatelessWidget {
                   backgroundColor: primaryColor,
                   padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 ),
-                child: const Text('Назад'),
+                child: Text('back'.tr),
               ),
             ],
           ),

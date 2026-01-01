@@ -258,7 +258,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                 controller: _videoUrlController,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
-                  labelText: 'URL видео *',
+                  labelText: 'video_url_required'.tr,
                   labelStyle: TextStyle(color: Colors.grey[400]),
                   hintText: 'https://example.com/video.mp4',
                   hintStyle: TextStyle(color: Colors.grey[600]),

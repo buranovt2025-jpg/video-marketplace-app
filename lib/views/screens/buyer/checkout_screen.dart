@@ -33,9 +33,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   
   // Delivery tariff options
   String _selectedTariff = 'standard'; // standard, express
-  static const double _standardDeliveryFee = 15000; // 15,000 сум
-  static const double _expressDeliveryFee = 30000; // 30,000 сум
-  static const double _freeDeliveryThreshold = 500000; // Free delivery over 500K сум
+  static const double _standardDeliveryFee = 15000; // 15,000 UZS
+  static const double _expressDeliveryFee = 30000; // 30,000 UZS
+  static const double _freeDeliveryThreshold = 500000; // Free delivery over 500,000 UZS
 
   @override
   void initState() {
@@ -486,7 +486,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '60-90 минут',
+                        'delivery_time_standard'.tr,
                         style: TextStyle(color: Colors.grey[500], fontSize: 12),
                       ),
                     ],
@@ -549,7 +549,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '30-45 минут',
+                        'delivery_time_express'.tr,
                         style: TextStyle(color: Colors.grey[500], fontSize: 12),
                       ),
                     ],
@@ -739,8 +739,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         // Clear items from this seller
         _cartController.clearSellerItems(widget.sellerId);
 
-        // Сначала снимаем loading (чтобы не оставаться в "зависшем" состоянии),
-        // затем уходим на success и чистим стек, чтобы не вернуться на checkout с loader'ом.
+        // First, stop loading (so we don't stay in a "stuck" state),
+        // then navigate to success and clear the stack to avoid returning to checkout with a loader.
         if (mounted) setState(() => _isLoading = false);
         Get.offAll(() => OrderSuccessScreen(order: order));
       } else {

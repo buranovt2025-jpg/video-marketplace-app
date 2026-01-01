@@ -61,7 +61,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         backgroundColor: Colors.grey[900],
         title: Text('login_required'.tr, style: const TextStyle(color: Colors.white)),
         content: Text(
-          'Войдите, чтобы $action',
+          'login_to_action'.trParams({'action': action}),
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
@@ -112,7 +112,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     } else {
       Get.snackbar(
         'error'.tr,
-        'Товар не найден',
+        'product_not_found'.tr,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -203,9 +203,9 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 _currentIndex = index;
               });
 
-              // Критично для прода: когда пользователь впервые открывает вкладку "Заказы",
-              // список может быть пустым, если fetchOrders не вызывался/не успел.
-              // Подтягиваем заказы при входе на вкладку.
+              // Important: when user opens Orders tab for the first time,
+              // the list may be empty if fetchOrders wasn't called yet.
+              // Fetch orders when entering the tab.
               final isOrdersTab = _isSeller ? index == 3 : index == 2;
               if (isOrdersTab && _controller.isLoggedIn) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -316,7 +316,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
           Icon(Icons.shopping_bag_outlined, size: 80, color: Colors.grey[600]),
           const SizedBox(height: 24),
           Text(
-            'Войдите, чтобы видеть заказы',
+            'login_to_view_orders'.tr,
             style: TextStyle(color: Colors.grey[400], fontSize: 18),
           ),
           const SizedBox(height: 24),
@@ -351,7 +351,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'Добро пожаловать!',
+            'welcome'.tr,
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 24,
@@ -360,7 +360,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Войдите или зарегистрируйтесь,\nчтобы делать покупки',
+            'login_or_register_to_shop'.tr,
               style: TextStyle(color: Colors.grey[400], fontSize: 16),
               textAlign: TextAlign.center,
             ),
@@ -475,8 +475,8 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 Get.to(() => const CreateStoryScreen());
               } else {
                 Get.snackbar(
-                  'Недоступно',
-                  'Только продавцы могут создавать истории',
+                  'unavailable'.tr,
+                  'only_sellers_can_create_stories'.tr,
                   snackPosition: SnackPosition.BOTTOM,
                 );
               }
@@ -496,13 +496,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            'Добавить',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 11,
-            ),
-          ),
+          Text('add'.tr, style: const TextStyle(color: Colors.white, fontSize: 11)),
         ],
       ),
     );
@@ -590,7 +584,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 Icon(Icons.video_library, size: 64, color: Colors.grey[700]),
                 const SizedBox(height: 16),
                 Text(
-                  'Пока нет рилсов',
+                  'no_reels_yet'.tr,
                   style: TextStyle(color: Colors.grey[500], fontSize: 16),
                 ),
                 if (_controller.isSeller || _controller.isAdmin) ...[
@@ -600,7 +594,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: buttonColor,
                     ),
-                    child: const Text('Создать первый рилс'),
+                    child: Text('create_first_reel'.tr),
                   ),
                 ],
               ],
@@ -755,7 +749,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                     final reels = List<Map<String, dynamic>>.from(_controller.reels);
                     Get.to(() => ReelsViewerScreen(reels: reels, initialIndex: index));
                   },
-                  child: const Text('Смотреть', style: TextStyle(color: Colors.white)),
+                  child: Text('watch'.tr, style: const TextStyle(color: Colors.white)),
                 ),
                 // Buy button for reels with linked product
                 if (reel['product_id'] != null) ...[
@@ -811,7 +805,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
             child: TextField(
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
-                hintText: 'Поиск товаров и продавцов',
+                hintText: 'search_products_and_sellers'.tr,
                 hintStyle: TextStyle(color: Colors.grey[500]),
                 prefixIcon: Icon(Icons.search, color: Colors.grey[500]),
                 border: InputBorder.none,
@@ -838,7 +832,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                         Icon(Icons.inventory_2, size: 64, color: Colors.grey[700]),
                         const SizedBox(height: 16),
                         Text(
-                          'Пока нет товаров',
+                          'no_products'.tr,
                           style: TextStyle(color: Colors.grey[500], fontSize: 16),
                         ),
                       ],
@@ -931,12 +925,12 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               Icon(Icons.lock, size: 64, color: Colors.grey[700]),
               const SizedBox(height: 16),
               Text(
-                'Только для продавцов',
+                'sellers_only'.tr,
                 style: TextStyle(color: Colors.grey[500], fontSize: 16),
               ),
               const SizedBox(height: 8),
               Text(
-                'Зарегистрируйтесь как продавец,\nчтобы создавать контент',
+                'register_as_seller_to_create_content'.tr,
                 style: TextStyle(color: Colors.grey[600], fontSize: 14),
                 textAlign: TextAlign.center,
               ),
@@ -951,41 +945,37 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 40),
-            const Text(
-              'Создать',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
+            Text(
+              'create'.tr,
+              style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
-              'Выберите что хотите создать',
+              'choose_what_to_create'.tr,
               style: TextStyle(color: Colors.grey[400]),
             ),
             const SizedBox(height: 32),
             
             _buildCreateOption(
               icon: Icons.inventory_2,
-              title: 'Товар',
-              description: 'Добавьте новый товар в каталог',
+              title: 'create_option_product_title'.tr,
+              description: 'create_option_product_desc'.tr,
               onTap: () => Get.to(() => const CreateProductScreen()),
             ),
             const SizedBox(height: 16),
             
             _buildCreateOption(
               icon: Icons.video_library,
-              title: 'Рилс',
-              description: 'Создайте видео о вашем товаре',
+              title: 'create_option_reel_title'.tr,
+              description: 'create_option_reel_desc'.tr,
               onTap: () => Get.to(() => const CreateReelScreen()),
             ),
             const SizedBox(height: 16),
             
             _buildCreateOption(
               icon: Icons.auto_stories,
-              title: 'История',
-              description: 'Поделитесь моментом с покупателями',
+              title: 'create_option_story_title'.tr,
+              description: 'create_option_story_desc'.tr,
               onTap: () => Get.to(() => const CreateStoryScreen()),
             ),
             
@@ -995,7 +985,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
             OutlinedButton.icon(
               onPressed: () => Get.to(() => const MyProductsScreen()),
               icon: const Icon(Icons.list),
-              label: const Text('Мои товары'),
+              label: Text('my_products'.tr),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.white,
                 side: BorderSide(color: Colors.grey[700]!),
@@ -1068,15 +1058,12 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         SliverAppBar(
           floating: true,
           backgroundColor: backgroundColor,
-          title: const Text(
-            'Заказы',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-          ),
+          title: Text('orders'.tr, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           actions: [
             IconButton(
               icon: const Icon(Icons.refresh, color: Colors.white),
               onPressed: _controller.isLoggedIn ? _controller.fetchOrders : null,
-              tooltip: 'Обновить',
+              tooltip: 'refresh'.tr,
             ),
           ],
         ),
@@ -1095,14 +1082,14 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                       Icon(Icons.shopping_bag_outlined, size: 64, color: Colors.grey[700]),
                       const SizedBox(height: 16),
                       Text(
-                        'Пока нет заказов',
+                        'no_orders'.tr,
                         style: TextStyle(color: Colors.grey[500], fontSize: 16),
                       ),
                       const SizedBox(height: 16),
                       OutlinedButton.icon(
                         onPressed: _controller.isLoggedIn ? _controller.fetchOrders : null,
                         icon: const Icon(Icons.refresh),
-                        label: const Text('Обновить'),
+                        label: Text('refresh'.tr),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.white,
                           side: BorderSide(color: Colors.grey[700]!),
@@ -1150,17 +1137,6 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         'cancelled': Colors.red,
       };
     
-      final statusLabels = {
-        'created': 'Создан',
-        'accepted': 'Принят',
-        'ready': 'Готов',
-        'picked_up': 'Забран',
-        'in_transit': 'В пути',
-        'delivered': 'Доставлен',
-        'completed': 'Завершён',
-        'cancelled': 'Отменён',
-      };
-    
       final status = order['status'] ?? 'created';
     
       final orderIdStr = (order['id'] ?? '').toString();
@@ -1183,7 +1159,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Заказ #$orderIdShort',
+                    'order_number_short'.trParams({'id': orderIdShort}),
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -1196,7 +1172,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      statusLabels[status] ?? status,
+                      _getOrderStatusLabel(status.toString()),
                       style: TextStyle(
                         color: statusColors[status],
                         fontSize: 12,
@@ -1208,7 +1184,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Сумма: ${formatMoneyWithCurrency(totalAmountNum)}',
+                '${'amount'.tr}: ${formatMoneyWithCurrency(totalAmountNum)}',
                 style: TextStyle(color: Colors.grey[400]),
               ),
               if (order['delivery_address'] != null) ...[
@@ -1346,9 +1322,9 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      _buildStatItem('Товары', _controller.myProducts.length.toString()),
-                      _buildStatItem('Заказы', _controller.orders.length.toString()),
-                      _buildStatItem('Рилсы', _controller.reels.where((r) => r['author_id'] == _controller.userId).length.toString()),
+                      _buildStatItem('products'.tr, _controller.myProducts.length.toString()),
+                      _buildStatItem('orders'.tr, _controller.orders.length.toString()),
+                      _buildStatItem('reels'.tr, _controller.reels.where((r) => r['author_id'] == _controller.userId).length.toString()),
                     ],
                   ),
                   
@@ -1480,7 +1456,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
           children: [
             ListTile(
               leading: const Text('🇷🇺', style: TextStyle(fontSize: 24)),
-              title: const Text('Русский', style: TextStyle(color: Colors.white)),
+              title: Text('russian'.tr, style: const TextStyle(color: Colors.white)),
               onTap: () {
                 Get.updateLocale(const Locale('ru', 'RU'));
                 Get.back();
@@ -1531,15 +1507,38 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   String _getRoleLabel(String role) {
     switch (role) {
       case 'seller':
-        return 'Продавец';
+        return 'seller'.tr;
       case 'buyer':
-        return 'Покупатель';
+        return 'buyer'.tr;
       case 'courier':
-        return 'Курьер';
+        return 'courier'.tr;
       case 'admin':
-        return 'Администратор';
+        return 'admin'.tr;
       default:
         return role;
+    }
+  }
+
+  String _getOrderStatusLabel(String status) {
+    switch (status) {
+      case 'created':
+        return 'status_created'.tr;
+      case 'accepted':
+        return 'status_accepted'.tr;
+      case 'ready':
+        return 'status_ready'.tr;
+      case 'picked_up':
+        return 'status_picked_up'.tr;
+      case 'in_transit':
+        return 'status_in_transit'.tr;
+      case 'delivered':
+        return 'status_delivered'.tr;
+      case 'completed':
+        return 'status_completed'.tr;
+      case 'cancelled':
+        return 'status_cancelled'.tr;
+      default:
+        return status;
     }
   }
 }

@@ -116,7 +116,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                   ),
                   Text(
-                    'Онлайн',
+                    'chat_online'.tr,
                     style: TextStyle(
                       color: Colors.green[400],
                       fontSize: 12,
@@ -164,7 +164,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Начните диалог',
+            'start_conversation'.tr,
             style: TextStyle(
               color: Colors.grey[500],
               fontSize: 16,
@@ -172,7 +172,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Напишите сообщение ${widget.userName}',
+            'write_message_to_user'.trParams({'name': widget.userName}),
             style: TextStyle(
               color: Colors.grey[600],
               fontSize: 14,
@@ -281,8 +281,8 @@ class _ChatScreenState extends State<ChatScreen> {
               icon: Icon(Icons.attach_file, color: Colors.grey[500]),
               onPressed: () {
                 Get.snackbar(
-                  'Скоро',
-                  'Отправка файлов будет доступна в следующей версии',
+                  'coming_soon'.tr,
+                  'file_sending_next_version'.tr,
                   snackPosition: SnackPosition.BOTTOM,
                 );
               },
@@ -300,7 +300,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   maxLines: null,
                   textCapitalization: TextCapitalization.sentences,
                   decoration: InputDecoration(
-                    hintText: 'Сообщение...',
+                    hintText: 'message_hint'.tr,
                     hintStyle: TextStyle(color: Colors.grey[500]),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(vertical: 10),

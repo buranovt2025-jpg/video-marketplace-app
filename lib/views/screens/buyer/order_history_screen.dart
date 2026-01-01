@@ -21,8 +21,8 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   @override
   void initState() {
     super.initState();
-    // Важно: этот экран не гарантирует, что orders уже загружены.
-    // Подгружаем после первой отрисовки, чтобы избежать серого/пустого экрана.
+    // Note: this screen does not guarantee that orders are already loaded.
+    // Fetch after the first frame to avoid an empty/grey screen.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (_controller.isLoggedIn) {
         await _controller.fetchOrders();

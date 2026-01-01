@@ -736,7 +736,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    '$quantity шт',
+                    '$quantity ${'pcs_short'.tr}',
                     style: TextStyle(
                       color: isLowStock ? Colors.red : Colors.green,
                       fontWeight: FontWeight.bold,

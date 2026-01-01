@@ -536,7 +536,7 @@ class _SellerAnalyticsScreenState extends State<SellerAnalyticsScreen> {
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
-                            '${product['quantity']} шт.',
+                            '${product['quantity']} ${'pcs_short'.tr}',
                             style: TextStyle(color: Colors.grey[500], fontSize: 12),
                           ),
                         ],
