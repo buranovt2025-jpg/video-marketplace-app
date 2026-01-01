@@ -8,7 +8,7 @@ import 'package:tiktok_tutorial/services/api_service.dart';
 import 'package:tiktok_tutorial/views/screens/admin/admin_home_screen.dart';
 import 'package:tiktok_tutorial/views/screens/courier/courier_home_screen.dart';
 import 'package:tiktok_tutorial/views/screens/marketplace_home_screen.dart';
-import 'package:tiktok_tutorial/main.dart' show AppRouter;
+import 'package:tiktok_tutorial/app_router.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -35,10 +35,8 @@ class _SplashScreenState extends State<SplashScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     // Best-effort precache (helps on web).
-    final brightness = MediaQuery.platformBrightnessOf(context);
-    final asset = brightness == Brightness.light ? 'assets/images/logo_white.png' : 'assets/images/logo_dark.png';
     // ignore: discarded_futures
-    precacheImage(AssetImage(asset), context);
+    precacheImage(const AssetImage('assets/images/splash_logo.png'), context);
 
     // Kick navigation only once (didChangeDependencies может вызываться несколько раз).
     // ignore: discarded_futures
@@ -88,35 +86,44 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = MediaQuery.platformBrightnessOf(context);
-    final isLight = brightness == Brightness.light;
-
-    final bg = isLight ? Colors.white : Colors.black;
-    final asset = isLight ? 'assets/images/logo_white.png' : 'assets/images/logo_dark.png';
-
-    // Scale logo on larger screens (web desktop).
-    final shortest = MediaQuery.sizeOf(context).shortestSide;
-    final logoSize = (shortest * 0.45).clamp(180.0, 360.0);
-
     return Scaffold(
-      backgroundColor: bg,
-      body: Center(
-        child: AnimatedOpacity(
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOut,
-          opacity: _visible ? 1 : 0,
-          child: AnimatedScale(
-            duration: const Duration(milliseconds: 450),
-            curve: Curves.easeOutBack,
-            scale: _visible ? 1 : 0.96,
+      backgroundColor: const Color(0xFFFF6A00),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Fullscreen branded loading background.
+          AnimatedOpacity(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOut,
+            opacity: _visible ? 1 : 0,
             child: Image.asset(
-              asset,
-              width: logoSize,
-              height: logoSize,
+              'assets/images/splash_logo.png',
+              fit: BoxFit.cover,
               filterQuality: FilterQuality.high,
             ),
           ),
-        ),
+
+          // Optional small loading indicator (subtle).
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 56,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 220),
+              opacity: _visible ? 0.9 : 0,
+              child: const Center(
+                child: SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
