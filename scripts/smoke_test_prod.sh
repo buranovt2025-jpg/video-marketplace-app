@@ -13,6 +13,7 @@ set -euo pipefail
 #   API_URL=https://app-owphiuvd.fly.dev
 #   SMOKE_EMAIL=buyer@demo.com
 #   SMOKE_PASSWORD=demo123
+#   RUN_BACKEND_CHECKS=0|1 (default: 0)
 #
 # Notes:
 # - WEB_URL uses self-signed TLS, so we use curl -k for it.
@@ -22,6 +23,7 @@ WEB_URL="${WEB_URL:-https://165.232.81.31}"
 API_URL="${API_URL:-https://app-owphiuvd.fly.dev}"
 SMOKE_EMAIL="${SMOKE_EMAIL:-buyer@demo.com}"
 SMOKE_PASSWORD="${SMOKE_PASSWORD:-demo123}"
+RUN_BACKEND_CHECKS="${RUN_BACKEND_CHECKS:-0}"
 
 require() {
   command -v "$1" >/dev/null 2>&1 || {
@@ -82,4 +84,10 @@ echo "OK: API /api/orders (200)"
 
 echo ""
 echo "== Smoke test PASSED =="
+
+if [ "$RUN_BACKEND_CHECKS" != "0" ]; then
+  echo ""
+  echo "== 3) Backend feature checks (optional) =="
+  bash scripts/backend_acceptance_checks.sh
+fi
 

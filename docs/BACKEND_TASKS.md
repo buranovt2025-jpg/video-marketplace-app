@@ -103,3 +103,15 @@ Response:
 
 Workflow и server deploy уже прокидывают `DART_DEFINES` в `flutter build web`.
 
+## 4) Быстрая проверка после выката backend
+
+После внедрения upload/reviews на backend можно прогнать проверки:
+
+```bash
+# базовый smoke (web + auth + orders)
+bash scripts/smoke_test_prod.sh
+
+# + проверки backend endpoints (upload/reviews)
+RUN_BACKEND_CHECKS=1 bash scripts/smoke_test_prod.sh
+```
+
