@@ -27,6 +27,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
   bool _isVideo = false;
   bool _useUpload = false;
   XFile? _pickedFile;
+  bool _isUploading = false;
 
   @override
   void initState() {
@@ -43,6 +44,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
   }
 
   Future<void> _createStory() async {
+    if (_isUploading) return;
     String? finalImageUrl;
     String? finalVideoUrl;
 
@@ -59,6 +61,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
       }
 
       try {
+        if (mounted) setState(() => _isUploading = true);
         final bytes = await _pickedFile!.readAsBytes();
         final kind = _isVideo ? 'story_video' : 'story_image';
         final contentType = _isVideo ? 'video/mp4' : 'image/jpeg';
@@ -83,7 +86,18 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
         } else {
           finalImageUrl = fileUrl;
         }
-      } catch (_) {
+      } catch (e) {
+        if (e is ApiException && (e.statusCode == 404 || e.statusCode == 405 || e.statusCode == 501)) {
+          Get.snackbar(
+            'error'.tr,
+            'upload_not_supported'.tr,
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+            duration: const Duration(seconds: 4),
+          );
+          if (mounted) setState(() => _useUpload = false);
+        } else {
         Get.snackbar(
           'error'.tr,
           'upload_failed'.tr,
@@ -91,7 +105,10 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
           backgroundColor: Colors.red,
           colorText: Colors.white,
         );
+        }
         return;
+      } finally {
+        if (mounted) setState(() => _isUploading = false);
       }
     } else {
       final hasImage = _imageUrlController.text.isNotEmpty;
@@ -172,26 +189,29 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
           style: const TextStyle(color: Colors.white),
         ),
         actions: [
-          Obx(() => TextButton(
-            onPressed: _controller.isLoading.value ? null : _createStory,
-            child: _controller.isLoading.value
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
+          Obx(() {
+            final busy = _controller.isLoading.value || _isUploading;
+            return TextButton(
+              onPressed: busy ? null : _createStory,
+              child: busy
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text(
+                      'publish'.tr,
+                      style: TextStyle(
+                        color: buttonColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
-                  )
-                : Text(
-                    'publish'.tr,
-                    style: TextStyle(
-                      color: buttonColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-          )),
+            );
+          }),
         ],
       ),
       body: SingleChildScrollView(
@@ -267,7 +287,11 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
               children: [
                 Expanded(
                   child: GestureDetector(
-                    onTap: () => setState(() => _isVideo = false),
+                    onTap: () => setState(() {
+                      _isVideo = false;
+                      _pickedFile = null;
+                      _videoUrlController.clear();
+                    }),
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
@@ -300,7 +324,11 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: GestureDetector(
-                    onTap: () => setState(() => _isVideo = true),
+                    onTap: () => setState(() {
+                      _isVideo = true;
+                      _pickedFile = null;
+                      _imageUrlController.clear();
+                    }),
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(

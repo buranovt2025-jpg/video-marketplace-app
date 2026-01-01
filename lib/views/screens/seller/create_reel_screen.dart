@@ -25,6 +25,7 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
   String? _selectedProductId;
   bool _useUpload = false;
   XFile? _pickedVideo;
+  bool _isUploading = false;
 
   @override
   void initState() {
@@ -40,6 +41,7 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
   }
 
   Future<void> _createReel() async {
+    if (_isUploading) return;
     String? finalVideoUrl;
 
     if (kEnableMediaUpload && _useUpload) {
@@ -57,6 +59,7 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
       // Backend may not support uploads yet — keep it safe and explicit.
       // When backend is ready (see docs/MEDIA_UPLOAD.md), this block can be enabled.
       try {
+        if (mounted) setState(() => _isUploading = true);
         final bytes = await _pickedVideo!.readAsBytes();
         // Best-effort content-type; backend can also derive it.
         final session = await ApiService.createUploadSession(
@@ -77,6 +80,17 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
         );
         finalVideoUrl = fileUrl;
       } catch (e) {
+        if (e is ApiException && (e.statusCode == 404 || e.statusCode == 405 || e.statusCode == 501)) {
+          Get.snackbar(
+            'error'.tr,
+            'upload_not_supported'.tr,
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+            duration: const Duration(seconds: 4),
+          );
+          if (mounted) setState(() => _useUpload = false);
+        } else {
         Get.snackbar(
           'error'.tr,
           'upload_failed'.tr,
@@ -84,7 +98,10 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
           backgroundColor: Colors.red,
           colorText: Colors.white,
         );
+        }
         return;
+      } finally {
+        if (mounted) setState(() => _isUploading = false);
       }
     } else {
       if (_videoUrlController.text.isEmpty) {
@@ -159,26 +176,29 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
           style: const TextStyle(color: Colors.white),
         ),
         actions: [
-          Obx(() => TextButton(
-            onPressed: _controller.isLoading.value ? null : _createReel,
-            child: _controller.isLoading.value
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
+          Obx(() {
+            final busy = _controller.isLoading.value || _isUploading;
+            return TextButton(
+              onPressed: busy ? null : _createReel,
+              child: busy
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text(
+                      'publish'.tr,
+                      style: TextStyle(
+                        color: buttonColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
-                  )
-                : Text(
-                    'publish'.tr,
-                    style: TextStyle(
-                      color: buttonColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-          )),
+            );
+          }),
         ],
       ),
       body: SingleChildScrollView(
