@@ -334,7 +334,7 @@ class FavoritesScreen extends StatelessWidget {
             children: [
               // Remove from favorites
               IconButton(
-                icon: Icon(Icons.favorite, color: Colors.red[400]),
+                icon: const Icon(Icons.favorite, color: primaryColor),
                 onPressed: () => favoritesController.removeFromFavorites((product['id'] ?? '').toString()),
               ),
               // Add to cart

@@ -59,7 +59,7 @@ class _CartScreenState extends State<CartScreen> {
                   onPressed: _showClearCartDialog,
                   child: Text(
                     'clear'.tr,
-                    style: TextStyle(color: Colors.red[400]),
+                    style: const TextStyle(color: primaryColor, fontWeight: FontWeight.bold),
                   ),
                 )
               : const SizedBox()),
@@ -204,7 +204,7 @@ class _CartScreenState extends State<CartScreen> {
             children: [
               IconButton(
                 onPressed: () => _showDeleteItemDialog(item),
-                icon: Icon(Icons.delete_outline, color: Colors.red[400]),
+                icon: const Icon(Icons.delete_outline, color: primaryColor),
               ),
               Text(
                 _formatPrice(item.total),
@@ -448,7 +448,7 @@ class _CartScreenState extends State<CartScreen> {
             },
             child: Text(
               'clear'.tr,
-              style: TextStyle(color: Colors.red[400]),
+              style: const TextStyle(color: primaryColor, fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -477,7 +477,7 @@ class _CartScreenState extends State<CartScreen> {
             },
             child: Text(
               'delete'.tr,
-              style: TextStyle(color: Colors.red[400]),
+              style: const TextStyle(color: primaryColor, fontWeight: FontWeight.bold),
             ),
           ),
         ],

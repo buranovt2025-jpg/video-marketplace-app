@@ -233,7 +233,7 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> with TickerProvid
                     _CircleActionButton(
                       icon: liked ? Icons.favorite : Icons.favorite_border,
                       label: '${asInt(reel['likes_count'] ?? reel['likes'] ?? 0)}',
-                      iconColor: liked ? Colors.redAccent : Colors.white,
+                      iconColor: liked ? primaryColor : Colors.white,
                       onTap: () async {
                         final id = reel['id']?.toString() ?? '';
                         if (id.trim().isEmpty) return;
@@ -676,7 +676,7 @@ class _HeartsOverlayState extends State<HeartsOverlay> with TickerProviderStateM
         startDx: dx,
         drift: drift,
         rotation: rotation,
-        color: _rng.nextBool() ? Colors.redAccent : Colors.pinkAccent,
+        color: _rng.nextBool() ? primaryColor : accentColor,
       );
       _hearts.add(heart);
       c.addStatusListener((status) {

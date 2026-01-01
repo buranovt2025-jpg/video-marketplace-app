@@ -87,7 +87,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       color: Colors.black.withOpacity(0.5),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(isFav ? Icons.favorite : Icons.favorite_border, color: isFav ? Colors.redAccent : Colors.white),
+                    child: Icon(isFav ? Icons.favorite : Icons.favorite_border, color: isFav ? primaryColor : Colors.white),
                   ),
                   onPressed: () => _favoritesController.toggleFavorite(product),
                 );
@@ -367,7 +367,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     ),
                     child: Text(
                       (inStock ? 'in_stock' : 'out_of_stock').tr,
-                      style: TextStyle(color: inStock ? Colors.greenAccent : Colors.redAccent, fontSize: 12, fontWeight: FontWeight.w700),
+                      style: TextStyle(color: inStock ? Colors.greenAccent : primaryColor, fontSize: 12, fontWeight: FontWeight.w700),
                     ),
                   ),
                 ],

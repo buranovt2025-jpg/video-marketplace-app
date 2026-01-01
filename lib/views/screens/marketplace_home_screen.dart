@@ -655,7 +655,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                             width: 34,
                             height: 34,
                             decoration: const BoxDecoration(color: Colors.black45, shape: BoxShape.circle),
-                            child: Icon(isFav ? Icons.favorite : Icons.favorite_border, color: isFav ? Colors.redAccent : Colors.white, size: 18),
+                            child: Icon(isFav ? Icons.favorite : Icons.favorite_border, color: isFav ? primaryColor : Colors.white, size: 18),
                           ),
                         ),
                       ),
@@ -742,7 +742,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
             ),
             trailing: IconButton(
               onPressed: () => _favoritesController.toggleFavorite(p),
-              icon: Icon(isFav ? Icons.favorite : Icons.favorite_border, color: isFav ? Colors.redAccent : Colors.white),
+              icon: Icon(isFav ? Icons.favorite : Icons.favorite_border, color: isFav ? primaryColor : Colors.white),
             ),
             onTap: () => Get.to(() => ProductDetailScreen(product: p)),
           );
@@ -993,7 +993,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                          child: Icon(isFav ? Icons.favorite : Icons.favorite_border, color: isFav ? Colors.redAccent : Colors.white, size: 18),
+                          child: Icon(isFav ? Icons.favorite : Icons.favorite_border, color: isFav ? primaryColor : Colors.white, size: 18),
                         ),
                       ),
                     ),
