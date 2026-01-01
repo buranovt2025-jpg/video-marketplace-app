@@ -11,6 +11,7 @@ set -euo pipefail
 # Optional env:
 #   WEB_URL=https://165.232.81.31
 #   API_URL=https://app-owphiuvd.fly.dev
+#   API_INSECURE=0|1 (default: 0) - set to 1 for self-signed TLS on API_URL
 #   SMOKE_EMAIL=buyer@demo.com
 #   SMOKE_PASSWORD=demo123
 #   RUN_BACKEND_CHECKS=0|1 (default: 0)
@@ -21,9 +22,18 @@ set -euo pipefail
 
 WEB_URL="${WEB_URL:-https://165.232.81.31}"
 API_URL="${API_URL:-https://app-owphiuvd.fly.dev}"
+API_INSECURE="${API_INSECURE:-0}"
 SMOKE_EMAIL="${SMOKE_EMAIL:-buyer@demo.com}"
 SMOKE_PASSWORD="${SMOKE_PASSWORD:-demo123}"
 RUN_BACKEND_CHECKS="${RUN_BACKEND_CHECKS:-0}"
+
+curl_api() {
+  if [ "$API_INSECURE" != "0" ]; then
+    curl -k "$@"
+  else
+    curl "$@"
+  fi
+}
 
 require() {
   command -v "$1" >/dev/null 2>&1 || {
@@ -54,9 +64,9 @@ echo "OK: WEB .last_build_id=$LAST_BUILD_ID"
 
 echo ""
 echo "== 2) Backend health/auth checks =="
-curl -fsS -o /dev/null "$API_URL/healthz" && echo "OK: API /healthz"
+curl_api -fsS -o /dev/null "$API_URL/healthz" && echo "OK: API /healthz"
 
-LOGIN_JSON="$(curl -fsS \
+LOGIN_JSON="$(curl_api -fsS \
   -H "Content-Type: application/json" \
   -d "{\"email\":\"${SMOKE_EMAIL}\",\"password\":\"${SMOKE_PASSWORD}\"}" \
   "$API_URL/api/auth/login")"
@@ -68,14 +78,14 @@ if [ -z "$TOKEN" ]; then
 fi
 echo "OK: API login (token received)"
 
-ME_HTTP="$(curl -sS -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $TOKEN" "$API_URL/api/auth/me")"
+ME_HTTP="$(curl_api -sS -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $TOKEN" "$API_URL/api/auth/me")"
 if [ "$ME_HTTP" != "200" ]; then
   echo "ERROR: GET /api/auth/me returned HTTP $ME_HTTP" >&2
   exit 1
 fi
 echo "OK: API /api/auth/me (200)"
 
-ORDERS_HTTP="$(curl -sS -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $TOKEN" "$API_URL/api/orders")"
+ORDERS_HTTP="$(curl_api -sS -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $TOKEN" "$API_URL/api/orders")"
 if [ "$ORDERS_HTTP" != "200" ]; then
   echo "ERROR: GET /api/orders returned HTTP $ORDERS_HTTP" >&2
   exit 1

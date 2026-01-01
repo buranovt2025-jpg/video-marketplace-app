@@ -11,6 +11,8 @@ set -euo pipefail
 # Optional env:
 #   API_URL=https://app-owphiuvd.fly.dev
 #   FEATURE_API_URL=http://127.0.0.1:8010 (optional; overrides uploads/reviews base)
+#   API_INSECURE=0|1 (default: 0) - set to 1 for self-signed TLS on API_URL
+#   FEATURE_API_INSECURE=0|1 (default: 0) - set to 1 for self-signed TLS on FEATURE_API_URL
 #   WEB_URL=https://165.232.81.31
 #   SMOKE_EMAIL=buyer@demo.com
 #   SMOKE_PASSWORD=demo123
@@ -22,6 +24,8 @@ set -euo pipefail
 
 API_URL="${API_URL:-https://app-owphiuvd.fly.dev}"
 FEATURE_API_URL="${FEATURE_API_URL:-$API_URL}"
+API_INSECURE="${API_INSECURE:-0}"
+FEATURE_API_INSECURE="${FEATURE_API_INSECURE:-0}"
 WEB_URL="${WEB_URL:-https://165.232.81.31}"
 SMOKE_EMAIL="${SMOKE_EMAIL:-buyer@demo.com}"
 SMOKE_PASSWORD="${SMOKE_PASSWORD:-demo123}"
@@ -33,6 +37,17 @@ require() {
 
 require curl
 require python3
+
+# If running against a self-signed TLS endpoint, set API_INSECURE=1 and/or
+# FEATURE_API_INSECURE=1 to automatically add "-k" to curl calls.
+_CURL_BIN="$(command -v curl)"
+curl() {
+  if [ "$API_INSECURE" != "0" ] || [ "$FEATURE_API_INSECURE" != "0" ]; then
+    "$_CURL_BIN" -k "$@"
+  else
+    "$_CURL_BIN" "$@"
+  fi
+}
 
 echo "== Backend acceptance checks =="
 echo "API_URL=$API_URL"
