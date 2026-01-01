@@ -6,9 +6,13 @@
 - **Active branch**: `cursor/what-has-been-done-5e03`
 - **Deploy workflow**: `.github/workflows/deploy_web.yml` (name: **Deploy Flutter Web (SSH)**)
 - **Prod Web**: `https://165.232.81.31`
-- **Prod API**: `https://165.232.81.31` (self-signed TLS; nginx proxies `/api` to `127.0.0.1:8000`)
-- **Last deployed web commit**: `341a0312bfd3efcdd1a59d797a1ca107a5dbe012` (from `/.last_build_id`)
-- **Smoke test**: `API_INSECURE=1 FEATURE_API_INSECURE=1 RUN_BACKEND_CHECKS=1 WEB_URL=https://165.232.81.31 API_URL=https://165.232.81.31 bash scripts/smoke_test_prod.sh` (passed)
+- **Prod API**:
+  - public API used by most checks: `https://app-owphiuvd.fly.dev`
+  - server-local API (self-hosted, self-signed): `https://165.232.81.31` (nginx proxies `/api` to `127.0.0.1:8000`)
+- **Last deployed web commit**: `6ed149d4712ef46b32cd221ddea0b80da76fd340` (from `/.last_build_id`)
+- **Smoke test**:
+  - default: `bash scripts/smoke_test_prod.sh` (passed)
+  - self-hosted API: `API_INSECURE=1 FEATURE_API_INSECURE=1 RUN_BACKEND_CHECKS=1 WEB_URL=https://165.232.81.31 API_URL=https://165.232.81.31 bash scripts/smoke_test_prod.sh` (passed)
 
 ## Feature flags (build-time)
 
@@ -37,6 +41,21 @@ And we hardened exposure:
 Details / rollback steps: `docs/SERVER_GOGOMARKET_PATCH.md`.
 
 ## What we changed recently
+
+### Web perf (Lighthouse)
+- `web/index.html`
+  - Added lightweight HTML splash screen (improved FCP/LCP and perceived load).
+  - Preload `main.dart.js`, remove splash on `flutter-first-frame`.
+- `scripts/build_web.sh`
+  - Added `--no-source-maps` + `--tree-shake-icons`.
+  - Added renderer switch via env `WEB_RENDERER` (default: `html`) + `FLUTTER_WEB_USE_SKIA` guidance.
+- Result: FCP/LCP improved; next focus is Speed Index (startup + caching).
+
+### Buyer UX: simplify bottom navigation
+- `lib/views/screens/marketplace_home_screen.dart`
+  - Buyer/Guest: replaced bottom “Search” tab with “Shorts/Reels”.
+  - Buyer/Guest: removed “Orders” from bottom nav; orders entry moved into Profile.
+  - Profile: buyer stats now show Orders/Favorites/Cart; profile primary CTA opens Orders.
 
 ### Chat stability / UX
 - `lib/views/screens/chat/chat_screen.dart`
