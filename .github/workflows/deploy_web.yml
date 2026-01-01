@@ -99,8 +99,13 @@ jobs:
             FLUTTER_BIN=\"${DEPLOY_FLUTTER_BIN:-/opt/flutter/bin/flutter}\"
             cd \"\${PROJECT_DIR}\"
             git fetch origin
-            git checkout \"${DEPLOY_BRANCH}\"
-            git pull origin \"${DEPLOY_BRANCH}\"
+            # Ensure a clean working tree on the server (CI-managed deploy checkout).
+            git reset --hard
+            git clean -fd
+            # Force the branch to match the remote exactly (avoid pull conflicts).
+            git checkout -B \"${DEPLOY_BRANCH}\" \"origin/${DEPLOY_BRANCH}\"
+            git reset --hard \"origin/${DEPLOY_BRANCH}\"
+            git clean -fd
             PROJECT_DIR=\"\${PROJECT_DIR}\" WEB_ROOT=\"\${WEB_ROOT}\" FLUTTER_BIN=\"\${FLUTTER_BIN}\" bash scripts/deploy_web.sh
           '"
 
