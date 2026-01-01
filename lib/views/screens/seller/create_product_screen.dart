@@ -193,11 +193,16 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
         ? _imageUrlController.text.trim() 
         : null;
     
-    // If local image selected, we'd upload it here (for now use placeholder)
+    // If local image selected, we'd upload it here (if/when uploads are wired for product images).
     if (_selectedImage != null && imageUrl == null) {
-      // In production, upload to server and get URL
-      // For now, use a placeholder
-      imageUrl = 'https://via.placeholder.com/400x400?text=${_nameController.text.trim()}';
+      Get.snackbar(
+        'error'.tr,
+        'upload_media'.tr,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
     }
 
     final product = await _controller.createProduct(
