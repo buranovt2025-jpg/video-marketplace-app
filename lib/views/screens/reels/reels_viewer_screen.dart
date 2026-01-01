@@ -4,6 +4,7 @@ import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/controllers/cart_controller.dart';
 import 'package:tiktok_tutorial/services/api_service.dart';
+import 'package:tiktok_tutorial/views/screens/buyer/cart_screen.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/product_detail_screen.dart';
 import 'package:tiktok_tutorial/views/widgets/video_player_iten.dart';
 import 'package:tiktok_tutorial/utils/formatters.dart';
@@ -11,6 +12,7 @@ import 'package:tiktok_tutorial/utils/media_url.dart';
 import 'package:tiktok_tutorial/utils/money.dart';
 import 'package:tiktok_tutorial/utils/share_utils.dart';
 import 'package:tiktok_tutorial/views/widgets/comments_coming_soon_sheet.dart';
+import 'package:tiktok_tutorial/views/widgets/product_quick_buy_sheet.dart';
 
 /// Full-screen vertical reel viewer (TikTok-like).
 ///
@@ -135,6 +137,33 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                         icon: const Icon(Icons.arrow_back, color: Colors.white),
                       ),
                       const Spacer(),
+                      Obx(() {
+                        final count = _cartController.itemCount;
+                        return Stack(
+                          children: [
+                            IconButton(
+                              onPressed: () => Get.to(() => const CartScreen()),
+                              icon: const Icon(Icons.shopping_cart_outlined, color: Colors.white),
+                            ),
+                            if (count > 0)
+                              Positioned(
+                                right: 6,
+                                top: 6,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: buttonColor ?? primaryColor,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Text(
+                                    '$count',
+                                    style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      }),
                       IconButton(
                         onPressed: () async {
                           await copyToClipboardWithToast(buildReelShareText(reel));
@@ -230,18 +259,19 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                           onTap: () {
                             final productId = reel['product_id']?.toString();
                             if (productId == null || productId.isEmpty) return;
-                            // Best effort: find product in loaded list.
                             final p = _findProduct(productId);
                             if (p != null) {
-                              Get.to(() => ProductDetailScreen(product: Map<String, dynamic>.from(p)));
+                              Get.bottomSheet(
+                                ProductQuickBuySheet(product: Map<String, dynamic>.from(p)),
+                                isScrollControlled: true,
+                              );
                               return;
                             }
+                            // Fallback: open a lightweight "product not found" toast.
                             Get.snackbar(
                               'product'.tr,
-                              'product_number'.trParams({'id': productId}),
+                              'product_not_found'.tr,
                               snackPosition: SnackPosition.BOTTOM,
-                              backgroundColor: Colors.white,
-                              colorText: Colors.black,
                             );
                           },
                           trailing: _buildAddToCartTrailing(reel),
