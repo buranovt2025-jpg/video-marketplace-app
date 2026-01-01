@@ -10,6 +10,7 @@ set -euo pipefail
 #
 # Optional env:
 #   API_URL=https://app-owphiuvd.fly.dev
+#   FEATURE_API_URL=http://127.0.0.1:8010 (optional; overrides uploads/reviews base)
 #   WEB_URL=https://165.232.81.31
 #   SMOKE_EMAIL=buyer@demo.com
 #   SMOKE_PASSWORD=demo123
@@ -20,6 +21,7 @@ set -euo pipefail
 # - For presigned upload validation, it checks that /api/uploads responds and returns upload_url/file_url.
 
 API_URL="${API_URL:-https://app-owphiuvd.fly.dev}"
+FEATURE_API_URL="${FEATURE_API_URL:-$API_URL}"
 WEB_URL="${WEB_URL:-https://165.232.81.31}"
 SMOKE_EMAIL="${SMOKE_EMAIL:-buyer@demo.com}"
 SMOKE_PASSWORD="${SMOKE_PASSWORD:-demo123}"
@@ -34,6 +36,7 @@ require python3
 
 echo "== Backend acceptance checks =="
 echo "API_URL=$API_URL"
+echo "FEATURE_API_URL=$FEATURE_API_URL"
 echo "WEB_URL=$WEB_URL"
 echo "PRODUCT_ID=$PRODUCT_ID"
 echo ""
@@ -53,7 +56,7 @@ echo "OK: login"
 
 echo ""
 echo "== 1) Reviews endpoints =="
-REV_HTTP="$(curl -sS -o /dev/null -w "%{http_code}" "$API_URL/api/products/$PRODUCT_ID/reviews")"
+REV_HTTP="$(curl -sS -o /dev/null -w "%{http_code}" "$FEATURE_API_URL/api/products/$PRODUCT_ID/reviews")"
 if [ "$REV_HTTP" = "404" ] || [ "$REV_HTTP" = "405" ] || [ "$REV_HTTP" = "501" ]; then
   echo "WARN: reviews endpoint not available yet (HTTP $REV_HTTP)"
 else
@@ -63,7 +66,7 @@ fi
 CREATE_REV_HTTP="$(curl -sS -o /dev/null -w "%{http_code}" \
   -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
   -d '{"rating":5,"text":"smoke"}' \
-  "$API_URL/api/products/$PRODUCT_ID/reviews")"
+  "$FEATURE_API_URL/api/products/$PRODUCT_ID/reviews")"
 if [ "$CREATE_REV_HTTP" = "404" ] || [ "$CREATE_REV_HTTP" = "405" ] || [ "$CREATE_REV_HTTP" = "501" ]; then
   echo "WARN: create review endpoint not available yet (HTTP $CREATE_REV_HTTP)"
 else
@@ -75,7 +78,7 @@ echo "== 2) Upload endpoint =="
 UPLOAD_JSON_HTTP="$(curl -sS -w "\n%{http_code}" \
   -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
   -d '{"kind":"reel_video","filename":"smoke.mp4","content_type":"video/mp4","size_bytes":1024}' \
-  "$API_URL/api/uploads" || true)"
+  "$FEATURE_API_URL/api/uploads" || true)"
 
 UPLOAD_HTTP="$(printf '%s' "$UPLOAD_JSON_HTTP" | tail -n 1)"
 UPLOAD_BODY="$(printf '%s' "$UPLOAD_JSON_HTTP" | sed '$d')"
