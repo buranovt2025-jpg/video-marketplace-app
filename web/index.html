@@ -34,14 +34,70 @@
 
   <title>GoGoMarket</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- Performance: start fetching JS ASAP -->
+  <link rel="preload" href="main.dart.js" as="script">
+
+  <style>
+    /* Lightweight HTML splash (improves FCP/SpeedIndex on slow JS loads). */
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: #FF6B00;
+    }
+    #gogomarket-splash {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 16px;
+      background: #FF6B00;
+      color: #FFFFFF;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      text-align: center;
+      z-index: 9999;
+    }
+    #gogomarket-splash .title {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+      line-height: 1.1;
+    }
+    #gogomarket-splash .subtitle {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+    #gogomarket-splash .spinner {
+      width: 36px;
+      height: 36px;
+      border-radius: 999px;
+      border: 3px solid rgba(255, 255, 255, 0.35);
+      border-top-color: #FFFFFF;
+      animation: gogomarket-spin 0.9s linear infinite;
+    }
+    @keyframes gogomarket-spin { to { transform: rotate(360deg); } }
+  </style>
 </head>
 <body>
+  <div id="gogomarket-splash" aria-label="Loading">
+    <div class="title">GoGoMarket</div>
+    <div class="spinner" aria-hidden="true"></div>
+    <div class="subtitle">Загрузка…</div>
+  </div>
+
   <!-- This script installs service_worker.js to provide PWA functionality to
        application. For more information, see:
        https://developers.google.com/web/fundamentals/primers/service-workers -->
   <script>
     var serviceWorkerVersion = null;
     var scriptLoaded = false;
+    function removeSplash() {
+      var el = document.getElementById('gogomarket-splash');
+      if (el && el.parentNode) el.parentNode.removeChild(el);
+    }
     function loadMainDartJs() {
       if (scriptLoaded) {
         return;
@@ -50,6 +106,7 @@
       var scriptTag = document.createElement('script');
       scriptTag.src = 'main.dart.js';
       scriptTag.type = 'application/javascript';
+      scriptTag.defer = true;
       document.body.append(scriptTag);
     }
 
@@ -61,6 +118,10 @@
     // We intentionally disable service workers here and always load via the
     // plain <script> tag.
     console.log('Service Worker registration disabled (self-signed SSL hotfix).');
+
+    // Remove HTML splash on first Flutter frame.
+    window.addEventListener('flutter-first-frame', removeSplash);
+
     loadMainDartJs();
   </script>
 </body>

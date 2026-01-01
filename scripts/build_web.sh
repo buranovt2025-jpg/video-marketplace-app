@@ -47,7 +47,7 @@ if [ -n "${DART_DEFINES}" ]; then
   done
 fi
 
-"$FLUTTER_BIN" build web --release --pwa-strategy="$PWA_STRATEGY" "${extra_defines[@]}"
+"$FLUTTER_BIN" build web --release --no-source-maps --tree-shake-icons --pwa-strategy="$PWA_STRATEGY" "${extra_defines[@]}"
 
 echo "== Build OK =="
 
