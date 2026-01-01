@@ -11,6 +11,52 @@ class ApiService {
       String.fromEnvironment('API_BASE_URL', defaultValue: 'https://app-owphiuvd.fly.dev');
   static String? _token;
   static const Duration _defaultTimeout = Duration(seconds: 30);
+
+  // Upload (presigned URL) scaffolding
+  static Future<Map<String, dynamic>> createUploadSession({
+    required String kind,
+    required String filename,
+    required String contentType,
+    required int sizeBytes,
+  }) async {
+    final response = await http
+        .post(
+          Uri.parse('$baseUrl/api/uploads'),
+          headers: _headers,
+          body: jsonEncode({
+            'kind': kind,
+            'filename': filename,
+            'content_type': contentType,
+            'size_bytes': sizeBytes,
+          }),
+        )
+        .timeout(_defaultTimeout);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    }
+    return await _throwApi(response, fallbackMessage: 'Failed to create upload session');
+  }
+
+  /// Uploads bytes to a presigned URL (S3-style).
+  /// Returns true when server responds 2xx.
+  static Future<void> uploadToPresignedUrl({
+    required Uri uploadUrl,
+    required List<int> bytes,
+    Map<String, String>? headers,
+  }) async {
+    final response = await http
+        .put(
+          uploadUrl,
+          headers: headers,
+          body: bytes,
+        )
+        .timeout(_defaultTimeout);
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ApiException(response.statusCode, _extractErrorMessage(response, 'Upload failed'));
+    }
+  }
   
   static Map<String, dynamic>? _tryDecodeJsonObject(String body) {
     try {

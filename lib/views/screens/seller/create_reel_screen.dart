@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/services/api_service.dart';
+import 'package:tiktok_tutorial/utils/feature_flags.dart';
 import 'package:tiktok_tutorial/utils/formatters.dart';
 import 'package:tiktok_tutorial/utils/media_url.dart';
 import 'package:tiktok_tutorial/utils/money.dart';
@@ -17,8 +20,11 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
   final TextEditingController _captionController = TextEditingController();
   final TextEditingController _videoUrlController = TextEditingController();
   final MarketplaceController _controller = Get.find<MarketplaceController>();
+  final ImagePicker _picker = ImagePicker();
   
   String? _selectedProductId;
+  bool _useUpload = false;
+  XFile? _pickedVideo;
 
   @override
   void initState() {
@@ -34,32 +40,81 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
   }
 
   Future<void> _createReel() async {
-    if (_videoUrlController.text.isEmpty) {
-      Get.snackbar(
-        'error'.tr,
-        'video_url_required'.tr,
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-      return;
-    }
-    
-    final url = _videoUrlController.text.trim();
-    if (!looksLikeVideoUrl(url)) {
-      Get.snackbar(
-        'error'.tr,
-        'video_url_invalid'.tr,
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 5),
-      );
-      return;
+    String? finalVideoUrl;
+
+    if (kEnableMediaUpload && _useUpload) {
+      if (_pickedVideo == null) {
+        Get.snackbar(
+          'error'.tr,
+          'media_missing'.tr,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      // Backend may not support uploads yet — keep it safe and explicit.
+      // When backend is ready (see docs/MEDIA_UPLOAD.md), this block can be enabled.
+      try {
+        final bytes = await _pickedVideo!.readAsBytes();
+        // Best-effort content-type; backend can also derive it.
+        final session = await ApiService.createUploadSession(
+          kind: 'reel_video',
+          filename: _pickedVideo!.name,
+          contentType: 'video/mp4',
+          sizeBytes: bytes.length,
+        );
+        final uploadUrl = session['upload_url']?.toString();
+        final fileUrl = session['file_url']?.toString();
+        if (uploadUrl == null || uploadUrl.isEmpty || fileUrl == null || fileUrl.isEmpty) {
+          throw Exception('Invalid upload session');
+        }
+        await ApiService.uploadToPresignedUrl(
+          uploadUrl: Uri.parse(uploadUrl),
+          bytes: bytes,
+          headers: (session['headers'] is Map) ? Map<String, String>.from(session['headers'] as Map) : null,
+        );
+        finalVideoUrl = fileUrl;
+      } catch (e) {
+        Get.snackbar(
+          'error'.tr,
+          'upload_failed'.tr,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return;
+      }
+    } else {
+      if (_videoUrlController.text.isEmpty) {
+        Get.snackbar(
+          'error'.tr,
+          'video_url_required'.tr,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      final url = _videoUrlController.text.trim();
+      if (!looksLikeVideoUrl(url)) {
+        Get.snackbar(
+          'error'.tr,
+          'video_url_invalid'.tr,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 5),
+        );
+        return;
+      }
+      finalVideoUrl = url;
     }
 
     final reel = await _controller.createReel(
-      videoUrl: url,
+      videoUrl: finalVideoUrl,
       caption: _captionController.text.isNotEmpty 
           ? _captionController.text.trim() 
           : null,
@@ -131,10 +186,76 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (kEnableMediaUpload) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _useUpload = false),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: !_useUpload ? buttonColor!.withOpacity(0.2) : Colors.grey[900],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: !_useUpload ? buttonColor! : Colors.grey[800]!),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.link, color: !_useUpload ? buttonColor : Colors.grey[500]),
+                            const SizedBox(width: 8),
+                            Text(
+                              'use_link'.tr,
+                              style: TextStyle(
+                                color: !_useUpload ? Colors.white : Colors.grey[500],
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _useUpload = true),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: _useUpload ? buttonColor!.withOpacity(0.2) : Colors.grey[900],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: _useUpload ? buttonColor! : Colors.grey[800]!),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.cloud_upload, color: _useUpload ? buttonColor : Colors.grey[500]),
+                            const SizedBox(width: 8),
+                            Text(
+                              'upload_media'.tr,
+                              style: TextStyle(
+                                color: _useUpload ? Colors.white : Colors.grey[500],
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
+
             // Video preview area
             GestureDetector(
               onTap: () {
-                // TODO: Implement video picker
+                if (kEnableMediaUpload && _useUpload) {
+                  // ignore: discarded_futures
+                  _pickVideo();
+                }
               },
               child: Container(
                 height: 400,
@@ -149,7 +270,7 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
                     Icon(Icons.video_call, size: 64, color: Colors.grey[600]),
                     const SizedBox(height: 16),
                     Text(
-                      'add_video'.tr,
+                      (kEnableMediaUpload && _useUpload) ? 'choose_file'.tr : 'add_video'.tr,
                       style: TextStyle(
                         color: Colors.grey[500],
                         fontSize: 16,
@@ -163,34 +284,69 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
                         fontSize: 12,
                       ),
                     ),
+                    if (kEnableMediaUpload && _useUpload && _pickedVideo != null) ...[
+                      const SizedBox(height: 12),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          '${'selected_file'.tr}: ${_pickedVideo!.name}',
+                          style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 16),
             
-            // Video URL field (temporary until file upload is implemented)
-            TextField(
-              controller: _videoUrlController,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                labelText: 'video_url_required'.tr,
-                labelStyle: TextStyle(color: Colors.grey[400]),
-                hintText: 'video_url_hint_mp4'.tr,
-                hintStyle: TextStyle(color: Colors.grey[600]),
-                prefixIcon: Icon(Icons.link, color: Colors.grey[400]),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey[700]!),
+            // Video URL field (default) / Upload info (feature-flagged)
+            if (!(kEnableMediaUpload && _useUpload))
+              TextField(
+                controller: _videoUrlController,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: 'video_url_required'.tr,
+                  labelStyle: TextStyle(color: Colors.grey[400]),
+                  hintText: 'video_url_hint_mp4'.tr,
+                  hintStyle: TextStyle(color: Colors.grey[600]),
+                  prefixIcon: Icon(Icons.link, color: Colors.grey[400]),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey[700]!),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: buttonColor!),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[900],
                 ),
-                focusedBorder: OutlineInputBorder(
+              )
+            else
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.grey[900],
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: buttonColor!),
+                  border: Border.all(color: Colors.grey[800]!),
                 ),
-                filled: true,
-                fillColor: Colors.grey[900],
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.grey[500]),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'upload_uses_backend'.tr,
+                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
             const SizedBox(height: 24),
             
             // Caption field
@@ -348,5 +504,19 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _pickVideo() async {
+    try {
+      final x = await _picker.pickVideo(source: ImageSource.gallery);
+      if (!mounted) return;
+      setState(() => _pickedVideo = x);
+    } catch (_) {
+      Get.snackbar(
+        'error'.tr,
+        'upload_failed'.tr,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
   }
 }

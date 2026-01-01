@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/services/api_service.dart';
+import 'package:tiktok_tutorial/utils/feature_flags.dart';
 import 'package:tiktok_tutorial/utils/formatters.dart';
 import 'package:tiktok_tutorial/utils/media_url.dart';
 import 'package:tiktok_tutorial/utils/money.dart';
@@ -18,9 +21,12 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
   final TextEditingController _imageUrlController = TextEditingController();
   final TextEditingController _videoUrlController = TextEditingController();
   final MarketplaceController _controller = Get.find<MarketplaceController>();
+  final ImagePicker _picker = ImagePicker();
   
   String? _selectedProductId;
   bool _isVideo = false;
+  bool _useUpload = false;
+  XFile? _pickedFile;
 
   @override
   void initState() {
@@ -37,36 +43,91 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
   }
 
   Future<void> _createStory() async {
-    final hasImage = _imageUrlController.text.isNotEmpty;
-    final hasVideo = _videoUrlController.text.isNotEmpty;
+    String? finalImageUrl;
+    String? finalVideoUrl;
+
+    if (kEnableMediaUpload && _useUpload) {
+      if (_pickedFile == null) {
+        Get.snackbar(
+          'error'.tr,
+          'media_missing'.tr,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      try {
+        final bytes = await _pickedFile!.readAsBytes();
+        final kind = _isVideo ? 'story_video' : 'story_image';
+        final contentType = _isVideo ? 'video/mp4' : 'image/jpeg';
+        final session = await ApiService.createUploadSession(
+          kind: kind,
+          filename: _pickedFile!.name,
+          contentType: contentType,
+          sizeBytes: bytes.length,
+        );
+        final uploadUrl = session['upload_url']?.toString();
+        final fileUrl = session['file_url']?.toString();
+        if (uploadUrl == null || uploadUrl.isEmpty || fileUrl == null || fileUrl.isEmpty) {
+          throw Exception('Invalid upload session');
+        }
+        await ApiService.uploadToPresignedUrl(
+          uploadUrl: Uri.parse(uploadUrl),
+          bytes: bytes,
+          headers: (session['headers'] is Map) ? Map<String, String>.from(session['headers'] as Map) : null,
+        );
+        if (_isVideo) {
+          finalVideoUrl = fileUrl;
+        } else {
+          finalImageUrl = fileUrl;
+        }
+      } catch (_) {
+        Get.snackbar(
+          'error'.tr,
+          'upload_failed'.tr,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return;
+      }
+    } else {
+      final hasImage = _imageUrlController.text.isNotEmpty;
+      final hasVideo = _videoUrlController.text.isNotEmpty;
     
-    if (!hasImage && !hasVideo) {
-      Get.snackbar(
-        'error'.tr,
-        'media_missing'.tr,
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-      return;
-    }
+      if (!hasImage && !hasVideo) {
+        Get.snackbar(
+          'error'.tr,
+          'media_missing'.tr,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return;
+      }
     
-    final videoUrl = hasVideo ? _videoUrlController.text.trim() : null;
-    if (videoUrl != null && videoUrl.isNotEmpty && !looksLikeVideoUrl(videoUrl)) {
-      Get.snackbar(
-        'error'.tr,
-        'video_url_invalid'.tr,
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 5),
-      );
-      return;
+      final videoUrl = hasVideo ? _videoUrlController.text.trim() : null;
+      if (videoUrl != null && videoUrl.isNotEmpty && !looksLikeVideoUrl(videoUrl)) {
+        Get.snackbar(
+          'error'.tr,
+          'video_url_invalid'.tr,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 5),
+        );
+        return;
+      }
+
+      finalImageUrl = hasImage ? _imageUrlController.text.trim() : null;
+      finalVideoUrl = videoUrl;
     }
 
     final story = await _controller.createStory(
-      imageUrl: hasImage ? _imageUrlController.text.trim() : null,
-      videoUrl: videoUrl,
+      imageUrl: finalImageUrl,
+      videoUrl: finalVideoUrl,
       caption: _captionController.text.isNotEmpty 
           ? _captionController.text.trim() 
           : null,
@@ -138,6 +199,69 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (kEnableMediaUpload) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _useUpload = false),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: !_useUpload ? buttonColor!.withOpacity(0.2) : Colors.grey[900],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: !_useUpload ? buttonColor! : Colors.grey[800]!),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.link, color: !_useUpload ? buttonColor : Colors.grey[500]),
+                            const SizedBox(width: 8),
+                            Text(
+                              'use_link'.tr,
+                              style: TextStyle(
+                                color: !_useUpload ? Colors.white : Colors.grey[500],
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _useUpload = true),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: _useUpload ? buttonColor!.withOpacity(0.2) : Colors.grey[900],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: _useUpload ? buttonColor! : Colors.grey[800]!),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.cloud_upload, color: _useUpload ? buttonColor : Colors.grey[500]),
+                            const SizedBox(width: 8),
+                            Text(
+                              'upload_media'.tr,
+                              style: TextStyle(
+                                color: _useUpload ? Colors.white : Colors.grey[500],
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
+
             // Type selector
             Row(
               children: [
@@ -213,7 +337,10 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
             // Media preview area
             GestureDetector(
               onTap: () {
-                // TODO: Implement media picker
+                if (kEnableMediaUpload && _useUpload) {
+                  // ignore: discarded_futures
+                  _pickMedia();
+                }
               },
               child: Container(
                 height: 300,
@@ -232,7 +359,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      _isVideo ? 'add_video'.tr : 'add_photo'.tr,
+                      (kEnableMediaUpload && _useUpload) ? 'choose_file'.tr : (_isVideo ? 'add_video'.tr : 'add_photo'.tr),
                       style: TextStyle(
                         color: Colors.grey[500],
                         fontSize: 16,
@@ -246,14 +373,27 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                         fontSize: 12,
                       ),
                     ),
+                    if (kEnableMediaUpload && _useUpload && _pickedFile != null) ...[
+                      const SizedBox(height: 12),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          '${'selected_file'.tr}: ${_pickedFile!.name}',
+                          style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 16),
             
-            // URL field (temporary until file upload is implemented)
-            if (_isVideo)
+            // URL field (default) / Upload info (feature-flagged)
+            if (!(kEnableMediaUpload && _useUpload) && _isVideo)
               TextField(
                 controller: _videoUrlController,
                 style: const TextStyle(color: Colors.white),
@@ -275,7 +415,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                   fillColor: Colors.grey[900],
                 ),
               )
-            else
+            else if (!(kEnableMediaUpload && _useUpload))
               TextField(
                 controller: _imageUrlController,
                 style: const TextStyle(color: Colors.white),
@@ -297,6 +437,28 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                   fillColor: Colors.grey[900],
                 ),
               ),
+            if (kEnableMediaUpload && _useUpload) ...[
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.grey[900],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey[800]!),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.grey[500]),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'upload_uses_backend'.tr,
+                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 24),
             
             // Caption field
@@ -443,5 +605,21 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _pickMedia() async {
+    try {
+      final x = _isVideo
+          ? await _picker.pickVideo(source: ImageSource.gallery)
+          : await _picker.pickImage(source: ImageSource.gallery);
+      if (!mounted) return;
+      setState(() => _pickedFile = x);
+    } catch (_) {
+      Get.snackbar(
+        'error'.tr,
+        'upload_failed'.tr,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
   }
 }
