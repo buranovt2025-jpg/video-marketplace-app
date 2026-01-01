@@ -2005,15 +2005,21 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      _buildStatItem('products'.tr, _controller.myProducts.length.toString()),
-                      _buildStatItem('orders'.tr, _controller.orders.length.toString()),
-                      _buildStatItem('reels'.tr, _controller.reels.where((r) => r['author_id'] == _controller.userId).length.toString()),
+                      if (_isSeller) ...[
+                        _buildStatItem('products'.tr, _controller.myProducts.length.toString()),
+                        _buildStatItem('orders'.tr, _controller.orders.length.toString()),
+                        _buildStatItem('reels'.tr, _controller.reels.where((r) => r['author_id'] == _controller.userId).length.toString()),
+                      ] else ...[
+                        _buildStatItem('orders'.tr, _controller.orders.length.toString()),
+                        _buildStatItem('favorites'.tr, _favoritesController.favorites.length.toString()),
+                        _buildStatItem('cart'.tr, _cartController.itemCount.toString()),
+                      ],
                     ],
                   ),
                   
                   const SizedBox(height: 32),
                   
-                  // My Cabinet button
+                  // Seller: My Cabinet. Buyer: Orders (moved into profile).
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
@@ -2024,8 +2030,8 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                           Get.to(() => const BuyerCabinetScreen());
                         }
                       },
-                      icon: const Icon(Icons.dashboard),
-                      label: Text('my_cabinet'.tr),
+                      icon: Icon(_isSeller ? Icons.dashboard : Icons.shopping_bag_outlined),
+                      label: Text(_isSeller ? 'my_cabinet'.tr : 'orders'.tr),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primaryColor,
                         foregroundColor: Colors.white,
@@ -2036,27 +2042,6 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                       ),
                     ),
                   ),
-
-                  // Orders lives inside Profile for buyers (no bottom tab)
-                  if (_isBuyer) ...[
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: () => Get.to(() => const BuyerCabinetScreen()),
-                        icon: const Icon(Icons.shopping_bag_outlined),
-                        label: Text('orders'.tr),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          side: BorderSide(color: Colors.grey[700]!),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
                   
                   const SizedBox(height: 16),
                   
