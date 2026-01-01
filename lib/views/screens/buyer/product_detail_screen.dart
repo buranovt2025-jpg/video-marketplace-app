@@ -332,7 +332,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             onPressed: () {
               if (product['seller_id'] != null) {
                 Get.to(() => ChatScreen(
-                  userId: product['seller_id'],
+                  userId: product['seller_id'].toString(),
                   userName: product['seller_name'] ?? 'seller_fallback'.tr,
                 ));
               }

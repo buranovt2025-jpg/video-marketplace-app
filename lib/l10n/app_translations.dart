@@ -692,6 +692,7 @@ class AppTranslations extends Translations {
           'additional_info': 'Дополнительная информация',
           'describe_problem_optional': 'Опишите проблему подробнее (необязательно)...',
           'send_report': 'Отправить жалобу',
+          'failed_load_messages': 'Не удалось загрузить сообщения',
         },
     
     'uz_UZ': {
@@ -1363,6 +1364,7 @@ class AppTranslations extends Translations {
             'additional_info': 'Qo‘shimcha ma’lumot',
             'describe_problem_optional': 'Muammoni batafsil yozing (ixtiyoriy)...',
             'send_report': 'Shikoyat yuborish',
+            'failed_load_messages': 'Xabarlarni yuklab bo‘lmadi',
       
       // Nearby sellers
       'nearby_sellers': 'Yaqindagi sotuvchilar',
@@ -2049,6 +2051,7 @@ class AppTranslations extends Translations {
           'additional_info': 'Additional information',
           'describe_problem_optional': 'Describe the issue in more detail (optional)...',
           'send_report': 'Send report',
+          'failed_load_messages': 'Failed to load messages',
         },
   };
 }

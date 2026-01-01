@@ -464,7 +464,7 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () => Get.to(() => ChatScreen(
-                      userId: userId,
+                      userId: userId.toString(),
                       userName: name,
                     )),
                     icon: Icon(Icons.chat_bubble_outline, color: Colors.grey[400], size: 18),

@@ -40,16 +40,26 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _loadMessages() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
     try {
-      final messages = await _controller.getChatMessages(widget.userId);
+      final messages = await _controller
+          .getChatMessages(widget.userId)
+          .timeout(const Duration(seconds: 12));
+      if (!mounted) return;
       setState(() {
         _messages = messages;
         _isLoading = false;
       });
       _scrollToBottom();
     } catch (e) {
+      if (!mounted) return;
       setState(() => _isLoading = false);
+      Get.snackbar(
+        'error'.tr,
+        'failed_load_messages'.tr,
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
   }
 

@@ -437,8 +437,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 onPressed: () {
                   if (_order['seller_id'] != null) {
                     Get.to(() => ChatScreen(
-                      userId: _order['seller_id'],
-                              userName: _order['seller_name'] ?? 'seller_fallback'.tr,
+                      userId: _order['seller_id'].toString(),
+                      userName: _order['seller_name'] ?? 'seller_fallback'.tr,
                     ));
                   }
                 },
@@ -457,8 +457,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 onPressed: () {
                   if (_order['courier_id'] != null) {
                     Get.to(() => ChatScreen(
-                      userId: _order['courier_id'],
-                              userName: _order['courier_name'] ?? 'courier'.tr,
+                      userId: _order['courier_id'].toString(),
+                      userName: _order['courier_name'] ?? 'courier'.tr,
                     ));
                   } else {
                     Get.snackbar(
