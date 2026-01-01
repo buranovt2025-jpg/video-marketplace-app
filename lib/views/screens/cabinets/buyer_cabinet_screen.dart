@@ -531,16 +531,16 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
               },
               itemBuilder: (context) => [
                 if (!isDefault)
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'default',
                     child: Text('make_primary'.tr, style: TextStyle(color: Colors.white)),
                   ),
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'edit',
                   child: Text('edit'.tr, style: TextStyle(color: Colors.white)),
                 ),
                 if (_addresses.length > 1)
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'delete',
                     child: Text('delete'.tr, style: TextStyle(color: Colors.red)),
                   ),
@@ -630,10 +630,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
       AlertDialog(
         backgroundColor: cardColor,
         title: Text('delete_address'.tr, style: const TextStyle(color: Colors.white)),
-        content: const Text(
-          'delete_address_confirm'.tr,
-          style: TextStyle(color: Colors.white70),
-        ),
+        content: Text('delete_address_confirm'.tr, style: const TextStyle(color: Colors.white70)),
         actions: [
           TextButton(
             onPressed: () => Get.back(),

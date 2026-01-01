@@ -169,7 +169,7 @@ class _NearbySellersScreenState extends State<NearbySellersScreen> {
 
   Widget _buildContent() {
     if (_isLoading) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
