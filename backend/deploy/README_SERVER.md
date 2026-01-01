@@ -1,12 +1,12 @@
 # Deploy backend on the same server (165.232.81.31)
 
-Цель: запустить FastAPI backend (из `backend/`) на **том же сервере**, где nginx уже проксирует `/api` на `127.0.0.1:8000`.
+Цель: запустить FastAPI backend (из `backend/`) на **том же сервере**, не ломая существующий backend. Рекомендуемый порт для этого модуля: **`127.0.0.1:8010`**.
 
 ## 0) Важно
 
 - Этот backend модуль **не заменяет** ваш полный backend (products/orders/chat).  
   Он добавляет endpoints для **uploads** и **reviews**. Интегрировать нужно в существующий backend, либо расширять этот модуль.
-- Если на сервере уже работает backend на `127.0.0.1:8000`, новый сервис конфликтует по порту.
+- Если на сервере уже работает backend на `:8000` (как у вас), новый сервис должен слушать **другой порт** (здесь: `8010`).
 
 ## 1) Установка зависимостей (Ubuntu)
 
@@ -79,12 +79,12 @@ sudo journalctl -u gogomarket-backend -f
 ## 6) Проверка
 
 ```bash
-curl -fsS http://127.0.0.1:8000/healthz
+curl -fsS http://127.0.0.1:8010/healthz
 ```
 
 Проверить endpoints:
 
 ```bash
-RUN_BACKEND_CHECKS=1 bash scripts/smoke_test_prod.sh
+API_URL=https://app-owphiuvd.fly.dev FEATURE_API_URL=http://127.0.0.1:8010 RUN_BACKEND_CHECKS=1 bash scripts/smoke_test_prod.sh
 ```
 
