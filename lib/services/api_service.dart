@@ -11,6 +11,7 @@ class ApiService {
       String.fromEnvironment('API_BASE_URL', defaultValue: 'https://app-owphiuvd.fly.dev');
   static String? _token;
   static const Duration _defaultTimeout = Duration(seconds: 30);
+  static const Duration _uploadTimeout = Duration(minutes: 5);
 
   // Upload (presigned URL) scaffolding
   static Future<Map<String, dynamic>> createUploadSession({
@@ -44,14 +45,21 @@ class ApiService {
     required Uri uploadUrl,
     required List<int> bytes,
     Map<String, String>? headers,
+    Duration? timeout,
   }) async {
+    final effectiveHeaders = <String, String>{
+      // Content-Type is usually required by the storage signature.
+      // Caller can override it by providing a header explicitly.
+      if (headers != null) ...headers,
+      if (headers == null || !headers.keys.map((k) => k.toLowerCase()).contains('content-type')) 'Content-Type': 'application/octet-stream',
+    };
     final response = await http
         .put(
           uploadUrl,
-          headers: headers,
+          headers: effectiveHeaders,
           body: bytes,
         )
-        .timeout(_defaultTimeout);
+        .timeout(timeout ?? _uploadTimeout);
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw ApiException(response.statusCode, _extractErrorMessage(response, 'Upload failed'));

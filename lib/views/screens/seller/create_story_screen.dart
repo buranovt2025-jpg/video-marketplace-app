@@ -28,6 +28,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
   bool _useUpload = false;
   XFile? _pickedFile;
   bool _isUploading = false;
+  static const int _maxUploadBytes = 50 * 1024 * 1024; // 50 MB
 
   @override
   void initState() {
@@ -62,6 +63,17 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
 
       try {
         if (mounted) setState(() => _isUploading = true);
+        final sizeBytes = await _pickedFile!.length();
+        if (sizeBytes > _maxUploadBytes) {
+          Get.snackbar(
+            'error'.tr,
+            'file_too_large'.trParams({'max': '50 MB'}),
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+          );
+          return;
+        }
         final bytes = await _pickedFile!.readAsBytes();
         final kind = _isVideo ? 'story_video' : 'story_image';
         final contentType = _isVideo ? 'video/mp4' : 'image/jpeg';
@@ -69,17 +81,24 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
           kind: kind,
           filename: _pickedFile!.name,
           contentType: contentType,
-          sizeBytes: bytes.length,
+          sizeBytes: sizeBytes,
         );
         final uploadUrl = session['upload_url']?.toString();
         final fileUrl = session['file_url']?.toString();
         if (uploadUrl == null || uploadUrl.isEmpty || fileUrl == null || fileUrl.isEmpty) {
           throw Exception('Invalid upload session');
         }
+        final hdr = <String, String>{};
+        if (session['headers'] is Map) {
+          for (final entry in (session['headers'] as Map).entries) {
+            hdr[entry.key.toString()] = entry.value.toString();
+          }
+        }
+        hdr.putIfAbsent('Content-Type', () => contentType);
         await ApiService.uploadToPresignedUrl(
           uploadUrl: Uri.parse(uploadUrl),
           bytes: bytes,
-          headers: (session['headers'] is Map) ? Map<String, String>.from(session['headers'] as Map) : null,
+          headers: hdr.isEmpty ? null : hdr,
         );
         if (_isVideo) {
           finalVideoUrl = fileUrl;
@@ -637,9 +656,11 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
 
   Future<void> _pickMedia() async {
     try {
+      final source = await _pickSource();
+      if (source == null) return;
       final x = _isVideo
-          ? await _picker.pickVideo(source: ImageSource.gallery)
-          : await _picker.pickImage(source: ImageSource.gallery);
+          ? await _picker.pickVideo(source: source)
+          : await _picker.pickImage(source: source);
       if (!mounted) return;
       setState(() => _pickedFile = x);
     } catch (_) {
@@ -649,5 +670,32 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
         snackPosition: SnackPosition.BOTTOM,
       );
     }
+  }
+
+  Future<ImageSource?> _pickSource() async {
+    return await Get.bottomSheet<ImageSource?>(
+      SafeArea(
+        child: Container(
+          color: Colors.grey[900],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_library, color: Colors.white),
+                title: Text('gallery'.tr, style: const TextStyle(color: Colors.white)),
+                onTap: () => Get.back(result: ImageSource.gallery),
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt, color: Colors.white),
+                title: Text('camera'.tr, style: const TextStyle(color: Colors.white)),
+                onTap: () => Get.back(result: ImageSource.camera),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+      isScrollControlled: true,
+    );
   }
 }
