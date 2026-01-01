@@ -79,6 +79,23 @@ ENABLE_MEDIA_UPLOAD=true ENABLE_PRODUCT_REVIEWS=true
 - CI preflight web build
 - server-side build при деплое
 
+## Renderer / скорость загрузки (Speed Index)
+
+Для Flutter Web существенная часть **Speed Index** — это время до первого Flutter-кадра.
+CanvasKit добавляет тяжёлую загрузку `canvaskit.wasm` (несколько MB), что часто ухудшает Speed Index на “холодном” прогоне.
+
+В этом репозитории выбор renderer управляется в `scripts/build_web.sh` через env `WEB_RENDERER`:
+
+- `WEB_RENDERER=html` (по умолчанию) — быстрее старт, лучше Lighthouse Speed Index
+- `WEB_RENDERER=canvaskit` — если нужен CanvasKit
+- `WEB_RENDERER=auto` — не форсировать
+
+Альтернативно (и приоритетнее), можно управлять через `DART_DEFINES`:
+
+```text
+FLUTTER_WEB_USE_SKIA=false
+```
+
 ## См. также
 
 - `docs/HANDOFF.md` — текущее состояние, урлы, грабли, последний деплой
