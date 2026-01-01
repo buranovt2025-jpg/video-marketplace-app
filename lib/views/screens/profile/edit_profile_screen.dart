@@ -101,8 +101,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
               if (_avatarUrl != null || _selectedImage != null)
                 ListTile(
-                  leading: const Icon(Icons.delete, color: Colors.red),
-                  title: Text('remove_photo'.tr, style: const TextStyle(color: Colors.red)),
+                  leading: const Icon(Icons.delete, color: primaryColor),
+                  title: Text('remove_photo'.tr, style: const TextStyle(color: primaryColor)),
                   onTap: () {
                     Navigator.pop(context);
                     setState(() {
@@ -124,7 +124,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         'error'.tr,
         'name_cannot_be_empty'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
       return;
@@ -168,7 +168,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         'error'.tr,
         '${'profile_update_failed'.tr}: $e',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
     } finally {

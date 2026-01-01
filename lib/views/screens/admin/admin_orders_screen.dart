@@ -114,14 +114,14 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
     final isSelected = _filterStatus == status;
     final statusColors = {
       'all': buttonColor,
-      'created': Colors.blue,
-      'accepted': Colors.orange,
-      'ready': Colors.purple,
-      'picked_up': Colors.indigo,
-      'in_transit': Colors.cyan,
+      'created': Colors.grey,
+      'accepted': accentColor,
+      'ready': primaryColor,
+      'picked_up': primaryColor,
+      'in_transit': accentColor,
       'delivered': Colors.green,
       'completed': Colors.green,
-      'cancelled': Colors.red,
+      'cancelled': Colors.grey,
     };
     
     return GestureDetector(
@@ -145,14 +145,14 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
 
   Widget _buildOrderCard(Map<String, dynamic> order) {
     final statusColors = {
-      'created': Colors.blue,
-      'accepted': Colors.orange,
-      'ready': Colors.purple,
-      'picked_up': Colors.indigo,
-      'in_transit': Colors.cyan,
+      'created': Colors.grey,
+      'accepted': accentColor,
+      'ready': primaryColor,
+      'picked_up': primaryColor,
+      'in_transit': accentColor,
       'delivered': Colors.green,
       'completed': Colors.green,
-      'cancelled': Colors.red,
+      'cancelled': Colors.grey,
     };
 
     final statusLabels = {
@@ -310,8 +310,8 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
             child: OutlinedButton(
               onPressed: () => _updateOrderStatus(order['id'], 'cancelled'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.red,
-                side: const BorderSide(color: Colors.red),
+                foregroundColor: primaryColor,
+                side: const BorderSide(color: primaryColor),
                 padding: const EdgeInsets.symmetric(vertical: 10),
               ),
               child: Text('cancel_order'.tr),
@@ -336,7 +336,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
         'error'.tr,
         'status_update_failed'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
     }

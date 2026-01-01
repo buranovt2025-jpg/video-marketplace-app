@@ -51,7 +51,7 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
           'error'.tr,
           'media_missing'.tr,
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
+          backgroundColor: Colors.black87,
           colorText: Colors.white,
         );
         return;
@@ -67,7 +67,7 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
             'error'.tr,
             'file_too_large'.trParams({'max': '50 MB'}),
             snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.black87,
             colorText: Colors.white,
           );
           return;
@@ -104,7 +104,7 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
             'error'.tr,
             'upload_not_supported'.tr,
             snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.black87,
             colorText: Colors.white,
             duration: const Duration(seconds: 4),
           );
@@ -114,7 +114,7 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
           'error'.tr,
           'upload_failed'.tr,
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
+          backgroundColor: Colors.black87,
           colorText: Colors.white,
         );
         }
@@ -128,7 +128,7 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
           'error'.tr,
           'video_url_required'.tr,
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
+          backgroundColor: Colors.black87,
           colorText: Colors.white,
         );
         return;
@@ -140,7 +140,7 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
           'error'.tr,
           'video_url_invalid'.tr,
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
+          backgroundColor: Colors.black87,
           colorText: Colors.white,
           duration: const Duration(seconds: 5),
         );
@@ -173,7 +173,7 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
             ? _controller.error.value 
             : 'create_reel_failed'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
     }
@@ -511,21 +511,21 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.purple.withOpacity(0.1),
+                color: accentColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.purple.withOpacity(0.3)),
+                border: Border.all(color: accentColor.withOpacity(0.3)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.tips_and_updates, color: Colors.purple[300]),
+                      const Icon(Icons.tips_and_updates, color: accentColor),
                       const SizedBox(width: 8),
                       Text(
                         'reels_tips_title'.tr,
                         style: TextStyle(
-                          color: Colors.purple[300],
+                          color: accentColor,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -534,7 +534,7 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
                   const SizedBox(height: 8),
                   Text(
                     'reels_tips_body'.tr,
-                    style: TextStyle(color: Colors.purple[300], fontSize: 13),
+                    style: const TextStyle(color: accentColor, fontSize: 13),
                   ),
                 ],
               ),

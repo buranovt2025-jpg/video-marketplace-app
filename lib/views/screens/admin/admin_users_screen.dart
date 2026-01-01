@@ -38,7 +38,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
         'error'.tr,
         'load_users_failed'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
     }
@@ -161,9 +161,9 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
   Widget _buildUserCard(Map<String, dynamic> user) {
     final roleColors = {
       'seller': Colors.green,
-      'buyer': Colors.blue,
-      'courier': Colors.orange,
-      'admin': Colors.purple,
+      'buyer': primaryColor,
+      'courier': accentColor,
+      'admin': Colors.white,
     };
 
     final role = user['role'] ?? 'buyer';

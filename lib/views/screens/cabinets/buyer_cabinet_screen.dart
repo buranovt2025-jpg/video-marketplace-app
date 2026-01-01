@@ -143,12 +143,12 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
         statusIcon = Icons.pending;
         break;
       case 'accepted':
-        statusColor = Colors.blue;
+        statusColor = primaryColor;
         statusText = 'status_accepted_by_seller'.tr;
         statusIcon = Icons.check_circle;
         break;
       case 'ready':
-        statusColor = Colors.purple;
+        statusColor = accentColor;
         statusText = 'ready_for_pickup'.tr;
         statusIcon = Icons.inventory;
         break;
@@ -163,7 +163,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
         statusIcon = Icons.done_all;
         break;
       case 'rejected':
-        statusColor = Colors.red;
+        statusColor = Colors.black87;
         statusText = 'rejected'.tr;
         statusIcon = Icons.cancel;
         break;
@@ -358,7 +358,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
                         color: Colors.black.withOpacity(0.5),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.favorite, color: Colors.red, size: 20),
+                      child: const Icon(Icons.favorite, color: primaryColor, size: 20),
                     ),
                   ),
                 ),
@@ -542,7 +542,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
                 if (_addresses.length > 1)
                   PopupMenuItem(
                     value: 'delete',
-                    child: Text('delete'.tr, style: TextStyle(color: Colors.red)),
+                    child: Text('delete'.tr, style: TextStyle(color: primaryColor)),
                   ),
               ],
             ),
@@ -642,7 +642,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
               Get.back();
               Get.snackbar('success'.tr, 'address_deleted'.tr, snackPosition: SnackPosition.BOTTOM);
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
             child: Text('delete'.tr),
           ),
         ],

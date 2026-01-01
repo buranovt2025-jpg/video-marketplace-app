@@ -182,7 +182,7 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
         'error'.tr,
         'quantity_gt_zero'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
       return;
@@ -199,7 +199,7 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
         'error'.tr,
         'upload_media'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
       return;
@@ -232,7 +232,7 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
             ? _controller.error.value 
             : 'product_create_failed'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
     }
@@ -491,18 +491,18 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
+                color: accentColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                border: Border.all(color: accentColor.withOpacity(0.3)),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.lightbulb_outline, color: Colors.blue[300]),
+                  const Icon(Icons.lightbulb_outline, color: accentColor),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       'add_photo_tip'.tr,
-                      style: TextStyle(color: Colors.blue[300], fontSize: 13),
+                      style: const TextStyle(color: accentColor, fontSize: 13),
                     ),
                   ),
                 ],

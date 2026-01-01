@@ -346,7 +346,7 @@ class _SellerAnalyticsScreenState extends State<SellerAnalyticsScreen> {
               _buildOrderStat('total_orders'.tr, total.toString(), Colors.white),
               _buildOrderStat('completed'.tr, completed.toString(), Colors.green),
               _buildOrderStat('pending'.tr, pending.toString(), Colors.orange),
-              _buildOrderStat('cancelled'.tr, cancelled.toString(), Colors.red),
+              _buildOrderStat('cancelled'.tr, cancelled.toString(), Colors.grey),
             ],
           ),
           const SizedBox(height: 16),

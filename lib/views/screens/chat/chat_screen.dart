@@ -399,7 +399,7 @@ class _ChatScreenState extends State<ChatScreen> {
             Icon(
               message['read'] == true ? Icons.done_all : Icons.done,
               size: 16,
-              color: message['read'] == true ? Colors.blue : Colors.grey,
+              color: message['read'] == true ? accentColor : Colors.grey,
             ),
           ],
         ],

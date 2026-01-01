@@ -76,7 +76,7 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
         'error'.tr,
         'coordinates_missing'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
       return;
@@ -124,7 +124,7 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
         'error'.tr,
         'status_update_failed'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
     }
@@ -196,7 +196,7 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
             _buildLocationCard(
               title: 'deliver_to_buyer_title'.tr,
               icon: Icons.location_on,
-              iconColor: Colors.blue,
+              iconColor: accentColor,
               address: _order['delivery_address'] ?? 'address_not_specified'.tr,
               name: _order['buyer_name'] ?? 'buyer'.tr,
               phone: _order['buyer_phone'],
@@ -233,14 +233,14 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
 
   Widget _buildStatusCard(String status) {
     final statusColors = {
-      'created': Colors.blue,
-      'accepted': Colors.orange,
-      'ready': Colors.purple,
-      'picked_up': Colors.indigo,
-      'in_transit': Colors.cyan,
+      'created': Colors.grey,
+      'accepted': accentColor,
+      'ready': primaryColor,
+      'picked_up': primaryColor,
+      'in_transit': accentColor,
       'delivered': Colors.green,
       'completed': Colors.green,
-      'cancelled': Colors.red,
+      'cancelled': Colors.grey,
     };
 
     final statusLabels = {
@@ -650,7 +650,7 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
                 : const Icon(Icons.qr_code_scanner),
               label: Text('scan_qr'.tr + ' - ' + 'confirm_pickup'.tr),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.purple,
+                backgroundColor: primaryColor,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
@@ -675,7 +675,7 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
                 : const Icon(Icons.directions_bike),
               label: Text('in_transit_to_buyer'.tr),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.cyan,
+                backgroundColor: accentColor,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(

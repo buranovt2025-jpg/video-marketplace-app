@@ -227,7 +227,7 @@ class _AdminContentScreenState extends State<AdminContentScreen> with SingleTick
                       left: 8,
                       child: Row(
                         children: [
-                          Icon(Icons.favorite, color: Colors.red[400], size: 14),
+                          Icon(Icons.favorite, color: primaryColor, size: 14),
                           const SizedBox(width: 4),
                           Text(
                             '${reel['likes_count'] ?? 0}',
@@ -276,7 +276,7 @@ class _AdminContentScreenState extends State<AdminContentScreen> with SingleTick
           color: Colors.grey[900],
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: story['is_active'] == true ? Colors.purple : Colors.transparent,
+            color: story['is_active'] == true ? accentColor : Colors.transparent,
             width: 2,
           ),
         ),
@@ -364,10 +364,10 @@ class _AdminContentScreenState extends State<AdminContentScreen> with SingleTick
               leading: Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.purple.withOpacity(0.2),
+                  color: primaryColor.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.video_call, color: Colors.purple),
+                child: const Icon(Icons.video_call, color: primaryColor),
               ),
               title: Text('reel'.tr, style: const TextStyle(color: Colors.white)),
               subtitle: Text(
@@ -384,10 +384,10 @@ class _AdminContentScreenState extends State<AdminContentScreen> with SingleTick
               leading: Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.2),
+                  color: accentColor.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.add_photo_alternate, color: Colors.orange),
+                child: const Icon(Icons.add_photo_alternate, color: accentColor),
               ),
               title: Text('story'.tr, style: const TextStyle(color: Colors.white)),
               subtitle: Text(
@@ -455,10 +455,10 @@ class _AdminContentScreenState extends State<AdminContentScreen> with SingleTick
                   Get.back();
                   _showDeleteDialog(reel, 'reel');
                 },
-                icon: const Icon(Icons.delete, color: Colors.red),
-                label: Text('delete'.tr, style: const TextStyle(color: Colors.red)),
+                icon: const Icon(Icons.delete, color: primaryColor),
+                label: Text('delete'.tr, style: const TextStyle(color: primaryColor)),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.red),
+                  side: const BorderSide(color: primaryColor),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
               ),
@@ -518,10 +518,10 @@ class _AdminContentScreenState extends State<AdminContentScreen> with SingleTick
                   Get.back();
                   _showDeleteDialog(story, 'story');
                 },
-                icon: const Icon(Icons.delete, color: Colors.red),
-                label: Text('delete'.tr, style: const TextStyle(color: Colors.red)),
+                icon: const Icon(Icons.delete, color: primaryColor),
+                label: Text('delete'.tr, style: const TextStyle(color: primaryColor)),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.red),
+                  side: const BorderSide(color: primaryColor),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
               ),
@@ -589,7 +589,7 @@ class _AdminContentScreenState extends State<AdminContentScreen> with SingleTick
               );
               _loadContent();
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
             child: Text('delete'.tr),
           ),
         ],

@@ -166,7 +166,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                       'orders'.tr,
                       _controller.orders.length.toString(),
                       Icons.shopping_bag,
-                      Colors.blue,
+                      primaryColor,
                     ),
                     _buildStatCard(
                       'products'.tr,
@@ -178,13 +178,13 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                       'reels'.tr,
                       _controller.reels.length.toString(),
                       Icons.video_library,
-                      Colors.purple,
+                      accentColor,
                     ),
                     _buildStatCard(
                       'stories'.tr,
                       _controller.stories.length.toString(),
                       Icons.auto_stories,
-                      Colors.orange,
+                      accentColor,
                     ),
                   ],
                 )),
@@ -295,14 +295,14 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     };
     
     final statusColors = {
-      'created': Colors.blue,
-      'accepted': Colors.orange,
-      'ready': Colors.purple,
-      'picked_up': Colors.indigo,
-      'in_transit': Colors.cyan,
+      'created': Colors.grey,
+      'accepted': accentColor,
+      'ready': primaryColor,
+      'picked_up': primaryColor,
+      'in_transit': accentColor,
       'delivered': Colors.green,
       'completed': Colors.green,
-      'cancelled': Colors.red,
+      'cancelled': Colors.grey,
     };
     
     return Container(
@@ -361,7 +361,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
           child: _buildActionButton(
             'create_reel'.tr,
             Icons.video_call,
-            Colors.purple,
+            primaryColor,
             () => setState(() => _currentIndex = 3),
           ),
         ),
@@ -370,7 +370,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
           child: _buildActionButton(
             'create_story'.tr,
             Icons.add_photo_alternate,
-            Colors.orange,
+            accentColor,
             () => setState(() => _currentIndex = 3),
           ),
         ),

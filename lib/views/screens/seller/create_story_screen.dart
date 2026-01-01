@@ -55,7 +55,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
           'error'.tr,
           'media_missing'.tr,
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
+          backgroundColor: Colors.black87,
           colorText: Colors.white,
         );
         return;
@@ -69,7 +69,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
             'error'.tr,
             'file_too_large'.trParams({'max': '50 MB'}),
             snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.black87,
             colorText: Colors.white,
           );
           return;
@@ -111,7 +111,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
             'error'.tr,
             'upload_not_supported'.tr,
             snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.black87,
             colorText: Colors.white,
             duration: const Duration(seconds: 4),
           );
@@ -121,7 +121,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
           'error'.tr,
           'upload_failed'.tr,
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
+          backgroundColor: Colors.black87,
           colorText: Colors.white,
         );
         }
@@ -138,7 +138,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
           'error'.tr,
           'media_missing'.tr,
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
+          backgroundColor: Colors.black87,
           colorText: Colors.white,
         );
         return;
@@ -150,7 +150,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
           'error'.tr,
           'video_url_invalid'.tr,
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
+          backgroundColor: Colors.black87,
           colorText: Colors.white,
           duration: const Duration(seconds: 5),
         );
@@ -186,7 +186,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
             ? _controller.error.value 
             : 'create_story_failed'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
     }

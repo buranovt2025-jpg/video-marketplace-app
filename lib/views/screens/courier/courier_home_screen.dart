@@ -149,14 +149,14 @@ class _CourierHomeScreenState extends State<CourierHomeScreen> with SingleTicker
 
   Widget _buildOrderCard(Map<String, dynamic> order, String type) {
     final statusColors = {
-      'created': Colors.blue,
-      'accepted': Colors.orange,
-      'ready': Colors.purple,
-      'picked_up': Colors.indigo,
-      'in_transit': Colors.cyan,
+      'created': Colors.grey,
+      'accepted': accentColor,
+      'ready': primaryColor,
+      'picked_up': primaryColor,
+      'in_transit': accentColor,
       'delivered': Colors.green,
       'completed': Colors.green,
-      'cancelled': Colors.red,
+      'cancelled': Colors.grey,
     };
 
     final statusLabels = {
@@ -182,7 +182,7 @@ class _CourierHomeScreenState extends State<CourierHomeScreen> with SingleTicker
           color: Colors.grey[900],
           borderRadius: BorderRadius.circular(12),
           border: type == 'available' 
-            ? Border.all(color: Colors.purple.withOpacity(0.5), width: 1)
+            ? Border.all(color: accentColor.withOpacity(0.5), width: 1)
             : null,
         ),
         child: Column(
@@ -270,7 +270,7 @@ class _CourierHomeScreenState extends State<CourierHomeScreen> with SingleTicker
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.location_on, size: 18, color: Colors.blue[400]),
+                  Icon(Icons.location_on, size: 18, color: accentColor),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Column(
@@ -316,7 +316,7 @@ class _CourierHomeScreenState extends State<CourierHomeScreen> with SingleTicker
                   icon: const Icon(Icons.check_circle_outline),
                   label: Text('take_order'.tr),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.purple,
+                    backgroundColor: primaryColor,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
@@ -353,7 +353,7 @@ class _CourierHomeScreenState extends State<CourierHomeScreen> with SingleTicker
           ),
           ElevatedButton(
             onPressed: () => Get.back(result: true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.purple),
+            style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
             child: Text('take_order'.tr),
           ),
         ],
@@ -376,7 +376,7 @@ class _CourierHomeScreenState extends State<CourierHomeScreen> with SingleTicker
           'error'.tr,
           'failed_take_order'.tr,
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
+          backgroundColor: Colors.black87,
           colorText: Colors.white,
         );
       }

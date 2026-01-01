@@ -74,7 +74,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
         'time_expired'.tr,
         'order_auto_rejected'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
     } catch (e) {
@@ -179,7 +179,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
         statusText = 'awaiting_short'.tr;
         break;
       case 'accepted':
-        statusColor = Colors.blue;
+        statusColor = primaryColor;
         statusText = 'accepted_short'.tr;
         break;
       case 'ready':
@@ -191,7 +191,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
         statusText = 'status_delivered'.tr;
         break;
       case 'rejected':
-        statusColor = Colors.red;
+        statusColor = Colors.black87;
         statusText = 'rejected'.tr;
         break;
       default:
@@ -269,8 +269,8 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
                     child: OutlinedButton(
                       onPressed: () => _rejectOrder(orderId),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
-                        side: const BorderSide(color: Colors.red),
+                        foregroundColor: primaryColor,
+                        side: const BorderSide(color: primaryColor),
                       ),
                       child: Text('reject'.tr),
                     ),
@@ -302,7 +302,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
                   icon: const Icon(Icons.qr_code),
                   label: Text('show_qr'.tr + ' - ' + 'pickup_qr'.tr),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.purple,
+                    backgroundColor: primaryColor,
                     foregroundColor: Colors.white,
                   ),
                 ),
@@ -321,10 +321,10 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: isUrgent ? Colors.red.withOpacity(0.2) : primaryColor.withOpacity(0.2),
+        color: isUrgent ? accentColor.withOpacity(0.2) : primaryColor.withOpacity(0.2),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: isUrgent ? Colors.red : primaryColor,
+          color: isUrgent ? accentColor : primaryColor,
           width: 1,
         ),
       ),
@@ -333,14 +333,14 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
         children: [
           Icon(
             Icons.timer,
-            color: isUrgent ? Colors.red : primaryColor,
+            color: isUrgent ? accentColor : primaryColor,
             size: 20,
           ),
           const SizedBox(width: 8),
           Text(
             'remaining'.trParams({'time': _formatTime(remainingSeconds)}),
             style: TextStyle(
-              color: isUrgent ? Colors.red : primaryColor,
+              color: isUrgent ? accentColor : primaryColor,
               fontWeight: FontWeight.bold,
               fontSize: 14,
             ),
@@ -350,7 +350,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
             Text(
               'urgent'.tr,
               style: const TextStyle(
-                color: Colors.red,
+                color: accentColor,
                 fontWeight: FontWeight.bold,
                 fontSize: 12,
               ),
@@ -451,7 +451,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
                     'orders_count'.tr,
                     '${completedOrders.length}',
                     Icons.shopping_bag,
-                    Colors.blue,
+                    primaryColor,
                   ),
                 ),
               ],
@@ -464,7 +464,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
                     'awaiting_plural'.tr,
                     '$pendingOrders',
                     Icons.pending,
-                    Colors.orange,
+                    accentColor,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -732,13 +732,13 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: isLowStock ? Colors.red.withOpacity(0.2) : Colors.green.withOpacity(0.2),
+                    color: isLowStock ? accentColor.withOpacity(0.2) : Colors.green.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     '$quantity ${'pcs_short'.tr}',
                     style: TextStyle(
-                      color: isLowStock ? Colors.red : Colors.green,
+                      color: isLowStock ? accentColor : Colors.green,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -748,7 +748,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
                       'low_stock'.tr,
-                      style: TextStyle(color: Colors.red[300], fontSize: 11),
+                      style: TextStyle(color: accentColor, fontSize: 11),
                     ),
                   ),
               ],
