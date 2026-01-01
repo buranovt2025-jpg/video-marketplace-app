@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'dart:async';
 
 class ChatScreen extends StatefulWidget {
   final String userId;
@@ -25,31 +26,128 @@ class _ChatScreenState extends State<ChatScreen> {
   List<Map<String, dynamic>> _messages = [];
   bool _isLoading = true;
   bool _isSending = false;
+  bool _loadFailed = false;
+  bool _pollInFlight = false;
+  bool _isAtBottom = true;
+  Timer? _pollTimer;
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_handleScroll);
     _loadMessages();
+    _startPolling();
   }
 
   @override
   void dispose() {
+    _pollTimer?.cancel();
+    _scrollController.removeListener(_handleScroll);
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadMessages() async {
-    setState(() => _isLoading = true);
+  void _startPolling() {
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(const Duration(seconds: 12), (_) => _pollMessages());
+  }
+
+  void _handleScroll() {
+    if (!_scrollController.hasClients) return;
+    final atBottom = (_scrollController.position.maxScrollExtent - _scrollController.offset) < 80;
+    if (atBottom != _isAtBottom) {
+      setState(() => _isAtBottom = atBottom);
+    }
+  }
+
+  Future<void> _pollMessages() async {
+    if (!mounted) return;
+    if (_isLoading || _isSending || _pollInFlight) return;
+    if (widget.userId.trim().isEmpty) return;
+
+    _pollInFlight = true;
     try {
-      final messages = await _controller.getChatMessages(widget.userId);
+      final messages = await _controller
+          .getChatMessages(widget.userId, throwOnError: true)
+          .timeout(const Duration(seconds: 12));
+      if (!mounted) return;
+
+      final merged = _mergeMessages(_messages, messages);
+      final changed = merged.length != _messages.length;
+      if (changed) {
+        setState(() {
+          _messages = merged;
+          _loadFailed = false;
+        });
+        if (_isAtBottom) _scrollToBottom();
+      }
+    } catch (_) {
+      // Silent: polling failures should not spam the user.
+    } finally {
+      _pollInFlight = false;
+    }
+  }
+
+  String _messageKey(Map<String, dynamic> m) {
+    final id = m['id'];
+    if (id != null) return 'id:$id';
+    final sender = m['sender_id']?.toString() ?? '';
+    final created = m['created_at']?.toString() ?? '';
+    final content = m['content']?.toString() ?? '';
+    return 'fallback:$sender|$created|$content';
+  }
+
+  List<Map<String, dynamic>> _mergeMessages(
+    List<Map<String, dynamic>> oldList,
+    List<Map<String, dynamic>> newList,
+  ) {
+    final seen = <String, Map<String, dynamic>>{};
+    for (final m in oldList) {
+      seen[_messageKey(m)] = m;
+    }
+    for (final m in newList) {
+      seen[_messageKey(m)] = m;
+    }
+    final merged = seen.values.toList();
+    merged.sort((a, b) {
+      final da = DateTime.tryParse(a['created_at']?.toString() ?? '');
+      final db = DateTime.tryParse(b['created_at']?.toString() ?? '');
+      if (da == null && db == null) return 0;
+      if (da == null) return -1;
+      if (db == null) return 1;
+      return da.compareTo(db);
+    });
+    return merged;
+  }
+
+  Future<void> _loadMessages() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true;
+      _loadFailed = false;
+    });
+    try {
+      final messages = await _controller
+          .getChatMessages(widget.userId, throwOnError: true)
+          .timeout(const Duration(seconds: 12));
+      if (!mounted) return;
       setState(() {
         _messages = messages;
         _isLoading = false;
       });
-      _scrollToBottom();
+      if (_isAtBottom) _scrollToBottom();
     } catch (e) {
-      setState(() => _isLoading = false);
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _loadFailed = true;
+      });
+      Get.snackbar(
+        'error'.tr,
+        'failed_load_messages'.tr,
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
   }
 
@@ -70,15 +168,26 @@ class _ChatScreenState extends State<ChatScreen> {
     if (text.isEmpty || _isSending) return;
 
     setState(() => _isSending = true);
-    _messageController.clear();
 
     try {
       final message = await _controller.sendMessage(widget.userId, text);
       if (message != null) {
+        _messageController.clear();
         setState(() {
           _messages.add(message);
         });
         _scrollToBottom();
+      } else {
+        // Keep text so user can retry.
+        if (_messageController.text.isEmpty) {
+          _messageController.text = text;
+          _messageController.selection = TextSelection.collapsed(offset: _messageController.text.length);
+        }
+        Get.snackbar(
+          'error'.tr,
+          'failed_send_message'.tr,
+          snackPosition: SnackPosition.BOTTOM,
+        );
       }
     } finally {
       setState(() => _isSending = false);
@@ -116,7 +225,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                   ),
                   Text(
-                    'Онлайн',
+                    'chat_online'.tr,
                     style: TextStyle(
                       color: Colors.green[400],
                       fontSize: 12,
@@ -129,6 +238,11 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            onPressed: _isLoading ? null : _loadMessages,
+            tooltip: 'refresh'.tr,
+          ),
+          IconButton(
             icon: const Icon(Icons.more_vert, color: Colors.white),
             onPressed: () {},
           ),
@@ -140,9 +254,14 @@ class _ChatScreenState extends State<ChatScreen> {
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : _messages.isEmpty
-                    ? _buildEmptyChat()
-                    : _buildMessagesList(),
+                : RefreshIndicator(
+                    onRefresh: _loadMessages,
+                    child: _loadFailed
+                        ? _buildLoadError()
+                        : _messages.isEmpty
+                            ? _buildEmptyChatList()
+                            : _buildMessagesList(),
+                  ),
           ),
 
           // Message input
@@ -152,34 +271,61 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _buildEmptyChat() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.chat_bubble_outline,
-            size: 64,
-            color: Colors.grey[700],
+  Widget _buildEmptyChatList() {
+    // Use a scrollable widget so RefreshIndicator can work.
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(24),
+      children: [
+        const SizedBox(height: 80),
+        Center(
+          child: Column(
+            children: [
+              Icon(Icons.chat_bubble_outline, size: 64, color: Colors.grey[700]),
+              const SizedBox(height: 16),
+              Text(
+                'start_conversation'.tr,
+                style: TextStyle(color: Colors.grey[500], fontSize: 16),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'write_message_to_user'.trParams({'name': widget.userName}),
+                style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          Text(
-            'Начните диалог',
-            style: TextStyle(
-              color: Colors.grey[500],
-              fontSize: 16,
-            ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLoadError() {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(24),
+      children: [
+        const SizedBox(height: 80),
+        Center(
+          child: Column(
+            children: [
+              Icon(Icons.wifi_off, size: 64, color: Colors.grey[700]),
+              const SizedBox(height: 16),
+              Text(
+                'failed_load_messages'.tr,
+                style: TextStyle(color: Colors.grey[500], fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _loadMessages,
+                style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
+                child: Text('retry'.tr),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Напишите сообщение ${widget.userName}',
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -253,7 +399,7 @@ class _ChatScreenState extends State<ChatScreen> {
             Icon(
               message['read'] == true ? Icons.done_all : Icons.done,
               size: 16,
-              color: message['read'] == true ? Colors.blue : Colors.grey,
+              color: message['read'] == true ? accentColor : Colors.grey,
             ),
           ],
         ],
@@ -281,8 +427,8 @@ class _ChatScreenState extends State<ChatScreen> {
               icon: Icon(Icons.attach_file, color: Colors.grey[500]),
               onPressed: () {
                 Get.snackbar(
-                  'Скоро',
-                  'Отправка файлов будет доступна в следующей версии',
+                  'coming_soon'.tr,
+                  'file_sending_next_version'.tr,
                   snackPosition: SnackPosition.BOTTOM,
                 );
               },
@@ -300,7 +446,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   maxLines: null,
                   textCapitalization: TextCapitalization.sentences,
                   decoration: InputDecoration(
-                    hintText: 'Сообщение...',
+                    hintText: 'message_hint'.tr,
                     hintStyle: TextStyle(color: Colors.grey[500]),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(vertical: 10),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
 import 'package:tiktok_tutorial/views/screens/seller/create_reel_screen.dart';
 import 'package:tiktok_tutorial/views/screens/seller/create_story_screen.dart';
 
@@ -42,9 +43,9 @@ class _AdminContentScreenState extends State<AdminContentScreen> with SingleTick
       backgroundColor: backgroundColor,
       appBar: AppBar(
         backgroundColor: backgroundColor,
-        title: const Text(
-          'Контент',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        title: Text(
+          'content'.tr,
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         automaticallyImplyLeading: false,
         actions: [
@@ -58,9 +59,9 @@ class _AdminContentScreenState extends State<AdminContentScreen> with SingleTick
           indicatorColor: buttonColor,
           labelColor: buttonColor,
           unselectedLabelColor: Colors.grey,
-          tabs: const [
-            Tab(text: 'Рилсы'),
-            Tab(text: 'Истории'),
+          tabs: [
+            Tab(text: 'reels'.tr),
+            Tab(text: 'stories'.tr),
           ],
         ),
       ),
@@ -75,7 +76,7 @@ class _AdminContentScreenState extends State<AdminContentScreen> with SingleTick
         onPressed: () => _showCreateOptions(),
         backgroundColor: buttonColor,
         icon: const Icon(Icons.add),
-        label: const Text('Создать'),
+        label: Text('create'.tr),
       ),
     );
   }
@@ -92,12 +93,12 @@ class _AdminContentScreenState extends State<AdminContentScreen> with SingleTick
               Icon(Icons.video_library_outlined, size: 64, color: Colors.grey[700]),
               const SizedBox(height: 16),
               Text(
-                'Нет рилсов',
+                'reels_empty'.tr,
                 style: TextStyle(color: Colors.grey[500], fontSize: 16),
               ),
               const SizedBox(height: 8),
               Text(
-                'Создайте рекламный рилс для платформы',
+                'create_promotional_reel'.tr,
                 style: TextStyle(color: Colors.grey[600], fontSize: 14),
               ),
             ],
@@ -137,12 +138,12 @@ class _AdminContentScreenState extends State<AdminContentScreen> with SingleTick
               Icon(Icons.auto_stories_outlined, size: 64, color: Colors.grey[700]),
               const SizedBox(height: 16),
               Text(
-                'Нет историй',
+                'stories_empty'.tr,
                 style: TextStyle(color: Colors.grey[500], fontSize: 16),
               ),
               const SizedBox(height: 8),
               Text(
-                'Создайте рекламную историю для платформы',
+                'create_promotional_story'.tr,
                 style: TextStyle(color: Colors.grey[600], fontSize: 14),
               ),
             ],
@@ -195,11 +196,11 @@ class _AdminContentScreenState extends State<AdminContentScreen> with SingleTick
                     if (reel['thumbnail_url'] != null)
                       ClipRRect(
                         borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                        child: Image.network(
-                          reel['thumbnail_url'],
+                        child: AppNetworkImage(
+                          url: reel['thumbnail_url']?.toString(),
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Center(
-                            child: Icon(Icons.video_library, color: Colors.grey[600], size: 40),
+                          errorWidget: const Center(
+                            child: Icon(Icons.video_library, color: Colors.grey, size: 40),
                           ),
                         ),
                       )
@@ -226,7 +227,7 @@ class _AdminContentScreenState extends State<AdminContentScreen> with SingleTick
                       left: 8,
                       child: Row(
                         children: [
-                          Icon(Icons.favorite, color: Colors.red[400], size: 14),
+                          Icon(Icons.favorite, color: primaryColor, size: 14),
                           const SizedBox(width: 4),
                           Text(
                             '${reel['likes_count'] ?? 0}',
@@ -247,14 +248,14 @@ class _AdminContentScreenState extends State<AdminContentScreen> with SingleTick
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    reel['caption'] ?? 'Без описания',
+                    reel['caption'] ?? 'no_description'.tr,
                     style: const TextStyle(color: Colors.white, fontSize: 12),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    reel['author_name'] ?? 'Автор',
+                    reel['author_name'] ?? 'author'.tr,
                     style: TextStyle(color: Colors.grey[500], fontSize: 10),
                   ),
                 ],
@@ -275,7 +276,7 @@ class _AdminContentScreenState extends State<AdminContentScreen> with SingleTick
           color: Colors.grey[900],
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: story['is_active'] == true ? Colors.purple : Colors.transparent,
+            color: story['is_active'] == true ? accentColor : Colors.transparent,
             width: 2,
           ),
         ),
@@ -285,11 +286,11 @@ class _AdminContentScreenState extends State<AdminContentScreen> with SingleTick
             if (story['media_url'] != null)
               ClipRRect(
                 borderRadius: BorderRadius.circular(10),
-                child: Image.network(
-                  story['media_url'],
+                child: AppNetworkImage(
+                  url: story['media_url']?.toString(),
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Center(
-                    child: Icon(Icons.image, color: Colors.grey[600], size: 32),
+                  errorWidget: const Center(
+                    child: Icon(Icons.image, color: Colors.grey, size: 32),
                   ),
                 ),
               )
@@ -314,7 +315,7 @@ class _AdminContentScreenState extends State<AdminContentScreen> with SingleTick
                   borderRadius: const BorderRadius.vertical(bottom: Radius.circular(10)),
                 ),
                 child: Text(
-                  story['author_name'] ?? 'Автор',
+                  story['author_name'] ?? 'author'.tr,
                   style: const TextStyle(color: Colors.white, fontSize: 10),
                   textAlign: TextAlign.center,
                   maxLines: 1,
@@ -349,9 +350,9 @@ class _AdminContentScreenState extends State<AdminContentScreen> with SingleTick
             ),
             const SizedBox(height: 20),
             
-            const Text(
-              'Создать рекламный контент',
-              style: TextStyle(
+            Text(
+              'create_ad_content'.tr,
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -363,14 +364,14 @@ class _AdminContentScreenState extends State<AdminContentScreen> with SingleTick
               leading: Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.purple.withOpacity(0.2),
+                  color: primaryColor.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.video_call, color: Colors.purple),
+                child: const Icon(Icons.video_call, color: primaryColor),
               ),
-              title: const Text('Рилс', style: TextStyle(color: Colors.white)),
+              title: Text('reel'.tr, style: const TextStyle(color: Colors.white)),
               subtitle: Text(
-                'Видео для ленты',
+                'video_for_feed'.tr,
                 style: TextStyle(color: Colors.grey[500]),
               ),
               onTap: () {
@@ -383,14 +384,14 @@ class _AdminContentScreenState extends State<AdminContentScreen> with SingleTick
               leading: Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.2),
+                  color: accentColor.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.add_photo_alternate, color: Colors.orange),
+                child: const Icon(Icons.add_photo_alternate, color: accentColor),
               ),
-              title: const Text('История', style: TextStyle(color: Colors.white)),
+              title: Text('story'.tr, style: const TextStyle(color: Colors.white)),
               subtitle: Text(
-                'Фото/видео на 24 часа',
+                'photo_video_24h'.tr,
                 style: TextStyle(color: Colors.grey[500]),
               ),
               onTap: () {
@@ -431,7 +432,7 @@ class _AdminContentScreenState extends State<AdminContentScreen> with SingleTick
             const SizedBox(height: 20),
             
             Text(
-              reel['caption'] ?? 'Без описания',
+              reel['caption'] ?? 'no_description'.tr,
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 18,
@@ -440,9 +441,9 @@ class _AdminContentScreenState extends State<AdminContentScreen> with SingleTick
             ),
             const SizedBox(height: 12),
             
-            _buildDetailRow('Автор', reel['author_name'] ?? 'Не указан'),
-            _buildDetailRow('Лайки', '${reel['likes_count'] ?? 0}'),
-            _buildDetailRow('Комментарии', '${reel['comments_count'] ?? 0}'),
+            _buildDetailRow('author'.tr, (reel['author_name'] ?? 'not_specified'.tr).toString()),
+            _buildDetailRow('likes'.tr, '${reel['likes_count'] ?? 0}'),
+            _buildDetailRow('comments'.tr, '${reel['comments_count'] ?? 0}'),
             _buildDetailRow('ID', reel['id']?.substring(0, 8) ?? ''),
             
             const SizedBox(height: 20),
@@ -454,10 +455,10 @@ class _AdminContentScreenState extends State<AdminContentScreen> with SingleTick
                   Get.back();
                   _showDeleteDialog(reel, 'reel');
                 },
-                icon: const Icon(Icons.delete, color: Colors.red),
-                label: const Text('Удалить', style: TextStyle(color: Colors.red)),
+                icon: const Icon(Icons.delete, color: primaryColor),
+                label: Text('delete'.tr, style: const TextStyle(color: primaryColor)),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.red),
+                  side: const BorderSide(color: primaryColor),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
               ),
@@ -494,9 +495,9 @@ class _AdminContentScreenState extends State<AdminContentScreen> with SingleTick
             ),
             const SizedBox(height: 20),
             
-            const Text(
-              'История',
-              style: TextStyle(
+            Text(
+              'story'.tr,
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -504,8 +505,8 @@ class _AdminContentScreenState extends State<AdminContentScreen> with SingleTick
             ),
             const SizedBox(height: 12),
             
-            _buildDetailRow('Автор', story['author_name'] ?? 'Не указан'),
-            _buildDetailRow('Статус', story['is_active'] == true ? 'Активна' : 'Истекла'),
+            _buildDetailRow('author'.tr, (story['author_name'] ?? 'not_specified'.tr).toString()),
+            _buildDetailRow('order_status'.tr, story['is_active'] == true ? 'active_feminine'.tr : 'expired_feminine'.tr),
             _buildDetailRow('ID', story['id']?.substring(0, 8) ?? ''),
             
             const SizedBox(height: 20),
@@ -517,10 +518,10 @@ class _AdminContentScreenState extends State<AdminContentScreen> with SingleTick
                   Get.back();
                   _showDeleteDialog(story, 'story');
                 },
-                icon: const Icon(Icons.delete, color: Colors.red),
-                label: const Text('Удалить', style: TextStyle(color: Colors.red)),
+                icon: const Icon(Icons.delete, color: primaryColor),
+                label: Text('delete'.tr, style: const TextStyle(color: primaryColor)),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.red),
+                  side: const BorderSide(color: primaryColor),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
               ),
@@ -557,39 +558,39 @@ class _AdminContentScreenState extends State<AdminContentScreen> with SingleTick
   }
 
   void _showDeleteDialog(Map<String, dynamic> item, String type) {
-    final typeLabel = type == 'reel' ? 'рилс' : 'историю';
+    final typeLabel = type == 'reel' ? 'reel'.tr : 'story'.tr;
     
     Get.dialog(
       AlertDialog(
         backgroundColor: Colors.grey[900],
         title: Text(
-          'Удалить $typeLabel?',
+          'delete_content_question'.trParams({'type': typeLabel}),
           style: const TextStyle(color: Colors.white),
         ),
         content: Text(
-          'Это действие нельзя отменить.',
+          'delete_irreversible'.tr,
           style: TextStyle(color: Colors.grey[400]),
         ),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: Text('Отмена', style: TextStyle(color: Colors.grey[500])),
+            child: Text('cancel'.tr, style: TextStyle(color: Colors.grey[500])),
           ),
           ElevatedButton(
             onPressed: () async {
               Get.back();
               // TODO: Implement delete API
               Get.snackbar(
-                'Удалено',
-                'Контент удалён',
+                'deleted'.tr,
+                'content_deleted'.tr,
                 snackPosition: SnackPosition.BOTTOM,
                 backgroundColor: Colors.green,
                 colorText: Colors.white,
               );
               _loadContent();
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Удалить'),
+            style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
+            child: Text('delete'.tr),
           ),
         ],
       ),

@@ -99,7 +99,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
         'error'.tr,
         'enter_address'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
       return;
@@ -266,7 +266,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
           style: const TextStyle(color: Colors.white),
         ),
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue,
+          backgroundColor: primaryColor,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -323,7 +323,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
             const SizedBox(height: 8),
             Text(
               _error!,
-              style: const TextStyle(color: Colors.red, fontSize: 12),
+              style: const TextStyle(color: primaryColor, fontSize: 12),
             ),
           ],
         ],

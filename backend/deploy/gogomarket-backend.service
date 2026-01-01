@@ -1,0 +1,20 @@
+[Unit]
+Description=GoGoMarket backend module (uploads + reviews)
+After=network.target
+
+[Service]
+Type=simple
+User=deploy
+Group=deploy
+WorkingDirectory=/home/deploy/projects/video-marketplace-app
+EnvironmentFile=/etc/gogomarket-backend.env
+Environment=PYTHONUNBUFFERED=1
+
+# Run on loopback to avoid exposing directly to the Internet.
+# Nginx should proxy only selected feature endpoints to this port.
+ExecStart=/home/deploy/projects/video-marketplace-app/backend/.venv/bin/uvicorn backend.app.main:app --host 127.0.0.1 --port 8010
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

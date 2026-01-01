@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
+import 'package:tiktok_tutorial/utils/formatters.dart';
+import 'package:tiktok_tutorial/utils/money.dart';
 import 'package:tiktok_tutorial/views/screens/seller/my_products_screen.dart';
 import 'package:tiktok_tutorial/views/screens/common/qr_code_screen.dart';
 import 'package:tiktok_tutorial/views/screens/seller/seller_analytics_screen.dart';
@@ -68,10 +71,10 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
     try {
       await _controller.updateOrderStatus(orderId, 'rejected');
       Get.snackbar(
-        'Время истекло',
-        'Заказ автоматически отклонён',
+        'time_expired'.tr,
+        'order_auto_rejected'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
     } catch (e) {
@@ -105,7 +108,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
           tabs: [
             Tab(text: 'orders'.tr),
             Tab(text: 'statistics'.tr),
-            Tab(text: 'Товары'),
+            Tab(text: 'inventory'.tr),
           ],
         ),
       ),
@@ -135,7 +138,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
               Icon(Icons.inbox, size: 64, color: Colors.grey[700]),
               const SizedBox(height: 16),
               Text(
-                'Нет заказов',
+                'no_orders'.tr,
                 style: TextStyle(color: Colors.grey[500], fontSize: 16),
               ),
             ],
@@ -173,23 +176,23 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
     switch (status) {
       case 'pending':
         statusColor = Colors.orange;
-        statusText = 'Ожидает';
+        statusText = 'awaiting_short'.tr;
         break;
       case 'accepted':
-        statusColor = Colors.blue;
-        statusText = 'Принят';
+        statusColor = primaryColor;
+        statusText = 'accepted_short'.tr;
         break;
       case 'ready':
         statusColor = Colors.green;
-        statusText = 'Готов к выдаче';
+        statusText = 'ready_for_pickup'.tr;
         break;
       case 'delivered':
         statusColor = Colors.grey;
-        statusText = 'Доставлен';
+        statusText = 'status_delivered'.tr;
         break;
       case 'rejected':
-        statusColor = Colors.red;
-        statusText = 'Отклонён';
+        statusColor = Colors.black87;
+        statusText = 'rejected'.tr;
         break;
       default:
         statusColor = Colors.grey;
@@ -208,7 +211,9 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Заказ #${orderId.length >= 8 ? orderId.substring(0, 8) : orderId}',
+                  'order_number_short'.trParams({
+                    'id': orderId.length >= 8 ? orderId.substring(0, 8) : orderId,
+                  }),
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -237,12 +242,12 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
             
             const SizedBox(height: 12),
             Text(
-              'Сумма: ${order['total_amount']?.toStringAsFixed(0) ?? '0'} сум',
+              '${'amount'.tr}: ${formatMoneyWithCurrency(order['total_amount'])}',
               style: const TextStyle(color: Colors.white70),
             ),
             const SizedBox(height: 4),
             Text(
-              'Адрес: ${order['delivery_address'] ?? 'Не указан'}',
+              '${'address'.tr}: ${(order['delivery_address'] ?? 'address_not_specified'.tr).toString()}',
               style: TextStyle(color: Colors.grey[500], fontSize: 13),
             ),
             if (isPending) ...[
@@ -264,8 +269,8 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
                     child: OutlinedButton(
                       onPressed: () => _rejectOrder(orderId),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
-                        side: const BorderSide(color: Colors.red),
+                        foregroundColor: primaryColor,
+                        side: const BorderSide(color: primaryColor),
                       ),
                       child: Text('reject'.tr),
                     ),
@@ -283,7 +288,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
                     backgroundColor: primaryColor,
                     foregroundColor: Colors.white,
                   ),
-                  child: const Text('Готов к выдаче'),
+                  child: Text('ready_for_pickup'.tr),
                 ),
               ),
             ],
@@ -297,7 +302,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
                   icon: const Icon(Icons.qr_code),
                   label: Text('show_qr'.tr + ' - ' + 'pickup_qr'.tr),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.purple,
+                    backgroundColor: primaryColor,
                     foregroundColor: Colors.white,
                   ),
                 ),
@@ -316,10 +321,10 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: isUrgent ? Colors.red.withOpacity(0.2) : primaryColor.withOpacity(0.2),
+        color: isUrgent ? accentColor.withOpacity(0.2) : primaryColor.withOpacity(0.2),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: isUrgent ? Colors.red : primaryColor,
+          color: isUrgent ? accentColor : primaryColor,
           width: 1,
         ),
       ),
@@ -328,24 +333,24 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
         children: [
           Icon(
             Icons.timer,
-            color: isUrgent ? Colors.red : primaryColor,
+            color: isUrgent ? accentColor : primaryColor,
             size: 20,
           ),
           const SizedBox(width: 8),
           Text(
-            'Осталось: ${_formatTime(remainingSeconds)}',
+            'remaining'.trParams({'time': _formatTime(remainingSeconds)}),
             style: TextStyle(
-              color: isUrgent ? Colors.red : primaryColor,
+              color: isUrgent ? accentColor : primaryColor,
               fontWeight: FontWeight.bold,
               fontSize: 14,
             ),
           ),
           if (isUrgent) ...[
             const SizedBox(width: 8),
-            const Text(
-              'Срочно!',
-              style: TextStyle(
-                color: Colors.red,
+            Text(
+              'urgent'.tr,
+              style: const TextStyle(
+                color: accentColor,
                 fontWeight: FontWeight.bold,
                 fontSize: 12,
               ),
@@ -361,9 +366,9 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
     try {
       await _controller.updateOrderStatus(orderId, 'accepted');
       _orderTimers.remove(orderId); // Remove timer when accepted
-      Get.snackbar('success'.tr, 'Заказ принят', snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar('success'.tr, 'order_accepted_snackbar'.tr, snackPosition: SnackPosition.BOTTOM);
     } catch (e) {
-      Get.snackbar('error'.tr, 'Не удалось принять заказ', snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar('error'.tr, 'order_accept_failed'.tr, snackPosition: SnackPosition.BOTTOM);
     }
   }
 
@@ -372,9 +377,9 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
     try {
       await _controller.updateOrderStatus(orderId, 'rejected');
       _orderTimers.remove(orderId); // Remove timer when rejected
-      Get.snackbar('success'.tr, 'Заказ отклонён', snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar('success'.tr, 'order_rejected_snackbar'.tr, snackPosition: SnackPosition.BOTTOM);
     } catch (e) {
-      Get.snackbar('error'.tr, 'Не удалось отклонить заказ', snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar('error'.tr, 'order_reject_failed'.tr, snackPosition: SnackPosition.BOTTOM);
     }
   }
 
@@ -382,9 +387,9 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
     if (orderId == null) return;
     try {
       await _controller.updateOrderStatus(orderId, 'ready');
-      Get.snackbar('success'.tr, 'Заказ готов к выдаче', snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar('success'.tr, 'order_ready_snackbar'.tr, snackPosition: SnackPosition.BOTTOM);
     } catch (e) {
-      Get.snackbar('error'.tr, 'Не удалось обновить статус', snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar('error'.tr, 'status_update_failed'.tr, snackPosition: SnackPosition.BOTTOM);
     }
   }
 
@@ -393,7 +398,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
       orderId: orderId,
       type: 'pickup',
       title: 'show_qr'.tr,
-      subtitle: 'Курьер должен отсканировать этот QR-код',
+      subtitle: 'qr_scan_required'.tr,
     ));
   }
 
@@ -407,7 +412,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
       final completedOrders = orders.where((o) => o['status'] == 'delivered').toList();
       final totalRevenue = completedOrders.fold<double>(
         0,
-        (sum, order) => sum + (order['total_amount'] ?? 0).toDouble(),
+        (sum, order) => sum + asDouble(order['total_amount']),
       );
       final pendingOrders = orders.where((o) => o['status'] == 'pending').length;
       final activeOrders = orders.where((o) => 
@@ -434,8 +439,8 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
               children: [
                 Expanded(
                   child: _buildStatCard(
-                    'Выручка',
-                    '${totalRevenue.toStringAsFixed(0)} сум',
+                    'revenue'.tr,
+                    formatMoneyWithCurrency(totalRevenue),
                     Icons.attach_money,
                     Colors.green,
                   ),
@@ -443,10 +448,10 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildStatCard(
-                    'Заказов',
+                    'orders_count'.tr,
                     '${completedOrders.length}',
                     Icons.shopping_bag,
-                    Colors.blue,
+                    primaryColor,
                   ),
                 ),
               ],
@@ -456,16 +461,16 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
               children: [
                 Expanded(
                   child: _buildStatCard(
-                    'Ожидают',
+                    'awaiting_plural'.tr,
                     '$pendingOrders',
                     Icons.pending,
-                    Colors.orange,
+                    accentColor,
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildStatCard(
-                    'Активные',
+                    'active_plural'.tr,
                     '$activeOrders',
                     Icons.local_shipping,
                     primaryColor,
@@ -495,9 +500,9 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
               ),
             
               const SizedBox(height: 32),
-              const Text(
-                'Топ товары',
-                style: TextStyle(
+              Text(
+                'top_products'.tr,
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -557,7 +562,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
           ),
           child: Center(
             child: Text(
-              'Нет товаров',
+              'no_products'.tr,
               style: TextStyle(color: Colors.grey[500]),
             ),
           ),
@@ -585,13 +590,10 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
                   child: product['image_url'] != null
                       ? ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            product['image_url'],
+                          child: AppNetworkImage(
+                            url: product['image_url']?.toString(),
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Icon(
-                              Icons.inventory_2,
-                              color: Colors.grey[600],
-                            ),
+                            errorWidget: Icon(Icons.inventory_2, color: Colors.grey[600]),
                           ),
                         )
                       : Icon(Icons.inventory_2, color: Colors.grey[600]),
@@ -602,7 +604,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        product['name'] ?? 'Товар',
+                        product['name'] ?? 'product'.tr,
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w500,
@@ -611,14 +613,14 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
-                        '${product['price']?.toStringAsFixed(0) ?? '0'} сум',
+                        formatMoneyWithCurrency(product['price']),
                         style: TextStyle(color: Colors.grey[500], fontSize: 13),
                       ),
                     ],
                   ),
                 ),
                 Text(
-                  'В наличии: ${product['quantity'] ?? 0}',
+                  'in_stock_qty'.trParams({'qty': asInt(product['quantity']).toString()}),
                   style: TextStyle(color: Colors.grey[400], fontSize: 12),
                 ),
               ],
@@ -644,7 +646,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
               Icon(Icons.inventory_2, size: 64, color: Colors.grey[700]),
               const SizedBox(height: 16),
               Text(
-                'Нет товаров',
+                'no_products'.tr,
                 style: TextStyle(color: Colors.grey[500], fontSize: 16),
               ),
               const SizedBox(height: 16),
@@ -653,7 +655,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryColor,
                 ),
-                child: const Text('Добавить товар'),
+                child: Text('add_product'.tr),
               ),
             ],
           ),
@@ -676,7 +678,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
   }
 
   Widget _buildInventoryCard(Map<String, dynamic> product) {
-    final quantity = product['quantity'] ?? 0;
+    final quantity = asInt(product['quantity']);
     final isLowStock = quantity < 5;
 
     return Card(
@@ -696,13 +698,10 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
               child: product['image_url'] != null
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        product['image_url'],
+                      child: AppNetworkImage(
+                        url: product['image_url']?.toString(),
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Icon(
-                          Icons.inventory_2,
-                          color: Colors.grey[600],
-                        ),
+                        errorWidget: Icon(Icons.inventory_2, color: Colors.grey[600]),
                       ),
                     )
                   : Icon(Icons.inventory_2, color: Colors.grey[600]),
@@ -713,7 +712,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    product['name'] ?? 'Товар',
+                    product['name'] ?? 'product'.tr,
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -721,7 +720,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${product['price']?.toStringAsFixed(0) ?? '0'} сум',
+                    formatMoneyWithCurrency(product['price']),
                     style: TextStyle(color: Colors.grey[500]),
                   ),
                 ],
@@ -733,13 +732,13 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: isLowStock ? Colors.red.withOpacity(0.2) : Colors.green.withOpacity(0.2),
+                    color: isLowStock ? accentColor.withOpacity(0.2) : Colors.green.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    '$quantity шт',
+                    '$quantity ${'pcs_short'.tr}',
                     style: TextStyle(
-                      color: isLowStock ? Colors.red : Colors.green,
+                      color: isLowStock ? accentColor : Colors.green,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -748,8 +747,8 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
-                      'Мало!',
-                      style: TextStyle(color: Colors.red[300], fontSize: 11),
+                      'low_stock'.tr,
+                      style: TextStyle(color: accentColor, fontSize: 11),
                     ),
                   ),
               ],

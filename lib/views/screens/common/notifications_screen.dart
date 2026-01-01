@@ -13,25 +13,25 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   final List<Map<String, dynamic>> _notifications = [
     {
       'id': '1',
-      'title': 'Новый заказ',
-      'message': 'Вы получили новый заказ #12345',
-      'time': '5 мин назад',
+      'title': 'New order',
+      'message': 'You received a new order #12345',
+      'time': '5 min ago',
       'read': false,
       'type': 'order',
     },
     {
       'id': '2',
-      'title': 'Заказ доставлен',
-      'message': 'Ваш заказ #12344 успешно доставлен',
-      'time': '1 час назад',
+      'title': 'Order delivered',
+      'message': 'Your order #12344 was delivered successfully',
+      'time': '1 hour ago',
       'read': true,
       'type': 'delivery',
     },
     {
       'id': '3',
-      'title': 'Новый отзыв',
-      'message': 'Покупатель оставил отзыв на ваш товар',
-      'time': '2 часа назад',
+      'title': 'New review',
+      'message': 'A buyer left a review on your product',
+      'time': '2 hours ago',
       'read': true,
       'type': 'review',
     },
@@ -68,7 +68,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Color _getNotificationColor(String type) {
     switch (type) {
       case 'order':
-        return Colors.blue;
+        return accentColor;
       case 'delivery':
         return Colors.green;
       case 'review':

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
   <!--
     If you are serving your web app in a path other than the root, change the
@@ -18,27 +18,86 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="GoGoMarket">
+
+  <!-- Allow zoom (accessibility) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- iOS meta tags & icons -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="tiktok_tutorial">
+  <meta name="apple-mobile-web-app-title" content="GoGoMarket">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>tiktok_tutorial</title>
+  <title>GoGoMarket</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- Performance: start fetching JS ASAP -->
+  <link rel="preload" href="main.dart.js" as="script">
+
+  <style>
+    /* Lightweight HTML splash (improves FCP/SpeedIndex on slow JS loads). */
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: #FF6B00;
+    }
+    #gogomarket-splash {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 16px;
+      background: #FF6B00;
+      color: #FFFFFF;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      text-align: center;
+      z-index: 9999;
+    }
+    #gogomarket-splash .title {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+      line-height: 1.1;
+    }
+    #gogomarket-splash .subtitle {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+    #gogomarket-splash .spinner {
+      width: 36px;
+      height: 36px;
+      border-radius: 999px;
+      border: 3px solid rgba(255, 255, 255, 0.35);
+      border-top-color: #FFFFFF;
+      animation: gogomarket-spin 0.9s linear infinite;
+    }
+    @keyframes gogomarket-spin { to { transform: rotate(360deg); } }
+  </style>
 </head>
 <body>
+  <div id="gogomarket-splash" aria-label="Loading">
+    <div class="title">GoGoMarket</div>
+    <div class="spinner" aria-hidden="true"></div>
+    <div class="subtitle">Загрузка…</div>
+  </div>
+
   <!-- This script installs service_worker.js to provide PWA functionality to
        application. For more information, see:
        https://developers.google.com/web/fundamentals/primers/service-workers -->
   <script>
     var serviceWorkerVersion = null;
     var scriptLoaded = false;
+    function removeSplash() {
+      var el = document.getElementById('gogomarket-splash');
+      if (el && el.parentNode) el.parentNode.removeChild(el);
+    }
     function loadMainDartJs() {
       if (scriptLoaded) {
         return;
@@ -47,58 +106,23 @@
       var scriptTag = document.createElement('script');
       scriptTag.src = 'main.dart.js';
       scriptTag.type = 'application/javascript';
+      scriptTag.defer = true;
       document.body.append(scriptTag);
     }
 
-    if ('serviceWorker' in navigator) {
-      // Service workers are supported. Use them.
-      window.addEventListener('load', function () {
-        // Wait for registration to finish before dropping the <script> tag.
-        // Otherwise, the browser will load the script multiple times,
-        // potentially different versions.
-        var serviceWorkerUrl = 'flutter_service_worker.js?v=' + serviceWorkerVersion;
-        navigator.serviceWorker.register(serviceWorkerUrl)
-          .then((reg) => {
-            function waitForActivation(serviceWorker) {
-              serviceWorker.addEventListener('statechange', () => {
-                if (serviceWorker.state == 'activated') {
-                  console.log('Installed new service worker.');
-                  loadMainDartJs();
-                }
-              });
-            }
-            if (!reg.active && (reg.installing || reg.waiting)) {
-              // No active web worker and we have installed or are installing
-              // one for the first time. Simply wait for it to activate.
-              waitForActivation(reg.installing || reg.waiting);
-            } else if (!reg.active.scriptURL.endsWith(serviceWorkerVersion)) {
-              // When the app updates the serviceWorkerVersion changes, so we
-              // need to ask the service worker to update.
-              console.log('New service worker available.');
-              reg.update();
-              waitForActivation(reg.installing);
-            } else {
-              // Existing service worker is still good.
-              console.log('Loading app from service worker.');
-              loadMainDartJs();
-            }
-          });
+    // IMPORTANT (hotfix for self-signed HTTPS):
+    // Service Worker registration fails with "SSL certificate error" on
+    // https://165.232.81.31/ (self-signed cert). That can cause confusing
+    // blank/white screens and aggressive caching problems.
+    //
+    // We intentionally disable service workers here and always load via the
+    // plain <script> tag.
+    console.log('Service Worker registration disabled (self-signed SSL hotfix).');
 
-        // If service worker doesn't succeed in a reasonable amount of time,
-        // fallback to plaint <script> tag.
-        setTimeout(() => {
-          if (!scriptLoaded) {
-            console.warn(
-              'Failed to load app from service worker. Falling back to plain <script> tag.',
-            );
-            loadMainDartJs();
-          }
-        }, 4000);
-      });
-    } else {
-      // Service workers not supported. Just drop the <script> tag.
-      loadMainDartJs();
-    }
+    // Remove HTML splash on first Flutter frame.
+    window.addEventListener('flutter-first-frame', removeSplash);
+
+    loadMainDartJs();
   </script>
 </body>
 </html>

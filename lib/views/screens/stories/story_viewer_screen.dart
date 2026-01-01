@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
+import 'package:tiktok_tutorial/utils/web_image_policy.dart';
+import 'package:tiktok_tutorial/views/widgets/video_player_iten.dart';
 
 class StoryViewerScreen extends StatefulWidget {
   final List<Map<String, dynamic>> stories;
@@ -51,6 +54,10 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
   }
 
   void _startProgress() {
+    // Video stories should stay longer than images by default.
+    final current = widget.stories[_currentIndex];
+    final isVideo = (current['video_url']?.toString() ?? '').trim().isNotEmpty;
+    _progressController.duration = Duration(seconds: isVideo ? 10 : 5);
     _progressController.reset();
     _progressController.forward();
   }
@@ -121,8 +128,14 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
             // Story content
             PageView.builder(
               controller: _pageController,
-              physics: const NeverScrollableScrollPhysics(),
+              physics: const BouncingScrollPhysics(),
               itemCount: widget.stories.length,
+              onPageChanged: (i) {
+                setState(() {
+                  _currentIndex = i;
+                });
+                _startProgress();
+              },
               itemBuilder: (context, index) {
                 final story = widget.stories[index];
                 return _buildStoryContent(story);
@@ -159,7 +172,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                           radius: 18,
                           backgroundColor: Colors.grey[800],
                           backgroundImage: widget.stories[_currentIndex]['author_avatar'] != null
-                              ? NetworkImage(widget.stories[_currentIndex]['author_avatar'])
+                              ? networkImageProviderOrNull(widget.stories[_currentIndex]['author_avatar'])
                               : null,
                           child: widget.stories[_currentIndex]['author_avatar'] == null
                               ? const Icon(Icons.person, color: Colors.white, size: 18)
@@ -263,54 +276,33 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
       color: Colors.black,
       child: Center(
         child: imageUrl != null
-            ? Image.network(
-                imageUrl,
+            ? AppNetworkImage(
+                url: imageUrl?.toString(),
                 fit: BoxFit.contain,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Center(
-                    child: CircularProgressIndicator(
-                      value: loadingProgress.expectedTotalBytes != null
-                          ? loadingProgress.cumulativeBytesLoaded /
-                              loadingProgress.expectedTotalBytes!
-                          : null,
-                      color: Colors.white,
+                placeholder: const Center(
+                  child: CircularProgressIndicator(color: Colors.white),
+                ),
+                errorWidget: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.broken_image, size: 64, color: Colors.grey[600]),
+                    const SizedBox(height: 16),
+                    Text(
+                      'image_load_failed'.tr,
+                      style: TextStyle(color: Colors.grey[500]),
                     ),
-                  );
-                },
-                errorBuilder: (context, error, stackTrace) {
-                  return Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.broken_image, size: 64, color: Colors.grey[600]),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Не удалось загрузить изображение',
-                        style: TextStyle(color: Colors.grey[500]),
-                      ),
-                    ],
-                  );
-                },
+                  ],
+                ),
               )
-            : videoUrl != null
-                ? Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.play_circle_outline, size: 80, color: Colors.grey[600]),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Видео история',
-                        style: TextStyle(color: Colors.grey[500]),
-                      ),
-                    ],
-                  )
+            : (videoUrl != null && videoUrl.toString().trim().isNotEmpty)
+                ? VideoPlayerItem(videoUrl: videoUrl.toString())
                 : Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.image, size: 64, color: Colors.grey[600]),
                       const SizedBox(height: 16),
                       Text(
-                        'Нет контента',
+                        'no_content'.tr,
                         style: TextStyle(color: Colors.grey[500]),
                       ),
                     ],
@@ -324,8 +316,8 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
       onTap: () {
         // Navigate to product detail
         Get.snackbar(
-          'Товар',
-          'Переход к товару: ${story['product_id']}',
+          'product'.tr,
+          'go_to_product'.trParams({'id': story['product_id']?.toString() ?? ''}),
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.white,
           colorText: Colors.black,
@@ -354,15 +346,15 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    'Посмотреть товар',
-                    style: TextStyle(
+                  Text(
+                    'view_product'.tr,
+                    style: const TextStyle(
                       color: Colors.black,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   Text(
-                    'Нажмите чтобы открыть',
+                    'tap_to_open'.tr,
                     style: TextStyle(
                       color: Colors.grey[600],
                       fontSize: 12,
@@ -379,7 +371,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
   }
 
   String _getTimeAgo(String? dateString) {
-    if (dateString == null) return 'Недавно';
+    if (dateString == null) return 'recently'.tr;
     
     try {
       final date = DateTime.parse(dateString);
@@ -387,16 +379,16 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
       final difference = now.difference(date);
 
       if (difference.inMinutes < 1) {
-        return 'Только что';
+        return 'just_now'.tr;
       } else if (difference.inMinutes < 60) {
-        return '${difference.inMinutes} мин назад';
+        return 'minutes_ago'.trParams({'n': difference.inMinutes.toString()});
       } else if (difference.inHours < 24) {
-        return '${difference.inHours} ч назад';
+        return 'hours_ago'.trParams({'n': difference.inHours.toString()});
       } else {
-        return '${difference.inDays} дн назад';
+        return 'days_ago'.trParams({'n': difference.inDays.toString()});
       }
     } catch (e) {
-      return 'Недавно';
+      return 'recently'.tr;
     }
   }
 }

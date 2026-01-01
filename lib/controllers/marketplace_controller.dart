@@ -38,6 +38,26 @@ class MarketplaceController extends GetxController {
   bool get isLoggedIn => currentUser.value != null;
   bool get isGuest => isGuestMode.value;
   
+  Future<void> _handleApiError(Object e, {String? fallbackMessage, bool ignore = false}) async {
+    if (e is ApiException) {
+      // If token became invalid anywhere, treat it as logged out.
+      if (e.statusCode == 401) {
+        await logout();
+        if (!ignore) {
+          error.value = 'Сессия истекла. Войдите снова.';
+        }
+        return;
+      }
+      if (!ignore) {
+        error.value = e.message.isNotEmpty ? e.message : (fallbackMessage ?? e.toString());
+      }
+      return;
+    }
+    if (!ignore) {
+      error.value = fallbackMessage ?? e.toString();
+    }
+  }
+  
   @override
   void onInit() {
     super.onInit();
@@ -63,7 +83,7 @@ class MarketplaceController extends GetxController {
       await _loadInitialData();
       return true;
     } catch (e) {
-      error.value = e.toString();
+      await _handleApiError(e, fallbackMessage: 'Не удалось войти');
       return false;
     } finally {
       isLoading.value = false;
@@ -99,7 +119,7 @@ class MarketplaceController extends GetxController {
       await _loadInitialData();
       return true;
     } catch (e) {
-      error.value = e.toString();
+      await _handleApiError(e, fallbackMessage: 'Не удалось зарегистрироваться');
       return false;
     } finally {
       isLoading.value = false;
@@ -161,7 +181,7 @@ class MarketplaceController extends GetxController {
         myProducts.value = products.where((p) => p['seller_id'] == userId).toList();
       }
     } catch (e) {
-      error.value = e.toString();
+      await _handleApiError(e, fallbackMessage: 'Не удалось загрузить товары');
     }
   }
   
@@ -172,7 +192,7 @@ class MarketplaceController extends GetxController {
       final data = await ApiService.getProducts(sellerId: userId);
       myProducts.value = List<Map<String, dynamic>>.from(data);
     } catch (e) {
-      error.value = e.toString();
+      await _handleApiError(e, fallbackMessage: 'Не удалось загрузить мои товары');
     }
   }
   
@@ -202,7 +222,7 @@ class MarketplaceController extends GetxController {
       
       return product;
     } catch (e) {
-      error.value = e.toString();
+      await _handleApiError(e, fallbackMessage: 'Не удалось создать товар');
       return null;
     } finally {
       isLoading.value = false;
@@ -224,7 +244,7 @@ class MarketplaceController extends GetxController {
       
       return true;
     } catch (e) {
-      error.value = e.toString();
+      await _handleApiError(e, fallbackMessage: 'Не удалось обновить товар');
       return false;
     } finally {
       isLoading.value = false;
@@ -243,7 +263,7 @@ class MarketplaceController extends GetxController {
       
       return true;
     } catch (e) {
-      error.value = e.toString();
+      await _handleApiError(e, fallbackMessage: 'Не удалось удалить товар');
       return false;
     } finally {
       isLoading.value = false;
@@ -256,7 +276,7 @@ class MarketplaceController extends GetxController {
       final data = await ApiService.getReels();
       reels.value = List<Map<String, dynamic>>.from(data);
     } catch (e) {
-      error.value = e.toString();
+      await _handleApiError(e, fallbackMessage: 'Не удалось загрузить рилсы', ignore: true);
     }
   }
   
@@ -265,7 +285,7 @@ class MarketplaceController extends GetxController {
       final data = await ApiService.getStories();
       stories.value = List<Map<String, dynamic>>.from(data);
     } catch (e) {
-      error.value = e.toString();
+      await _handleApiError(e, fallbackMessage: 'Не удалось загрузить истории', ignore: true);
     }
   }
   
@@ -288,7 +308,7 @@ class MarketplaceController extends GetxController {
       reels.insert(0, content);
       return content;
     } catch (e) {
-      error.value = e.toString();
+      await _handleApiError(e, fallbackMessage: 'Не удалось создать рилс');
       return null;
     } finally {
       isLoading.value = false;
@@ -316,7 +336,7 @@ class MarketplaceController extends GetxController {
       stories.insert(0, content);
       return content;
     } catch (e) {
-      error.value = e.toString();
+      await _handleApiError(e, fallbackMessage: 'Не удалось создать историю');
       return null;
     } finally {
       isLoading.value = false;
@@ -324,10 +344,47 @@ class MarketplaceController extends GetxController {
   }
   
   Future<void> likeContent(String contentId) async {
+    // Keep backward compatibility for existing call sites.
+    await toggleLikeOnReel(contentId);
+  }
+
+  Future<void> toggleLikeOnReel(String contentId) async {
+    final id = contentId.trim();
+    if (id.isEmpty) return;
+
+    final idx = reels.indexWhere((r) => (r['id']?.toString() ?? '') == id);
+    Map<String, dynamic>? before;
+    if (idx != -1) {
+      before = Map<String, dynamic>.from(reels[idx]);
+      final liked = (before['liked_by_me'] == true) || (before['liked'] == true);
+      final likes0 = (before['likes_count'] ?? before['likes'] ?? 0);
+      final likes = likes0 is num ? likes0.toInt() : int.tryParse(likes0.toString()) ?? 0;
+      final nextLikes = (liked ? (likes - 1) : (likes + 1)).clamp(0, 1 << 30);
+
+      final updated = Map<String, dynamic>.from(before);
+      updated['liked_by_me'] = !liked;
+      updated['liked'] = !liked;
+      updated['likes_count'] = nextLikes;
+      updated['likes'] = nextLikes;
+      reels[idx] = updated;
+    }
+
     try {
-      await ApiService.likeContent(contentId);
+      final updated = await ApiService.likeContent(id);
+      if (idx != -1) {
+        // Merge server response over local optimistic state.
+        final merged = <String, dynamic>{
+          ...reels[idx],
+          ...updated,
+        };
+        reels[idx] = merged;
+      }
     } catch (e) {
-      error.value = e.toString();
+      // Revert optimistic update.
+      if (idx != -1 && before != null) {
+        reels[idx] = before;
+      }
+      await _handleApiError(e, fallbackMessage: 'Не удалось поставить лайк', ignore: true);
     }
   }
   
@@ -337,7 +394,7 @@ class MarketplaceController extends GetxController {
       final data = await ApiService.getOrders();
       orders.value = List<Map<String, dynamic>>.from(data);
     } catch (e) {
-      error.value = e.toString();
+      await _handleApiError(e, fallbackMessage: 'Не удалось загрузить заказы');
     }
   }
   
@@ -365,7 +422,7 @@ class MarketplaceController extends GetxController {
       orders.insert(0, order);
       return order;
     } catch (e) {
-      error.value = e.toString();
+      await _handleApiError(e, fallbackMessage: 'Не удалось создать заказ');
       return null;
     } finally {
       isLoading.value = false;
@@ -384,7 +441,7 @@ class MarketplaceController extends GetxController {
       
       return true;
     } catch (e) {
-      error.value = e.toString();
+      await _handleApiError(e, fallbackMessage: 'Не удалось обновить статус заказа');
       return false;
     } finally {
       isLoading.value = false;
@@ -397,7 +454,7 @@ class MarketplaceController extends GetxController {
       final data = await ApiService.getConversations();
       conversations.value = List<Map<String, dynamic>>.from(data);
     } catch (e) {
-      error.value = e.toString();
+      await _handleApiError(e, fallbackMessage: 'Не удалось загрузить чаты');
     }
   }
   
@@ -405,16 +462,17 @@ class MarketplaceController extends GetxController {
     try {
       unreadCount.value = await ApiService.getUnreadCount();
     } catch (e) {
-      // Ignore errors for unread count
+      await _handleApiError(e, fallbackMessage: 'Не удалось получить непрочитанные', ignore: true);
     }
   }
   
-  Future<List<Map<String, dynamic>>> getChatMessages(String userId) async {
+  Future<List<Map<String, dynamic>>> getChatMessages(String userId, {bool throwOnError = false}) async {
     try {
       final data = await ApiService.getChatMessages(userId);
       return List<Map<String, dynamic>>.from(data);
     } catch (e) {
-      error.value = e.toString();
+      await _handleApiError(e, fallbackMessage: 'Не удалось загрузить сообщения', ignore: throwOnError);
+      if (throwOnError) rethrow;
       return [];
     }
   }
@@ -424,7 +482,7 @@ class MarketplaceController extends GetxController {
       final message = await ApiService.sendMessage(receiverId, content);
       return message;
     } catch (e) {
-      error.value = e.toString();
+      await _handleApiError(e, fallbackMessage: 'Не удалось отправить сообщение');
       return null;
     }
   }

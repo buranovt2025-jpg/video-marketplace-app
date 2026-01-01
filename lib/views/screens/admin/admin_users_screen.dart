@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/services/api_service.dart';
+import 'package:tiktok_tutorial/utils/web_image_policy.dart';
 
 class AdminUsersScreen extends StatefulWidget {
   const AdminUsersScreen({Key? key}) : super(key: key);
@@ -34,10 +35,10 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     } catch (e) {
       setState(() => _isLoading = false);
       Get.snackbar(
-        'Ошибка',
-        'Не удалось загрузить пользователей',
+        'error'.tr,
+        'load_users_failed'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
     }
@@ -54,9 +55,9 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
       backgroundColor: backgroundColor,
       appBar: AppBar(
         backgroundColor: backgroundColor,
-        title: const Text(
-          'Пользователи',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        title: Text(
+          'users'.tr,
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         automaticallyImplyLeading: false,
         actions: [
@@ -74,15 +75,15 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
-                _buildFilterChip('Все', 'all'),
+                _buildFilterChip('all'.tr, 'all'),
                 const SizedBox(width: 8),
-                _buildFilterChip('Продавцы', 'seller'),
+                _buildFilterChip('seller'.tr, 'seller'),
                 const SizedBox(width: 8),
-                _buildFilterChip('Покупатели', 'buyer'),
+                _buildFilterChip('buyer'.tr, 'buyer'),
                 const SizedBox(width: 8),
-                _buildFilterChip('Курьеры', 'courier'),
+                _buildFilterChip('courier'.tr, 'courier'),
                 const SizedBox(width: 8),
-                _buildFilterChip('Админы', 'admin'),
+                _buildFilterChip('admin'.tr, 'admin'),
               ],
             ),
           ),
@@ -93,7 +94,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
             child: Row(
               children: [
                 Text(
-                  'Всего: ${_filteredUsers.length}',
+                  'total_count'.trParams({'count': _filteredUsers.length.toString()}),
                   style: TextStyle(color: Colors.grey[400]),
                 ),
               ],
@@ -113,7 +114,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                             Icon(Icons.people_outline, size: 64, color: Colors.grey[700]),
                             const SizedBox(height: 16),
                             Text(
-                              'Нет пользователей',
+                              'no_users'.tr,
                               style: TextStyle(color: Colors.grey[500], fontSize: 16),
                             ),
                           ],
@@ -160,19 +161,14 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
   Widget _buildUserCard(Map<String, dynamic> user) {
     final roleColors = {
       'seller': Colors.green,
-      'buyer': Colors.blue,
-      'courier': Colors.orange,
-      'admin': Colors.purple,
-    };
-
-    final roleLabels = {
-      'seller': 'Продавец',
-      'buyer': 'Покупатель',
-      'courier': 'Курьер',
-      'admin': 'Админ',
+      'buyer': primaryColor,
+      'courier': accentColor,
+      'admin': Colors.white,
     };
 
     final role = user['role'] ?? 'buyer';
+    final avatarUrl = user['avatar']?.toString();
+    final avatar = networkImageProviderOrNull(avatarUrl);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -190,10 +186,8 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
               CircleAvatar(
                 radius: 24,
                 backgroundColor: roleColors[role]?.withOpacity(0.2),
-                backgroundImage: user['avatar'] != null && user['avatar'].toString().isNotEmpty
-                    ? NetworkImage(user['avatar'])
-                    : null,
-                child: user['avatar'] == null || user['avatar'].toString().isEmpty
+                backgroundImage: avatar,
+                child: avatar == null
                     ? Icon(Icons.person, color: roleColors[role], size: 24)
                     : null,
               ),
@@ -205,7 +199,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      user['name'] ?? 'Без имени',
+                      user['name'] ?? 'untitled'.tr,
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -228,7 +222,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  roleLabels[role] ?? role,
+                  role.toString().tr,
                   style: TextStyle(
                     color: roleColors[role],
                     fontSize: 12,

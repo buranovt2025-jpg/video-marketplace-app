@@ -25,21 +25,21 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
   final List<Map<String, dynamic>> _roles = [
     {
       'value': 'seller',
-      'label': 'Продавец',
+      'labelKey': 'seller',
       'icon': Icons.storefront,
-      'description': 'Продавайте товары на платформе',
+      'descriptionKey': 'role_seller_desc',
     },
     {
       'value': 'buyer',
-      'label': 'Покупатель',
+      'labelKey': 'buyer',
       'icon': Icons.shopping_bag,
-      'description': 'Покупайте товары с доставкой',
+      'descriptionKey': 'role_buyer_desc',
     },
     {
       'value': 'courier',
-      'label': 'Курьер',
+      'labelKey': 'courier',
       'icon': Icons.delivery_dining,
-      'description': 'Доставляйте заказы и зарабатывайте',
+      'descriptionKey': 'role_courier_desc',
     },
   ];
 
@@ -58,10 +58,10 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
         _emailController.text.isEmpty ||
         _passwordController.text.isEmpty) {
       Get.snackbar(
-        'Ошибка',
-        'Заполните обязательные поля',
+        'error'.tr,
+        'fill_required_fields'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
       return;
@@ -69,10 +69,10 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
 
     if (_passwordController.text.length < 6) {
       Get.snackbar(
-        'Ошибка',
-        'Пароль должен быть не менее 6 символов',
+        'error'.tr,
+        'password_min_6'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
       return;
@@ -91,12 +91,12 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
       Get.offAll(() => const MarketplaceHomeScreen());
     } else {
       Get.snackbar(
-        'Ошибка',
+        'error'.tr,
         _controller.error.value.isNotEmpty 
             ? _controller.error.value 
-            : 'Не удалось зарегистрироваться',
+            : 'registration_failed'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
     }
@@ -113,10 +113,7 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Get.back(),
         ),
-        title: const Text(
-          'Регистрация',
-          style: TextStyle(color: Colors.white),
-        ),
+        title: Text('register'.tr, style: const TextStyle(color: Colors.white)),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -126,7 +123,7 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
             children: [
               // Role selection
               Text(
-                'Выберите роль',
+                'select_role'.tr,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -137,6 +134,8 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
               
               ...List.generate(_roles.length, (index) {
                 final role = _roles[index];
+                final label = (role['labelKey']?.toString() ?? '').tr;
+                final description = (role['descriptionKey']?.toString() ?? '').tr;
                 final isSelected = _selectedRole == role['value'];
                 
                 return GestureDetector(
@@ -169,7 +168,7 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                role['label'],
+                                label,
                                 style: TextStyle(
                                   color: isSelected ? Colors.white : Colors.grey[300],
                                   fontWeight: FontWeight.bold,
@@ -177,7 +176,7 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
                                 ),
                               ),
                               Text(
-                                role['description'],
+                                description,
                                 style: TextStyle(
                                   color: Colors.grey[500],
                                   fontSize: 12,
@@ -201,7 +200,7 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
                 controller: _nameController,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
-                  labelText: 'Имя *',
+                  labelText: '${'name'.tr} *',
                   labelStyle: TextStyle(color: Colors.grey[400]),
                   prefixIcon: Icon(Icons.person, color: Colors.grey[400]),
                   enabledBorder: OutlineInputBorder(
@@ -224,7 +223,7 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
                 keyboardType: TextInputType.emailAddress,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
-                  labelText: 'Email *',
+                  labelText: '${'email'.tr} *',
                   labelStyle: TextStyle(color: Colors.grey[400]),
                   prefixIcon: Icon(Icons.email, color: Colors.grey[400]),
                   enabledBorder: OutlineInputBorder(
@@ -247,7 +246,7 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
                 obscureText: _obscurePassword,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
-                  labelText: 'Пароль *',
+                  labelText: '${'password'.tr} *',
                   labelStyle: TextStyle(color: Colors.grey[400]),
                   prefixIcon: Icon(Icons.lock, color: Colors.grey[400]),
                   suffixIcon: IconButton(
@@ -281,7 +280,7 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
                 keyboardType: TextInputType.phone,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
-                  labelText: 'Телефон',
+                  labelText: 'phone_number'.tr,
                   labelStyle: TextStyle(color: Colors.grey[400]),
                   prefixIcon: Icon(Icons.phone, color: Colors.grey[400]),
                   enabledBorder: OutlineInputBorder(
@@ -305,8 +304,8 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
                 maxLines: 2,
                 decoration: InputDecoration(
                   labelText: _selectedRole == 'seller' 
-                      ? 'Адрес точки продаж' 
-                      : 'Адрес доставки',
+                      ? 'sales_point_address'.tr
+                      : 'delivery_address'.tr,
                   labelStyle: TextStyle(color: Colors.grey[400]),
                   prefixIcon: Icon(Icons.location_on, color: Colors.grey[400]),
                   enabledBorder: OutlineInputBorder(
@@ -343,8 +342,8 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
                           color: Colors.white,
                         ),
                       )
-                    : const Text(
-                        'Зарегистрироваться',
+                    : Text(
+                        'sign_up'.tr,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -360,13 +359,13 @@ class _MarketplaceRegisterScreenState extends State<MarketplaceRegisterScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Уже есть аккаунт? ',
+                    '${'already_have_account'.tr} ',
                     style: TextStyle(color: Colors.grey[400]),
                   ),
                   GestureDetector(
                     onTap: () => Get.back(),
                     child: Text(
-                      'Войти',
+                      'login'.tr,
                       style: TextStyle(
                         color: buttonColor,
                         fontWeight: FontWeight.bold,

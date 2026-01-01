@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/services/api_service.dart';
+import 'package:tiktok_tutorial/utils/feature_flags.dart';
+import 'package:tiktok_tutorial/utils/formatters.dart';
+import 'package:tiktok_tutorial/utils/media_url.dart';
+import 'package:tiktok_tutorial/utils/money.dart';
 
 class CreateStoryScreen extends StatefulWidget {
   const CreateStoryScreen({Key? key}) : super(key: key);
@@ -15,9 +21,14 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
   final TextEditingController _imageUrlController = TextEditingController();
   final TextEditingController _videoUrlController = TextEditingController();
   final MarketplaceController _controller = Get.find<MarketplaceController>();
+  final ImagePicker _picker = ImagePicker();
   
   String? _selectedProductId;
   bool _isVideo = false;
+  bool _useUpload = false;
+  XFile? _pickedFile;
+  bool _isUploading = false;
+  static const int _maxUploadBytes = 50 * 1024 * 1024; // 50 MB
 
   @override
   void initState() {
@@ -34,23 +45,125 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
   }
 
   Future<void> _createStory() async {
-    final hasImage = _imageUrlController.text.isNotEmpty;
-    final hasVideo = _videoUrlController.text.isNotEmpty;
+    if (_isUploading) return;
+    String? finalImageUrl;
+    String? finalVideoUrl;
+
+    if (kEnableMediaUpload && _useUpload) {
+      if (_pickedFile == null) {
+        Get.snackbar(
+          'error'.tr,
+          'media_missing'.tr,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.black87,
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      try {
+        if (mounted) setState(() => _isUploading = true);
+        final sizeBytes = await _pickedFile!.length();
+        if (sizeBytes > _maxUploadBytes) {
+          Get.snackbar(
+            'error'.tr,
+            'file_too_large'.trParams({'max': '50 MB'}),
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.black87,
+            colorText: Colors.white,
+          );
+          return;
+        }
+        final bytes = await _pickedFile!.readAsBytes();
+        final kind = _isVideo ? 'story_video' : 'story_image';
+        final contentType = _isVideo ? 'video/mp4' : 'image/jpeg';
+        final session = await ApiService.createUploadSession(
+          kind: kind,
+          filename: _pickedFile!.name,
+          contentType: contentType,
+          sizeBytes: sizeBytes,
+        );
+        final uploadUrl = session['upload_url']?.toString();
+        final fileUrl = session['file_url']?.toString();
+        if (uploadUrl == null || uploadUrl.isEmpty || fileUrl == null || fileUrl.isEmpty) {
+          throw Exception('Invalid upload session');
+        }
+        final hdr = <String, String>{};
+        if (session['headers'] is Map) {
+          for (final entry in (session['headers'] as Map).entries) {
+            hdr[entry.key.toString()] = entry.value.toString();
+          }
+        }
+        hdr.putIfAbsent('Content-Type', () => contentType);
+        await ApiService.uploadToPresignedUrl(
+          uploadUrl: Uri.parse(uploadUrl),
+          bytes: bytes,
+          headers: hdr.isEmpty ? null : hdr,
+        );
+        if (_isVideo) {
+          finalVideoUrl = fileUrl;
+        } else {
+          finalImageUrl = fileUrl;
+        }
+      } catch (e) {
+        if (e is ApiException && (e.statusCode == 404 || e.statusCode == 405 || e.statusCode == 501)) {
+          Get.snackbar(
+            'error'.tr,
+            'upload_not_supported'.tr,
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.black87,
+            colorText: Colors.white,
+            duration: const Duration(seconds: 4),
+          );
+          if (mounted) setState(() => _useUpload = false);
+        } else {
+        Get.snackbar(
+          'error'.tr,
+          'upload_failed'.tr,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.black87,
+          colorText: Colors.white,
+        );
+        }
+        return;
+      } finally {
+        if (mounted) setState(() => _isUploading = false);
+      }
+    } else {
+      final hasImage = _imageUrlController.text.isNotEmpty;
+      final hasVideo = _videoUrlController.text.isNotEmpty;
     
-    if (!hasImage && !hasVideo) {
-      Get.snackbar(
-        'Ошибка',
-        'Добавьте фото или видео',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-      return;
+      if (!hasImage && !hasVideo) {
+        Get.snackbar(
+          'error'.tr,
+          'media_missing'.tr,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.black87,
+          colorText: Colors.white,
+        );
+        return;
+      }
+    
+      final videoUrl = hasVideo ? _videoUrlController.text.trim() : null;
+      if (videoUrl != null && videoUrl.isNotEmpty && !looksLikeVideoUrl(videoUrl)) {
+        Get.snackbar(
+          'error'.tr,
+          'video_url_invalid'.tr,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.black87,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 5),
+        );
+        return;
+      }
+
+      finalImageUrl = hasImage ? _imageUrlController.text.trim() : null;
+      finalVideoUrl = videoUrl;
     }
 
     final story = await _controller.createStory(
-      imageUrl: hasImage ? _imageUrlController.text.trim() : null,
-      videoUrl: hasVideo ? _videoUrlController.text.trim() : null,
+      imageUrl: finalImageUrl,
+      videoUrl: finalVideoUrl,
       caption: _captionController.text.isNotEmpty 
           ? _captionController.text.trim() 
           : null,
@@ -60,20 +173,20 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
     if (story != null) {
       Get.back();
       Get.snackbar(
-        'Успешно',
-        'История опубликована',
+        'success'.tr,
+        'story_published'.tr,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
     } else {
       Get.snackbar(
-        'Ошибка',
+        'error'.tr,
         _controller.error.value.isNotEmpty 
             ? _controller.error.value 
-            : 'Не удалось создать историю',
+            : 'create_story_failed'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
     }
@@ -90,31 +203,34 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
           icon: const Icon(Icons.close, color: Colors.white),
           onPressed: () => Get.back(),
         ),
-        title: const Text(
-          'Новая история',
-          style: TextStyle(color: Colors.white),
+        title: Text(
+          'new_story'.tr,
+          style: const TextStyle(color: Colors.white),
         ),
         actions: [
-          Obx(() => TextButton(
-            onPressed: _controller.isLoading.value ? null : _createStory,
-            child: _controller.isLoading.value
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
+          Obx(() {
+            final busy = _controller.isLoading.value || _isUploading;
+            return TextButton(
+              onPressed: busy ? null : _createStory,
+              child: busy
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text(
+                      'publish'.tr,
+                      style: TextStyle(
+                        color: buttonColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
-                  )
-                : Text(
-                    'Опубликовать',
-                    style: TextStyle(
-                      color: buttonColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-          )),
+            );
+          }),
         ],
       ),
       body: SingleChildScrollView(
@@ -122,12 +238,79 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (kEnableMediaUpload) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _useUpload = false),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: !_useUpload ? buttonColor!.withOpacity(0.2) : Colors.grey[900],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: !_useUpload ? buttonColor! : Colors.grey[800]!),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.link, color: !_useUpload ? buttonColor : Colors.grey[500]),
+                            const SizedBox(width: 8),
+                            Text(
+                              'use_link'.tr,
+                              style: TextStyle(
+                                color: !_useUpload ? Colors.white : Colors.grey[500],
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _useUpload = true),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: _useUpload ? buttonColor!.withOpacity(0.2) : Colors.grey[900],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: _useUpload ? buttonColor! : Colors.grey[800]!),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.cloud_upload, color: _useUpload ? buttonColor : Colors.grey[500]),
+                            const SizedBox(width: 8),
+                            Text(
+                              'upload_media'.tr,
+                              style: TextStyle(
+                                color: _useUpload ? Colors.white : Colors.grey[500],
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
+
             // Type selector
             Row(
               children: [
                 Expanded(
                   child: GestureDetector(
-                    onTap: () => setState(() => _isVideo = false),
+                    onTap: () => setState(() {
+                      _isVideo = false;
+                      _pickedFile = null;
+                      _videoUrlController.clear();
+                    }),
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
@@ -146,7 +329,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Фото',
+                            'add_photo'.tr,
                             style: TextStyle(
                               color: !_isVideo ? Colors.white : Colors.grey[500],
                               fontWeight: FontWeight.bold,
@@ -160,7 +343,11 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: GestureDetector(
-                    onTap: () => setState(() => _isVideo = true),
+                    onTap: () => setState(() {
+                      _isVideo = true;
+                      _pickedFile = null;
+                      _imageUrlController.clear();
+                    }),
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
@@ -179,7 +366,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Видео',
+                            'add_video'.tr,
                             style: TextStyle(
                               color: _isVideo ? Colors.white : Colors.grey[500],
                               fontWeight: FontWeight.bold,
@@ -197,7 +384,10 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
             // Media preview area
             GestureDetector(
               onTap: () {
-                // TODO: Implement media picker
+                if (kEnableMediaUpload && _useUpload) {
+                  // ignore: discarded_futures
+                  _pickMedia();
+                }
               },
               child: Container(
                 height: 300,
@@ -216,7 +406,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      _isVideo ? 'Добавить видео' : 'Добавить фото',
+                      (kEnableMediaUpload && _useUpload) ? 'choose_file'.tr : (_isVideo ? 'add_video'.tr : 'add_photo'.tr),
                       style: TextStyle(
                         color: Colors.grey[500],
                         fontSize: 16,
@@ -224,25 +414,38 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'История исчезнет через 24 часа',
+                      'story_expires_24h'.tr,
                       style: TextStyle(
                         color: Colors.grey[600],
                         fontSize: 12,
                       ),
                     ),
+                    if (kEnableMediaUpload && _useUpload && _pickedFile != null) ...[
+                      const SizedBox(height: 12),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          '${'selected_file'.tr}: ${_pickedFile!.name}',
+                          style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 16),
             
-            // URL field (temporary until file upload is implemented)
-            if (_isVideo)
+            // URL field (default) / Upload info (feature-flagged)
+            if (!(kEnableMediaUpload && _useUpload) && _isVideo)
               TextField(
                 controller: _videoUrlController,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
-                  labelText: 'URL видео *',
+                  labelText: 'video_url_required'.tr,
                   labelStyle: TextStyle(color: Colors.grey[400]),
                   hintText: 'https://example.com/video.mp4',
                   hintStyle: TextStyle(color: Colors.grey[600]),
@@ -259,14 +462,14 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                   fillColor: Colors.grey[900],
                 ),
               )
-            else
+            else if (!(kEnableMediaUpload && _useUpload))
               TextField(
                 controller: _imageUrlController,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
-                  labelText: 'URL изображения *',
+                  labelText: 'image_url_required'.tr,
                   labelStyle: TextStyle(color: Colors.grey[400]),
-                  hintText: 'https://example.com/image.jpg',
+                  hintText: 'image_url_hint'.tr,
                   hintStyle: TextStyle(color: Colors.grey[600]),
                   prefixIcon: Icon(Icons.link, color: Colors.grey[400]),
                   enabledBorder: OutlineInputBorder(
@@ -281,6 +484,28 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                   fillColor: Colors.grey[900],
                 ),
               ),
+            if (kEnableMediaUpload && _useUpload) ...[
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.grey[900],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey[800]!),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.grey[500]),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'upload_uses_backend'.tr,
+                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 24),
             
             // Caption field
@@ -290,9 +515,9 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
               maxLines: 2,
               maxLength: 200,
               decoration: InputDecoration(
-                labelText: 'Подпись',
+                labelText: 'caption'.tr,
                 labelStyle: TextStyle(color: Colors.grey[400]),
-                hintText: 'Добавьте подпись...',
+                hintText: 'add_caption_hint'.tr,
                 hintStyle: TextStyle(color: Colors.grey[600]),
                 alignLabelWithHint: true,
                 counterStyle: TextStyle(color: Colors.grey[500]),
@@ -312,7 +537,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
             
             // Link to product
             Text(
-              'Привязать к товару',
+              'link_to_product'.tr,
               style: TextStyle(
                 color: Colors.grey[300],
                 fontWeight: FontWeight.bold,
@@ -337,7 +562,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'У вас пока нет товаров.',
+                          'no_products_yet'.tr,
                           style: TextStyle(color: Colors.grey[500], fontSize: 13),
                         ),
                       ),
@@ -360,7 +585,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                     dropdownColor: Colors.grey[900],
                     icon: Icon(Icons.arrow_drop_down, color: Colors.grey[400]),
                     hint: Text(
-                      'Выберите товар (опционально)',
+                      'choose_product_optional'.tr,
                       style: TextStyle(color: Colors.grey[500]),
                     ),
                     style: const TextStyle(color: Colors.white),
@@ -368,7 +593,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                       DropdownMenuItem<String?>(
                         value: null,
                         child: Text(
-                          'Без товара',
+                          'no_product'.tr,
                           style: TextStyle(color: Colors.grey[500]),
                         ),
                       ),
@@ -381,7 +606,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
-                                  '${product['name']} - ${product['price']?.toStringAsFixed(0)} сум',
+                                  '${product['name']} - ${formatMoneyWithCurrency(product['price'])}',
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
@@ -416,7 +641,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Истории видны 24 часа и отображаются в кружочках вверху ленты',
+                      'stories_visible_24h'.tr,
                       style: TextStyle(color: Colors.orange[300], fontSize: 13),
                     ),
                   ),
@@ -426,6 +651,51 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _pickMedia() async {
+    try {
+      final source = await _pickSource();
+      if (source == null) return;
+      final x = _isVideo
+          ? await _picker.pickVideo(source: source)
+          : await _picker.pickImage(source: source);
+      if (!mounted) return;
+      setState(() => _pickedFile = x);
+    } catch (_) {
+      Get.snackbar(
+        'error'.tr,
+        'upload_failed'.tr,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+
+  Future<ImageSource?> _pickSource() async {
+    return await Get.bottomSheet<ImageSource?>(
+      SafeArea(
+        child: Container(
+          color: Colors.grey[900],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_library, color: Colors.white),
+                title: Text('gallery'.tr, style: const TextStyle(color: Colors.white)),
+                onTap: () => Get.back(result: ImageSource.gallery),
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt, color: Colors.white),
+                title: Text('camera'.tr, style: const TextStyle(color: Colors.white)),
+                onTap: () => Get.back(result: ImageSource.camera),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+      isScrollControlled: true,
     );
   }
 }

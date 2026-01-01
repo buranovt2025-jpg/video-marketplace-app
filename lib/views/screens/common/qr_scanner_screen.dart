@@ -205,22 +205,22 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.2),
+                  color: primaryColor.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.red),
+                  border: Border.all(color: primaryColor),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.error_outline, color: Colors.red),
+                    const Icon(Icons.error_outline, color: primaryColor),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         _error!,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(color: primaryColor),
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close, color: Colors.red),
+                      icon: const Icon(Icons.close, color: primaryColor),
                       onPressed: () => setState(() => _error = null),
                     ),
                   ],
@@ -247,11 +247,11 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: widget.expectedType == 'pickup' 
-                    ? Colors.blue.withOpacity(0.2) 
+                    ? primaryColor.withOpacity(0.2) 
                     : Colors.green.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: widget.expectedType == 'pickup' ? Colors.blue : Colors.green,
+                  color: widget.expectedType == 'pickup' ? primaryColor : Colors.green,
                 ),
               ),
               child: Row(
@@ -259,14 +259,14 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
                 children: [
                   Icon(
                     widget.expectedType == 'pickup' ? Icons.inventory_2 : Icons.local_shipping,
-                    color: widget.expectedType == 'pickup' ? Colors.blue : Colors.green,
+                    color: widget.expectedType == 'pickup' ? primaryColor : Colors.green,
                     size: 20,
                   ),
                   const SizedBox(width: 8),
                   Text(
                     widget.expectedType == 'pickup' ? 'pickup_qr'.tr : 'delivery_qr'.tr,
                     style: TextStyle(
-                      color: widget.expectedType == 'pickup' ? Colors.blue : Colors.green,
+                      color: widget.expectedType == 'pickup' ? primaryColor : Colors.green,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

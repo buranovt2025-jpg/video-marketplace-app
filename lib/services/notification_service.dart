@@ -1,5 +1,6 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
+import 'package:tiktok_tutorial/utils/money.dart';
 
 class NotificationService extends GetxService {
   static NotificationService get to => Get.find<NotificationService>();
@@ -58,7 +59,7 @@ class NotificationService extends GetxService {
     await _notifications.show(
       orderId.hashCode,
       'Новый заказ!',
-      'От $buyerName на ${amount.toStringAsFixed(0)} сум',
+      'От $buyerName на ${formatMoneyWithCurrency(amount)}',
       NotificationDetails(
         android: AndroidNotificationDetails(
           'orders_channel',
