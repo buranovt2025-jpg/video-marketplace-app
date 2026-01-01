@@ -6,6 +6,9 @@
 
 После реализации мы включим фичи на Web через `DART_DEFINES` (см. ниже).
 
+> Примечание (prod): на сервере `165.232.81.31` эти endpoints уже подняты внутри существующего backend (`gogomarket.service`).
+> Детали: `docs/SERVER_GOGOMARKET_PATCH.md`.
+
 ## 0) Ссылки на контракты
 
 - Upload: `docs/MEDIA_UPLOAD.md`

@@ -85,3 +85,17 @@ ENABLE_MEDIA_UPLOAD=true ENABLE_PRODUCT_REVIEWS=true
 - `docs/DEPLOY_AUTOMATION_GITHUB_ACTIONS.md` — детали настройки автодеплоя
 - `docs/BACKEND_TASKS.md` — список задач для backend (upload/reviews)
 
+## Примечание про self-signed TLS (prod)
+
+На `165.232.81.31` используется self-signed сертификат, поэтому:
+- `WEB_URL` в smoke test уже проверяется через `curl -k`
+- если `API_URL` тоже указывает на `https://165.232.81.31`, добавьте:
+  - `API_INSECURE=1`
+  - `FEATURE_API_INSECURE=1`
+
+Пример:
+
+```bash
+API_INSECURE=1 FEATURE_API_INSECURE=1 RUN_BACKEND_CHECKS=1 WEB_URL=https://165.232.81.31 API_URL=https://165.232.81.31 bash scripts/smoke_test_prod.sh
+```
+

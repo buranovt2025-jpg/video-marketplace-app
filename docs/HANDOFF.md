@@ -6,19 +6,35 @@
 - **Active branch**: `cursor/what-has-been-done-5e03`
 - **Deploy workflow**: `.github/workflows/deploy_web.yml` (name: **Deploy Flutter Web (SSH)**)
 - **Prod Web**: `https://165.232.81.31`
-- **Prod API**: `https://app-owphiuvd.fly.dev`
-- **Last deployed web commit**: `8bd63ebd243d06bc66a800fcd7e9543f4f5dc170` (from `/.last_build_id`)
-- **Smoke test**: `bash scripts/smoke_test_prod.sh` (passed after the deploy above)
+- **Prod API**: `https://165.232.81.31` (self-signed TLS; nginx proxies `/api` to `127.0.0.1:8000`)
+- **Last deployed web commit**: `341a0312bfd3efcdd1a59d797a1ca107a5dbe012` (from `/.last_build_id`)
+- **Smoke test**: `API_INSECURE=1 FEATURE_API_INSECURE=1 RUN_BACKEND_CHECKS=1 WEB_URL=https://165.232.81.31 API_URL=https://165.232.81.31 bash scripts/smoke_test_prod.sh` (passed)
 
 ## Feature flags (build-time)
 
 Feature flags are controlled via `--dart-define` and can be passed from CI/server via `DART_DEFINES`:
 - `ENABLE_MEDIA_UPLOAD=true` — enables upload mode in Create Reel/Story (requires backend `/api/uploads`)
 - `ENABLE_PRODUCT_REVIEWS=true` — enables product reviews UI (requires backend reviews endpoints)
+- `API_BASE_URL=https://165.232.81.31` — points the app to the nginx-proxied API on the same host as web
 
 Docs:
 - `docs/DEPLOYMENT.md` (how to set `DART_DEFINES`)
 - `docs/BACKEND_TASKS.md`, `docs/MEDIA_UPLOAD.md`, `docs/REVIEWS_API.md`
+
+## Prod backend notes (important)
+
+There is an existing backend on the server managed by systemd:
+- `gogomarket.service` runs `/opt/gogomarket/venv/bin/uvicorn main:app`.
+
+To unlock **uploads + reviews**, we integrated two endpoints into that backend (server-side):
+- `POST /api/uploads`
+- `GET/POST /api/products/{id}/reviews`
+
+And we hardened exposure:
+- `gogomarket.service` now binds to `127.0.0.1:8000` (systemd drop-in).
+- Nginx proxies `/api` + `/ws` over HTTPS.
+
+Details / rollback steps: `docs/SERVER_GOGOMARKET_PATCH.md`.
 
 ## What we changed recently
 
@@ -64,7 +80,7 @@ curl -kfsS https://165.232.81.31/.last_build_id | tr -d '\r\n'
 
 ### Run prod smoke test
 ```bash
-bash scripts/smoke_test_prod.sh
+API_INSECURE=1 FEATURE_API_INSECURE=1 RUN_BACKEND_CHECKS=1 WEB_URL=https://165.232.81.31 API_URL=https://165.232.81.31 bash scripts/smoke_test_prod.sh
 ```
 
 ### See commits not on prod (replace HASH with current .last_build_id)
