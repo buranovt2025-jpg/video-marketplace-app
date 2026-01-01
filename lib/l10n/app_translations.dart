@@ -87,6 +87,10 @@ class AppTranslations extends Translations {
       'sub_total': 'Подытог',
       'shipping': 'Доставка',
       'pay_now': 'Оплатить',
+      'free_shipping': 'Бесплатная доставка',
+      'see_all': 'Смотреть все',
+      'product_details': 'Детали товара',
+      'product_reviews': 'Отзывы',
       
       // Admin
       'dashboard': 'Дашборд',
@@ -815,6 +819,10 @@ class AppTranslations extends Translations {
       'sub_total': 'Oraliq jami',
       'shipping': 'Yetkazish',
       'pay_now': 'To‘lash',
+      'free_shipping': 'Bepul yetkazish',
+      'see_all': 'Hammasi',
+      'product_details': 'Mahsulot tafsilotlari',
+      'product_reviews': 'Sharhlar',
       
       // Admin
       'dashboard': 'Dashboard',
@@ -1538,6 +1546,10 @@ class AppTranslations extends Translations {
       'sub_total': 'Sub total',
       'shipping': 'Shipping',
       'pay_now': 'Pay now',
+      'free_shipping': 'Free shipping',
+      'see_all': 'See all',
+      'product_details': 'Product details',
+      'product_reviews': 'Product reviews',
       
       // Admin
       'dashboard': 'Dashboard',
