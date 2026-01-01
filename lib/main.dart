@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
@@ -41,31 +40,17 @@ void main() async {
   };
 
   runZonedGuarded(() async {
-    // TEMP (hotfix): accept self-signed certificates (e.g. https://165.232.81.31)
-    // for all HTTP(S) requests on mobile/desktop. This is unsafe for production.
-    installInsecureHttpOverrides();
+    // Optional: accept self-signed certificates on IO platforms.
+    //
+    // WARNING: This disables TLS certificate validation globally.
+    // Keep it OFF for production builds and enable only for local/staging:
+    //   --dart-define=ALLOW_INSECURE_TLS=true
+    const allowInsecureTls = bool.fromEnvironment('ALLOW_INSECURE_TLS', defaultValue: false);
+    if (allowInsecureTls) {
+      installInsecureHttpOverrides();
+    }
 
     debugPrint('=== GoGoMarket starting ===');
-
-    // Firebase init:
-    // - Mobile/desktop: can use native config (google-services.json / GoogleService-Info.plist).
-    // - Web: requires explicit FirebaseOptions (flutterfire configure).
-    //
-    // Current prod web uses FastAPI backend + self-signed SSL, and Firebase web config
-    // is often not present. Firebase init can throw and also generate noisy JS errors.
-    // Default: skip Firebase init on web unless explicitly enabled.
-    const enableFirebaseWeb = bool.fromEnvironment('ENABLE_FIREBASE_WEB', defaultValue: false);
-    if (!kIsWeb || enableFirebaseWeb) {
-      try {
-        await Firebase.initializeApp();
-        debugPrint('Firebase.initializeApp OK');
-      } catch (e, st) {
-        debugPrint('Firebase.initializeApp FAILED (continuing): $e');
-        debugPrint('$st');
-      }
-    } else {
-      debugPrint('Web: Firebase.initializeApp skipped (ENABLE_FIREBASE_WEB=false)');
-    }
 
     // Initialize API service and check for existing token
     try {

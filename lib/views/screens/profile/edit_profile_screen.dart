@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/services/api_service.dart';
 import 'package:tiktok_tutorial/utils/web_image_policy.dart';
+import 'package:tiktok_tutorial/utils/xfile_image_provider_stub.dart'
+    if (dart.library.io) 'package:tiktok_tutorial/utils/xfile_image_provider_io.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({Key? key}) : super(key: key);
@@ -21,7 +22,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final TextEditingController _addressController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
   
-  File? _selectedImage;
+  XFile? _selectedImage;
   String? _avatarUrl;
   bool _isLoading = false;
 
@@ -75,7 +76,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   );
                   if (image != null) {
                     setState(() {
-                      _selectedImage = File(image.path);
+                      _selectedImage = image;
                     });
                   }
                 },
@@ -93,7 +94,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   );
                   if (image != null) {
                     setState(() {
-                      _selectedImage = File(image.path);
+                      _selectedImage = image;
                     });
                   }
                 },
@@ -223,7 +224,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     radius: 60,
                     backgroundColor: Colors.grey[800],
                     backgroundImage: _selectedImage != null
-                        ? FileImage(_selectedImage!)
+                        ? xFileImageProvider(_selectedImage!)
                         : networkImageProviderOrNull(_avatarUrl),
                     child: (_selectedImage == null && _avatarUrl == null)
                         ? const Icon(Icons.person, size: 60, color: Colors.white)

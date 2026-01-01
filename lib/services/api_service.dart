@@ -3,7 +3,12 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  static const String baseUrl = 'https://app-owphiuvd.fly.dev';
+  /// Base URL for the backend API.
+  ///
+  /// Override for staging/dev builds:
+  /// `flutter run -d chrome --dart-define=API_BASE_URL=https://...`
+  static const String baseUrl =
+      String.fromEnvironment('API_BASE_URL', defaultValue: 'https://app-owphiuvd.fly.dev');
   static String? _token;
   static const Duration _defaultTimeout = Duration(seconds: 30);
   

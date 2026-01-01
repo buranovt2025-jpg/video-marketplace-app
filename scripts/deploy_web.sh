@@ -50,89 +50,10 @@ if [ "$(id -u)" -ne 0 ]; then
   fi
 fi
 
-echo "== Flutter clean/pub get =="
-"$FLUTTER_BIN" clean
-"$FLUTTER_BIN" pub get
-
-# Web build fix:
-# mobile_scanner declares a web plugin that conflicts with dart:html ImageCapture.
-# Even if app code doesn't use QR scanning on web, Flutter's generated web plugin
-# registrant can pull in the web implementation and break compilation.
-#
-# We patch the *pub-cache* copy of mobile_scanner just for the duration of the build
-# (disable platforms.web in its pubspec.yaml), then restore it afterwards.
-echo "== Patch mobile_scanner web plugin (temporary) =="
-PKG_CONFIG=".dart_tool/package_config.json"
-if [ -f "$PKG_CONFIG" ]; then
-  MOBILE_SCANNER_DIR="$(
-    python3 - <<'PY'
-import json, pathlib, urllib.parse, sys
-p = pathlib.Path(".dart_tool/package_config.json")
-cfg = json.loads(p.read_text())
-for pkg in cfg.get("packages", []):
-    if pkg.get("name") == "mobile_scanner":
-        uri = pkg.get("rootUri")
-        # rootUri is usually "file:///..." or relative "file://"
-        if uri.startswith("file:"):
-            path = urllib.parse.urlparse(uri).path
-            print(pathlib.Path(path).resolve())
-        else:
-            print((p.parent / uri).resolve())
-        sys.exit(0)
-sys.exit(1)
-PY
-  )" || MOBILE_SCANNER_DIR=""
-
-  if [ -n "${MOBILE_SCANNER_DIR:-}" ] && [ -f "$MOBILE_SCANNER_DIR/pubspec.yaml" ]; then
-    MS_PUB="$MOBILE_SCANNER_DIR/pubspec.yaml"
-    MS_BAK="/tmp/mobile_scanner_pubspec.yaml.bak.$$"
-    cp "$MS_PUB" "$MS_BAK"
-    python3 - <<PY
-from pathlib import Path
-
-p = Path("$MS_PUB")
-lines = p.read_text().splitlines(True)
-out = []
-i = 0
-while i < len(lines):
-    line = lines[i]
-    # remove "      web:" block and nested content
-    if line.startswith("      web:"):
-        i += 1
-        while i < len(lines) and lines[i].startswith("        "):
-            i += 1
-        continue
-    out.append(line)
-    i += 1
-p.write_text("".join(out))
-PY
-
-    restore_mobile_scanner_pubspec() {
-      if [ -f "$MS_BAK" ]; then
-        cp "$MS_BAK" "$MS_PUB" || true
-        rm -f "$MS_BAK" || true
-      fi
-    }
-    trap restore_mobile_scanner_pubspec EXIT
-
-    echo "Patched: $MS_PUB"
-  else
-    echo "WARN: mobile_scanner pubspec not found; continuing without patch."
-  fi
-else
-  echo "WARN: $PKG_CONFIG not found; skipping mobile_scanner patch."
-fi
-
 echo "== Build web =="
-# Self-signed HTTPS breaks Service Worker registration in browsers, which can lead
-# to confusing blank pages and aggressive caching issues. For this environment
-# we disable PWA/service worker.
-#
-# You can override these defaults via env vars:
-#   PWA_STRATEGY=none|offline-first
-PWA_STRATEGY="${PWA_STRATEGY:-none}"
-"$FLUTTER_BIN" build web --release --pwa-strategy="$PWA_STRATEGY"
+PROJECT_DIR="$PROJECT_DIR" FLUTTER_BIN="$FLUTTER_BIN" bash scripts/build_web.sh
 
+echo "== Deploy web build to nginx root =="
 $SUDO mkdir -p "$WEB_ROOT"
 $SUDO rsync -av --delete build/web/ "$WEB_ROOT/"
 echo "$(git rev-parse HEAD)" | $SUDO tee "$WEB_ROOT/.last_build_id" >/dev/null

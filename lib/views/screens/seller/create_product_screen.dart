@@ -1,10 +1,11 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
+import 'package:tiktok_tutorial/utils/xfile_image_provider_stub.dart'
+    if (dart.library.io) 'package:tiktok_tutorial/utils/xfile_image_provider_io.dart';
 
 class CreateProductScreen extends StatefulWidget {
   const CreateProductScreen({Key? key}) : super(key: key);
@@ -23,7 +24,7 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
   final ImagePicker _imagePicker = ImagePicker();
   
   String _selectedCategory = 'other';
-  File? _selectedImage;
+  XFile? _selectedImage;
   bool _isPickingImage = false;
   
   final List<Map<String, String>> _categories = const [
@@ -65,7 +66,7 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
       
       if (image != null) {
         setState(() {
-          _selectedImage = File(image.path);
+          _selectedImage = image;
           _imageUrlController.clear();
         });
       }
@@ -287,8 +288,8 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
                         children: [
                           ClipRRect(
                             borderRadius: BorderRadius.circular(16),
-                            child: Image.file(
-                              _selectedImage!,
+                            child: Image(
+                              image: xFileImageProvider(_selectedImage!),
                               fit: BoxFit.cover,
                               width: double.infinity,
                               height: double.infinity,
