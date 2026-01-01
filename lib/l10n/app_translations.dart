@@ -82,6 +82,11 @@ class AppTranslations extends Translations {
       'best_product': 'ЛУЧШИЙ ТОВАР',
       'new_collection': 'Новая коллекция',
       'just_for_you': 'Для вас',
+      'promo_code': 'Промокод',
+      'enter_promo_code': 'Введите промокод',
+      'sub_total': 'Подытог',
+      'shipping': 'Доставка',
+      'pay_now': 'Оплатить',
       
       // Admin
       'dashboard': 'Дашборд',
@@ -805,6 +810,11 @@ class AppTranslations extends Translations {
       'best_product': 'ENG YAXSHI MAHSULOT',
       'new_collection': 'Yangi kolleksiya',
       'just_for_you': 'Siz uchun',
+      'promo_code': 'Promo-kod',
+      'enter_promo_code': 'Promo-kodni kiriting',
+      'sub_total': 'Oraliq jami',
+      'shipping': 'Yetkazish',
+      'pay_now': 'To‘lash',
       
       // Admin
       'dashboard': 'Dashboard',
@@ -1523,6 +1533,11 @@ class AppTranslations extends Translations {
       'best_product': 'OUR BEST PRODUCT',
       'new_collection': 'New collection',
       'just_for_you': 'Just for you',
+      'promo_code': 'Promo code',
+      'enter_promo_code': 'Enter your promo code',
+      'sub_total': 'Sub total',
+      'shipping': 'Shipping',
+      'pay_now': 'Pay now',
       
       // Admin
       'dashboard': 'Dashboard',

@@ -19,6 +19,8 @@ class CartScreen extends StatefulWidget {
 class _CartScreenState extends State<CartScreen> {
   late CartController _cartController;
   final MarketplaceController _marketplaceController = Get.find<MarketplaceController>();
+  final _promoController = TextEditingController();
+  String? _promoCode;
 
   @override
   void initState() {
@@ -27,6 +29,12 @@ class _CartScreenState extends State<CartScreen> {
       Get.put(CartController());
     }
     _cartController = Get.find<CartController>();
+  }
+
+  @override
+  void dispose() {
+    _promoController.dispose();
+    super.dispose();
   }
 
   @override
@@ -61,13 +69,13 @@ class _CartScreenState extends State<CartScreen> {
         if (_cartController.isEmpty) {
           return _buildEmptyCart();
         }
-        return _buildCartContent();
+        return _buildCartContentV2();
       }),
       bottomNavigationBar: Obx(() {
         if (_cartController.isEmpty) {
           return const SizedBox();
         }
-        return _buildBottomBar();
+        return _buildBottomBarV2();
       }),
     );
   }
@@ -113,290 +121,240 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  Widget _buildCartContent() {
-    final sellerIds = _cartController.sellerIds;
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: sellerIds.length,
-      itemBuilder: (context, index) {
-        final sellerId = sellerIds[index];
-        final items = _cartController.getItemsBySeller(sellerId);
-        final sellerTotal = _cartController.getTotalBySeller(sellerId);
-
-        return _buildSellerSection(sellerId, items, sellerTotal);
-      },
+  Widget _buildCartContentV2() {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 140),
+      children: [
+        ..._cartController.items.map(_buildCartItemV2),
+        const SizedBox(height: 18),
+        _buildPromoRow(),
+        const SizedBox(height: 18),
+        _buildTotalsCard(),
+      ],
     );
   }
 
-  Widget _buildSellerSection(String sellerId, List<CartItem> items, double total) {
-    final sellerName = items.isNotEmpty ? items.first.sellerName : 'seller_fallback'.tr;
-
+  Widget _buildCartItemV2(CartItem item) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.grey[900],
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white10),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Seller header
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 16,
-                  backgroundColor: Colors.grey[800],
-                  child: const Icon(Icons.store, color: Colors.white, size: 16),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    sellerName,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                Text(
-                  _formatPrice(total),
-                  style: TextStyle(
-                    color: buttonColor,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Divider(color: Colors.grey, height: 1),
-
-          // Items
-          ...items.map((item) => _buildCartItem(item)),
-
-          // Checkout button for this seller
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _marketplaceController.isLoggedIn
-                    ? () => Get.to(() => CheckoutScreen(sellerId: sellerId))
-                    : () {
-                        Get.snackbar(
-                          'login_required'.tr,
-                          'login_to_continue'.tr,
-                          snackPosition: SnackPosition.BOTTOM,
-                        );
-                      },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: buttonColor,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-                child: Text('checkout'.tr),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCartItem(CartItem item) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Product image
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: Colors.grey[800],
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: item.imageUrl != null
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: AppNetworkImage(
+          ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: SizedBox(
+              width: 70,
+              height: 70,
+              child: item.imageUrl != null
+                  ? AppNetworkImage(
                       url: item.imageUrl,
                       fit: BoxFit.cover,
-                      errorWidget: Icon(Icons.inventory_2, color: Colors.grey[600]),
+                      errorWidget: Container(
+                        color: Colors.grey[850],
+                        child: Icon(Icons.inventory_2, color: Colors.grey[600]),
+                      ),
+                    )
+                  : Container(
+                      color: Colors.grey[850],
+                      child: Icon(Icons.inventory_2, color: Colors.grey[600]),
                     ),
-                  )
-                : Icon(
-                    Icons.inventory_2,
-                    color: Colors.grey[600],
-                  ),
+            ),
           ),
           const SizedBox(width: 12),
-
-          // Product info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   item.productName,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Text(
                   _formatPrice(item.price),
-                  style: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.grey[300], fontSize: 13, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 8),
-
-                // Quantity controls
                 Row(
                   children: [
-                    _buildQuantityButton(
-                      icon: Icons.remove,
-                      onPressed: () => _cartController.decrementQuantity(item.productId),
-                    ),
+                    _qtyButton(icon: Icons.remove, onTap: () => _cartController.decrementQuantity(item.productId)),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      width: 44,
+                      alignment: Alignment.center,
                       child: Text(
-                        '${item.quantity}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        item.quantity.toString().padLeft(2, '0'),
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                       ),
                     ),
-                    _buildQuantityButton(
-                      icon: Icons.add,
-                      onPressed: () => _cartController.incrementQuantity(item.productId),
-                    ),
-                    const Spacer(),
-                    Text(
-                      _formatPrice(item.total),
-                      style: TextStyle(
-                        color: buttonColor,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    _qtyButton(icon: Icons.add, onTap: () => _cartController.incrementQuantity(item.productId)),
                   ],
                 ),
               ],
             ),
           ),
-
-          // Delete button
-          IconButton(
-            icon: Icon(Icons.delete_outline, color: Colors.red[400], size: 20),
-            onPressed: () => _showDeleteItemDialog(item),
+          const SizedBox(width: 10),
+          Column(
+            children: [
+              IconButton(
+                onPressed: () => _showDeleteItemDialog(item),
+                icon: Icon(Icons.delete_outline, color: Colors.red[400]),
+              ),
+              Text(
+                _formatPrice(item.total),
+                style: TextStyle(color: buttonColor, fontWeight: FontWeight.bold),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildQuantityButton({required IconData icon, required VoidCallback onPressed}) {
+  Widget _qtyButton({required IconData icon, required VoidCallback onTap}) {
     return GestureDetector(
-      onTap: onPressed,
+      onTap: onTap,
       child: Container(
-        width: 28,
-        height: 28,
+        width: 32,
+        height: 32,
         decoration: BoxDecoration(
-          color: Colors.grey[800],
-          borderRadius: BorderRadius.circular(6),
+          color: Colors.black.withOpacity(0.35),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.white10),
         ),
-        child: Icon(icon, color: Colors.white, size: 16),
+        child: Icon(icon, color: Colors.white, size: 18),
       ),
     );
   }
 
-  Widget _buildBottomBar() {
-    final canCheckout = _marketplaceController.isLoggedIn;
+  Widget _buildPromoRow() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.grey[900],
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _promoController,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                hintText: 'enter_promo_code'.tr,
+                hintStyle: TextStyle(color: Colors.grey[600]),
+                border: InputBorder.none,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              final v = _promoController.text.trim();
+              if (v.isEmpty) return;
+              setState(() => _promoCode = v);
+              Get.snackbar('promo_code'.tr, v, snackPosition: SnackPosition.BOTTOM);
+            },
+            child: Text('add'.tr, style: const TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTotalsCard() {
+    final subTotal = _cartController.totalAmount;
+    final shippingText = 'free'.tr;
+    final total = subTotal; // promo/shipping not implemented yet
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.grey[900],
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        children: [
+          _rowKV('sub_total'.tr, _formatPrice(subTotal)),
+          const SizedBox(height: 10),
+          _rowKV('shipping'.tr, shippingText, valueColor: primaryColor),
+          const SizedBox(height: 12),
+          const Divider(color: Colors.white12, height: 1),
+          const SizedBox(height: 12),
+          _rowKV('total'.tr, _formatPrice(total), isBold: true),
+          if (_promoCode != null) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '${'promo_code'.tr}: $_promoCode',
+                style: TextStyle(color: Colors.grey[500], fontSize: 12),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _rowKV(String k, String v, {bool isBold = false, Color? valueColor}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(k, style: TextStyle(color: Colors.grey[400], fontSize: 14, fontWeight: isBold ? FontWeight.bold : FontWeight.w500)),
+        Text(
+          v,
+          style: TextStyle(
+            color: valueColor ?? Colors.white,
+            fontSize: isBold ? 16 : 14,
+            fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBottomBarV2() {
+    final canCheckout = _marketplaceController.isLoggedIn;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      decoration: BoxDecoration(
+        color: Colors.black,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
+            color: Colors.black.withOpacity(0.35),
+            blurRadius: 18,
+            offset: const Offset(0, -8),
           ),
         ],
       ),
       child: SafeArea(
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${'total'.tr}:',
-                    style: TextStyle(
-                      color: Colors.grey[400],
-                      fontSize: 12,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Obx(() => Text(
-                    _formatPrice(_cartController.totalAmount),
-                    style: TextStyle(
-                      color: buttonColor,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  )),
-                ],
-              ),
+        top: false,
+        child: SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () async {
+              if (!canCheckout) {
+                Get.snackbar('login_required'.tr, 'login_to_continue'.tr, snackPosition: SnackPosition.BOTTOM);
+                Get.to(() => const MarketplaceLoginScreen());
+                return;
+              }
+              await _openCheckoutSelector();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: buttonColor,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
             ),
-            const SizedBox(width: 12),
-            Obx(() => Text(
-                  'items_count'.trParams({'count': _cartController.itemCount.toString()}),
-                  style: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 14,
-                  ),
-                )),
-            const SizedBox(width: 12),
-            SizedBox(
-              height: 44,
-              child: ElevatedButton(
-                onPressed: () async {
-                  if (!canCheckout) {
-                    Get.snackbar(
-                      'login_required'.tr,
-                      'login_to_continue'.tr,
-                      snackPosition: SnackPosition.BOTTOM,
-                    );
-                    Get.to(() => const MarketplaceLoginScreen());
-                    return;
-                  }
-                  await _openCheckoutSelector();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: buttonColor,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: Text('checkout'.tr),
-              ),
-            ),
-          ],
+            child: Text('checkout'.tr, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ),
         ),
       ),
     );
