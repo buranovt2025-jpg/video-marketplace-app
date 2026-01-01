@@ -429,12 +429,13 @@ class MarketplaceController extends GetxController {
     }
   }
   
-  Future<List<Map<String, dynamic>>> getChatMessages(String userId) async {
+  Future<List<Map<String, dynamic>>> getChatMessages(String userId, {bool throwOnError = false}) async {
     try {
       final data = await ApiService.getChatMessages(userId);
       return List<Map<String, dynamic>>.from(data);
     } catch (e) {
-      await _handleApiError(e, fallbackMessage: 'Не удалось загрузить сообщения');
+      await _handleApiError(e, fallbackMessage: 'Не удалось загрузить сообщения', ignore: throwOnError);
+      if (throwOnError) rethrow;
       return [];
     }
   }

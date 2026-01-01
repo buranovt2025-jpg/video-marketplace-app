@@ -25,6 +25,7 @@ class _ChatScreenState extends State<ChatScreen> {
   List<Map<String, dynamic>> _messages = [];
   bool _isLoading = true;
   bool _isSending = false;
+  bool _loadFailed = false;
 
   @override
   void initState() {
@@ -41,10 +42,13 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _loadMessages() async {
     if (!mounted) return;
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _loadFailed = false;
+    });
     try {
       final messages = await _controller
-          .getChatMessages(widget.userId)
+          .getChatMessages(widget.userId, throwOnError: true)
           .timeout(const Duration(seconds: 12));
       if (!mounted) return;
       setState(() {
@@ -54,7 +58,10 @@ class _ChatScreenState extends State<ChatScreen> {
       _scrollToBottom();
     } catch (e) {
       if (!mounted) return;
-      setState(() => _isLoading = false);
+      setState(() {
+        _isLoading = false;
+        _loadFailed = true;
+      });
       Get.snackbar(
         'error'.tr,
         'failed_load_messages'.tr,
@@ -80,15 +87,26 @@ class _ChatScreenState extends State<ChatScreen> {
     if (text.isEmpty || _isSending) return;
 
     setState(() => _isSending = true);
-    _messageController.clear();
 
     try {
       final message = await _controller.sendMessage(widget.userId, text);
       if (message != null) {
+        _messageController.clear();
         setState(() {
           _messages.add(message);
         });
         _scrollToBottom();
+      } else {
+        // Keep text so user can retry.
+        if (_messageController.text.isEmpty) {
+          _messageController.text = text;
+          _messageController.selection = TextSelection.collapsed(offset: _messageController.text.length);
+        }
+        Get.snackbar(
+          'error'.tr,
+          'failed_send_message'.tr,
+          snackPosition: SnackPosition.BOTTOM,
+        );
       }
     } finally {
       setState(() => _isSending = false);
@@ -139,6 +157,11 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            onPressed: _isLoading ? null : _loadMessages,
+            tooltip: 'refresh'.tr,
+          ),
+          IconButton(
             icon: const Icon(Icons.more_vert, color: Colors.white),
             onPressed: () {},
           ),
@@ -150,9 +173,14 @@ class _ChatScreenState extends State<ChatScreen> {
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : _messages.isEmpty
-                    ? _buildEmptyChat()
-                    : _buildMessagesList(),
+                : RefreshIndicator(
+                    onRefresh: _loadMessages,
+                    child: _loadFailed
+                        ? _buildLoadError()
+                        : _messages.isEmpty
+                            ? _buildEmptyChatList()
+                            : _buildMessagesList(),
+                  ),
           ),
 
           // Message input
@@ -162,34 +190,61 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _buildEmptyChat() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.chat_bubble_outline,
-            size: 64,
-            color: Colors.grey[700],
+  Widget _buildEmptyChatList() {
+    // Use a scrollable widget so RefreshIndicator can work.
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(24),
+      children: [
+        const SizedBox(height: 80),
+        Center(
+          child: Column(
+            children: [
+              Icon(Icons.chat_bubble_outline, size: 64, color: Colors.grey[700]),
+              const SizedBox(height: 16),
+              Text(
+                'start_conversation'.tr,
+                style: TextStyle(color: Colors.grey[500], fontSize: 16),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'write_message_to_user'.trParams({'name': widget.userName}),
+                style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          Text(
-            'start_conversation'.tr,
-            style: TextStyle(
-              color: Colors.grey[500],
-              fontSize: 16,
-            ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLoadError() {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(24),
+      children: [
+        const SizedBox(height: 80),
+        Center(
+          child: Column(
+            children: [
+              Icon(Icons.wifi_off, size: 64, color: Colors.grey[700]),
+              const SizedBox(height: 16),
+              Text(
+                'failed_load_messages'.tr,
+                style: TextStyle(color: Colors.grey[500], fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _loadMessages,
+                style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
+                child: Text('retry'.tr),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            'write_message_to_user'.trParams({'name': widget.userName}),
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
