@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/cart_controller.dart';
+import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/checkout_screen.dart';
 import 'package:tiktok_tutorial/utils/money.dart';
@@ -15,6 +16,7 @@ class CartScreen extends StatefulWidget {
 
 class _CartScreenState extends State<CartScreen> {
   late CartController _cartController;
+  final MarketplaceController _marketplaceController = Get.find<MarketplaceController>();
 
   @override
   void initState() {
@@ -177,7 +179,15 @@ class _CartScreenState extends State<CartScreen> {
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => Get.to(() => CheckoutScreen(sellerId: sellerId)),
+                onPressed: _marketplaceController.isLoggedIn
+                    ? () => Get.to(() => CheckoutScreen(sellerId: sellerId))
+                    : () {
+                        Get.snackbar(
+                          'login_required'.tr,
+                          'login_to_continue'.tr,
+                          snackPosition: SnackPosition.BOTTOM,
+                        );
+                      },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: buttonColor,
                   padding: const EdgeInsets.symmetric(vertical: 12),

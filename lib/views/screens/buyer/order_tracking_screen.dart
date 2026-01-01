@@ -556,15 +556,41 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   }
 
   Future<void> _openInMaps() async {
-    final lat = _order['delivery_latitude'];
-    final lng = _order['delivery_longitude'];
-    
+    final rawLat = _order['delivery_latitude'];
+    final rawLng = _order['delivery_longitude'];
+    final deliveryAddress = (_order['delivery_address'] ?? '').toString().trim();
+
+    double? parseDouble(dynamic v) {
+      if (v == null) return null;
+      if (v is num) return v.toDouble();
+      return double.tryParse(v.toString());
+    }
+
+    final lat = parseDouble(rawLat);
+    final lng = parseDouble(rawLng);
+
+    // If coordinates are missing, fall back to searching by address.
     if (lat == null || lng == null) {
-      Get.snackbar(
-        'error'.tr,
-        'coordinates_missing'.tr,
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      if (deliveryAddress.isEmpty) {
+        Get.snackbar(
+          'error'.tr,
+          'coordinates_missing'.tr,
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
+
+      final query = Uri.encodeComponent(deliveryAddress);
+      final googleSearchUrl = 'https://www.google.com/maps/search/?api=1&query=$query';
+      try {
+        await launchUrl(Uri.parse(googleSearchUrl), mode: LaunchMode.externalApplication);
+      } catch (_) {
+        Get.snackbar(
+          'error'.tr,
+          'navigation_open_failed'.tr,
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
       return;
     }
 

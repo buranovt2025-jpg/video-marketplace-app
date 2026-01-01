@@ -32,6 +32,7 @@ import 'package:tiktok_tutorial/utils/money.dart';
 import 'package:tiktok_tutorial/utils/share_utils.dart';
 import 'package:tiktok_tutorial/views/screens/chat/conversations_screen.dart';
 import 'package:tiktok_tutorial/views/screens/common/notifications_screen.dart';
+import 'package:tiktok_tutorial/views/widgets/comments_coming_soon_sheet.dart';
 
 class MarketplaceHomeScreen extends StatefulWidget {
   final bool isGuestMode;
@@ -740,17 +741,16 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                   onPressed: () => _controller.toggleLikeOnReel(reel['id']?.toString() ?? ''),
                 ),
                 Text(
-                  '${reel['likes'] ?? 0}',
+                  '${asInt(reel['likes_count'] ?? reel['likes'] ?? 0)}',
                   style: const TextStyle(color: Colors.white),
                 ),
                 const SizedBox(width: 16),
                 IconButton(
                   icon: const Icon(Icons.comment_outlined, color: Colors.white),
                   onPressed: () {
-                    Get.snackbar(
-                      'coming_soon'.tr,
-                      'comments_coming_soon'.tr,
-                      snackPosition: SnackPosition.BOTTOM,
+                    Get.bottomSheet(
+                      CommentsComingSoonSheet(reel: reel),
+                      isScrollControlled: true,
                     );
                   },
                 ),

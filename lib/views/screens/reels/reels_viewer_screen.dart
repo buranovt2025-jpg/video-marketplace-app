@@ -8,6 +8,7 @@ import 'package:tiktok_tutorial/views/widgets/video_player_iten.dart';
 import 'package:tiktok_tutorial/utils/formatters.dart';
 import 'package:tiktok_tutorial/utils/media_url.dart';
 import 'package:tiktok_tutorial/utils/share_utils.dart';
+import 'package:tiktok_tutorial/views/widgets/comments_coming_soon_sheet.dart';
 
 /// Full-screen vertical reel viewer (TikTok-like).
 ///
@@ -166,10 +167,9 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                       label: '${asInt(reel['comments_count'] ?? 0)}',
                       color: Colors.white,
                       onTap: () {
-                        Get.snackbar(
-                          'coming_soon'.tr,
-                          'comments_coming_soon'.tr,
-                          snackPosition: SnackPosition.BOTTOM,
+                        Get.bottomSheet(
+                          CommentsComingSoonSheet(reel: reel),
+                          isScrollControlled: true,
                         );
                       },
                     ),

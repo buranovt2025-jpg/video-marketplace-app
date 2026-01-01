@@ -7,6 +7,7 @@ import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/order_success_screen.dart';
 import 'package:tiktok_tutorial/views/screens/common/location_picker_screen.dart';
 import 'package:tiktok_tutorial/utils/money.dart';
+import 'package:tiktok_tutorial/views/screens/auth/marketplace_login_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final String sellerId;
@@ -60,9 +61,76 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_marketplaceController.isLoggedIn) {
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        appBar: AppBar(
+          backgroundColor: backgroundColor,
+          title: Text('checkout'.tr, style: const TextStyle(color: Colors.white)),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => Get.back(),
+          ),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.lock_outline, size: 64, color: Colors.grey[700]),
+                const SizedBox(height: 16),
+                Text(
+                  'login_required'.tr,
+                  style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'login_to_continue'.tr,
+                  style: TextStyle(color: Colors.grey[500]),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => Get.to(() => const MarketplaceLoginScreen()),
+                  style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
+                  child: Text('login'.tr),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     final items = _cartController.getItemsBySeller(widget.sellerId);
     final total = _cartController.getTotalBySeller(widget.sellerId);
     final sellerName = items.isNotEmpty ? items.first.sellerName : 'seller_fallback'.tr;
+
+    if (items.isEmpty) {
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        appBar: AppBar(
+          backgroundColor: backgroundColor,
+          title: Text('checkout'.tr, style: const TextStyle(color: Colors.white)),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => Get.back(),
+          ),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              'cart_empty'.tr,
+              style: TextStyle(color: Colors.grey[500], fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: backgroundColor,
