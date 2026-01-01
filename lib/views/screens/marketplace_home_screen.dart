@@ -62,7 +62,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   bool get _isBuyer => _isGuestMode || _controller.currentUser.value?['role'] == 'buyer';
   
   // Get max valid index based on role (Guest mode = 3 tabs like buyer)
-  int get _maxIndex => _isSeller ? 4 : 4; // Seller: 5 tabs (0-4), Buyer/Guest: 5 tabs (0-4)
+  int get _maxIndex => _isSeller ? 4 : 5; // Seller: 5 tabs (0-4), Buyer/Guest: 6 tabs (0-5)
   
   // Ensure currentIndex is within bounds
   int get _safeCurrentIndex => _currentIndex > _maxIndex ? _maxIndex : _currentIndex;
@@ -140,7 +140,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         'error'.tr,
         'product_not_found'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
     }
@@ -215,13 +215,14 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 ],
               );
             } else {
-              // Buyer: no Create tab, but has Cart tab
+              // Buyer: no Create tab, but has Cart + Favorites tabs
               return IndexedStack(
                 index: _safeCurrentIndex,
                 children: [
                   _buildFeedTab(),
                   _buildExploreTab(),
                   const CartScreen(embedded: true),
+                  const FavoritesScreen(embedded: true),
                   _buildOrdersTab(),
                   _buildProfileTab(),
                 ],
@@ -240,7 +241,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               // Important: when user opens Orders tab for the first time,
               // the list may be empty if fetchOrders wasn't called yet.
               // Fetch orders when entering the tab.
-              final isOrdersTab = _isSeller ? index == 3 : index == 3;
+              final isOrdersTab = _isSeller ? index == 3 : index == 4;
               if (isOrdersTab && _controller.isLoggedIn) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   _controller.fetchOrders();
@@ -310,6 +311,10 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 label: 'cart'.tr,
               ),
               BottomNavigationBarItem(
+                icon: const Icon(Icons.favorite_border),
+                label: 'favorites'.tr,
+              ),
+              BottomNavigationBarItem(
                 icon: const Icon(Icons.shopping_bag),
                 label: 'orders'.tr,
               ),
@@ -330,6 +335,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         _buildFeedTab(),
         _buildExploreTab(),
         const CartScreen(embedded: true),
+        const FavoritesScreen(embedded: true),
         _buildGuestOrdersTab(),
         _buildGuestProfileTab(),
       ],
@@ -385,6 +391,10 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
             );
           }),
           label: 'cart'.tr,
+        ),
+        BottomNavigationBarItem(
+          icon: const Icon(Icons.favorite_border),
+          label: 'favorites'.tr,
         ),
         BottomNavigationBarItem(
           icon: const Icon(Icons.shopping_bag),
@@ -1123,9 +1133,9 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
                   colors: [
-                    Colors.purple,
-                    Colors.pink,
-                    Colors.orange,
+                    primaryColor,
+                    accentColor,
+                    primaryColor,
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -1831,14 +1841,14 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
 
     Widget _buildOrderCard(Map<String, dynamic> order) {
       final statusColors = {
-        'created': Colors.blue,
-        'accepted': Colors.orange,
-        'ready': Colors.purple,
-        'picked_up': Colors.indigo,
-        'in_transit': Colors.cyan,
+        'created': accentColor,
+        'accepted': primaryColor,
+        'ready': primaryColor,
+        'picked_up': primaryColor,
+        'in_transit': accentColor,
         'delivered': Colors.green,
         'completed': Colors.green,
-        'cancelled': Colors.red,
+        'cancelled': primaryColor,
       };
     
       final status = order['status'] ?? 'created';
@@ -2129,11 +2139,11 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                     width: double.infinity,
                     child: OutlinedButton.icon(
                       onPressed: () => Get.to(() => const DeleteAccountScreen()),
-                      icon: const Icon(Icons.delete_forever, color: Colors.red),
-                      label: Text('delete_account'.tr, style: const TextStyle(color: Colors.red)),
+                      icon: const Icon(Icons.delete_forever, color: primaryColor),
+                      label: Text('delete_account'.tr, style: const TextStyle(color: primaryColor)),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
-                        side: const BorderSide(color: Colors.red),
+                        foregroundColor: primaryColor,
+                        side: const BorderSide(color: primaryColor),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),

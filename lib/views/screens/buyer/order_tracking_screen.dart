@@ -278,9 +278,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.red.withOpacity(0.1),
+        color: primaryColor.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.red.withOpacity(0.3)),
+        border: Border.all(color: primaryColor.withOpacity(0.3)),
       ),
       child: Row(
         children: [
@@ -288,10 +288,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.2),
+              color: primaryColor.withOpacity(0.2),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.cancel, color: Colors.red, size: 30),
+            child: const Icon(Icons.cancel, color: primaryColor, size: 30),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -301,7 +301,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 Text(
                   'order_cancelled'.tr,
                   style: const TextStyle(
-                    color: Colors.red,
+                    color: primaryColor,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -647,18 +647,18 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   Color _getStatusColor(String? status) {
     switch (status) {
       case 'created':
-        return Colors.blue;
+        return accentColor;
       case 'accepted':
       case 'ready':
-        return Colors.orange;
+        return primaryColor;
       case 'picked_up':
       case 'in_transit':
-        return Colors.purple;
+        return accentColor;
       case 'delivered':
       case 'completed':
         return Colors.green;
       case 'cancelled':
-        return Colors.red;
+        return primaryColor;
       default:
         return Colors.grey;
     }

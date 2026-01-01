@@ -149,7 +149,7 @@ class _ProductReviewsSheetState extends State<ProductReviewsSheet> {
                 padding: const EdgeInsets.all(12),
                 child: Column(
                   children: [
-                    Text(_error!, style: TextStyle(color: Colors.red[300])),
+                    Text(_error!, style: const TextStyle(color: primaryColor)),
                     const SizedBox(height: 8),
                     OutlinedButton.icon(
                       onPressed: _load,

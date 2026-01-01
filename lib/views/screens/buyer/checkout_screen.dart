@@ -742,10 +742,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.2),
+                    color: accentColor.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.local_shipping, color: Colors.blue),
+                  child: const Icon(Icons.local_shipping, color: accentColor),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -1030,7 +1030,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ? _marketplaceController.error.value 
               : 'create_order_failed'.tr,
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
+          backgroundColor: Colors.black87,
           colorText: Colors.white,
         );
       }
@@ -1039,7 +1039,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         'error'.tr,
         e.toString(),
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
     } finally {

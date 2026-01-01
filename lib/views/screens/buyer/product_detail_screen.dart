@@ -361,7 +361,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: inStock ? Colors.green.withOpacity(0.16) : Colors.red.withOpacity(0.16),
+                      color: inStock ? Colors.green.withOpacity(0.16) : primaryColor.withOpacity(0.16),
                       borderRadius: BorderRadius.circular(999),
                       border: Border.all(color: Colors.white10),
                     ),

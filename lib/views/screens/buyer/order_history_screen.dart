@@ -64,7 +64,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
         'error'.tr,
         'cannot_cancel'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
       return;
@@ -111,7 +111,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               Get.back();
               _cancelOrder(order, reasonController.text);
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: primaryColor, foregroundColor: Colors.black),
             child: Text('confirm'.tr),
           ),
         ],
@@ -133,15 +133,15 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   Color _getStatusColor(String status) {
     switch (status) {
       case 'pending':
-        return Colors.orange;
+        return accentColor;
       case 'accepted':
-        return Colors.blue;
+        return primaryColor;
       case 'in_delivery':
-        return Colors.purple;
+        return accentColor;
       case 'delivered':
         return Colors.green;
       case 'cancelled':
-        return Colors.red;
+        return primaryColor;
       default:
         return Colors.grey;
     }
@@ -357,8 +357,8 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                     child: OutlinedButton(
                       onPressed: () => _showCancelDialog(order),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
-                        side: const BorderSide(color: Colors.red),
+                        foregroundColor: primaryColor,
+                        side: const BorderSide(color: primaryColor),
                       ),
                       child: Text('cancel_order'.tr),
                     ),

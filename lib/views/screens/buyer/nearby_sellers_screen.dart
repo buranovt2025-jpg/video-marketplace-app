@@ -264,7 +264,7 @@ class _NearbySellersScreenState extends State<NearbySellersScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(2),
                   decoration: const BoxDecoration(
-                    color: Colors.blue,
+                    color: primaryColor,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.check, color: Colors.white, size: 12),
@@ -287,12 +287,12 @@ class _NearbySellersScreenState extends State<NearbySellersScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.2),
+                  color: primaryColor.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   'verified_seller'.tr,
-                  style: const TextStyle(color: Colors.blue, fontSize: 10),
+                  style: const TextStyle(color: primaryColor, fontSize: 10),
                 ),
               ),
           ],

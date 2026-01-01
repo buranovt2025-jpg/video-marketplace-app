@@ -237,18 +237,18 @@ class OrderSuccessScreen extends StatelessWidget {
   Color _getStatusColor(String? status) {
     switch (status) {
       case 'created':
-        return Colors.blue;
+        return accentColor;
       case 'accepted':
       case 'ready':
-        return Colors.orange;
+        return primaryColor;
       case 'picked_up':
       case 'in_transit':
-        return Colors.purple;
+        return accentColor;
       case 'delivered':
       case 'completed':
         return Colors.green;
       case 'cancelled':
-        return Colors.red;
+        return primaryColor;
       default:
         return Colors.grey;
     }

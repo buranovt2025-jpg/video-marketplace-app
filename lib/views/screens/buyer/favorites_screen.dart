@@ -8,7 +8,8 @@ import 'package:tiktok_tutorial/utils/formatters.dart';
 import 'package:tiktok_tutorial/utils/money.dart';
 
 class FavoritesScreen extends StatelessWidget {
-  const FavoritesScreen({Key? key}) : super(key: key);
+  final bool embedded;
+  const FavoritesScreen({Key? key, this.embedded = false}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -23,10 +24,12 @@ class FavoritesScreen extends StatelessWidget {
           'favorites'.tr,
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Get.back(),
-        ),
+        leading: embedded
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: () => Get.back(),
+              ),
         actions: [
           Obx(() => favoritesController.favorites.isNotEmpty
               ? IconButton(
@@ -385,7 +388,7 @@ class FavoritesScreen extends StatelessWidget {
             },
             child: Text(
               'delete'.tr,
-              style: const TextStyle(color: Colors.red),
+              style: const TextStyle(color: primaryColor, fontWeight: FontWeight.bold),
             ),
           ),
         ],
