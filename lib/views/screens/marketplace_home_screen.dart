@@ -45,6 +45,7 @@ class MarketplaceHomeScreen extends StatefulWidget {
 
 class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   final MarketplaceController _controller = Get.find<MarketplaceController>();
+  late final CartController _cartController;
   int _currentIndex = 0;
   final String _gitSha = const String.fromEnvironment('GIT_SHA', defaultValue: '');
   
@@ -89,6 +90,10 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   @override
   void initState() {
     super.initState();
+    if (!Get.isRegistered<CartController>()) {
+      Get.put(CartController());
+    }
+    _cartController = Get.find<CartController>();
     _loadData();
   }
 
@@ -122,6 +127,13 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         colorText: Colors.white,
       );
     }
+  }
+
+  Map<String, dynamic>? _findProductById(String productId) {
+    for (final p in _controller.products) {
+      if (p['id']?.toString() == productId) return p;
+    }
+    return null;
   }
 
   Future<Map<String, String>> _fetchBuildInfo() async {
@@ -770,6 +782,27 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 ),
                 // Buy button for reels with linked product
                 if (reel['product_id'] != null) ...[
+                  IconButton(
+                    onPressed: () {
+                      final productId = reel['product_id']?.toString() ?? '';
+                      final p = productId.trim().isEmpty ? null : _findProductById(productId);
+                      if (p == null) {
+                        _openProductFromReel(reel);
+                        return;
+                      }
+                      _cartController.addToCart(p, quantity: 1);
+                      Get.snackbar(
+                        'added'.tr,
+                        'added_to_cart_named'.trParams({'name': (p['name'] ?? '').toString()}),
+                        snackPosition: SnackPosition.BOTTOM,
+                        backgroundColor: Colors.green,
+                        colorText: Colors.white,
+                        duration: const Duration(seconds: 2),
+                      );
+                    },
+                    icon: const Icon(Icons.add_shopping_cart, color: Colors.white),
+                    tooltip: 'add_to_cart'.tr,
+                  ),
                   ElevatedButton.icon(
                     onPressed: () => _openProductFromReel(reel),
                     icon: const Icon(Icons.shopping_cart, size: 18),

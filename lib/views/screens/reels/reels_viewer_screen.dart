@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/controllers/cart_controller.dart';
 import 'package:tiktok_tutorial/services/api_service.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/product_detail_screen.dart';
 import 'package:tiktok_tutorial/views/widgets/video_player_iten.dart';
 import 'package:tiktok_tutorial/utils/formatters.dart';
 import 'package:tiktok_tutorial/utils/media_url.dart';
+import 'package:tiktok_tutorial/utils/money.dart';
 import 'package:tiktok_tutorial/utils/share_utils.dart';
 import 'package:tiktok_tutorial/views/widgets/comments_coming_soon_sheet.dart';
 
@@ -30,6 +32,7 @@ class ReelsViewerScreen extends StatefulWidget {
 
 class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
   final MarketplaceController _controller = Get.find<MarketplaceController>();
+  late final CartController _cartController;
   late final PageController _pageController;
   int _index = 0;
   late List<Map<String, dynamic>> _reels;
@@ -38,6 +41,10 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
   @override
   void initState() {
     super.initState();
+    if (!Get.isRegistered<CartController>()) {
+      Get.put(CartController());
+    }
+    _cartController = Get.find<CartController>();
     _reels = widget.reels.map((e) => Map<String, dynamic>.from(e)).toList();
     _index = widget.initialIndex.clamp(0, _reels.isEmpty ? 0 : _reels.length - 1);
     _pageController = PageController(initialPage: _index);
@@ -218,31 +225,26 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
                       const SizedBox(height: 10),
                       if (reel['product_id'] != null)
                         _ProductPill(
-                          title: 'product'.tr,
-                          subtitle: 'open_product_card'.tr,
+                          title: _productTitleFor(reel),
+                          subtitle: _productSubtitleFor(reel),
                           onTap: () {
                             final productId = reel['product_id']?.toString();
                             if (productId == null || productId.isEmpty) return;
                             // Best effort: find product in loaded list.
-                            Map<String, dynamic>? p;
-                            for (final e in _controller.products) {
-                              if (e['id']?.toString() == productId) {
-                                p = e;
-                                break;
-                              }
-                            }
+                            final p = _findProduct(productId);
                             if (p != null) {
-                              Get.to(() => ProductDetailScreen(product: Map<String, dynamic>.from(p!)));
-                            } else {
-                              Get.snackbar(
-                                'product'.tr,
-                                'product_number'.trParams({'id': productId}),
-                                snackPosition: SnackPosition.BOTTOM,
-                                backgroundColor: Colors.white,
-                                colorText: Colors.black,
-                              );
+                              Get.to(() => ProductDetailScreen(product: Map<String, dynamic>.from(p)));
+                              return;
                             }
+                            Get.snackbar(
+                              'product'.tr,
+                              'product_number'.trParams({'id': productId}),
+                              snackPosition: SnackPosition.BOTTOM,
+                              backgroundColor: Colors.white,
+                              colorText: Colors.black,
+                            );
                           },
+                          trailing: _buildAddToCartTrailing(reel),
                         ),
                     ],
                   ),
@@ -288,6 +290,54 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
     // ignore: discarded_futures
     ApiService.viewContent(id);
   }
+
+  Map<String, dynamic>? _findProduct(String productId) {
+    for (final e in _controller.products) {
+      if (e['id']?.toString() == productId) {
+        return e;
+      }
+    }
+    return null;
+  }
+
+  String _productTitleFor(Map<String, dynamic> reel) {
+    final productId = reel['product_id']?.toString() ?? '';
+    if (productId.trim().isEmpty) return 'product'.tr;
+    final p = _findProduct(productId);
+    final name = (p?['name'] ?? '').toString().trim();
+    return name.isNotEmpty ? name : 'product'.tr;
+  }
+
+  String _productSubtitleFor(Map<String, dynamic> reel) {
+    final productId = reel['product_id']?.toString() ?? '';
+    if (productId.trim().isEmpty) return 'open_product_card'.tr;
+    final p = _findProduct(productId);
+    if (p == null) return 'open_product_card'.tr;
+    return formatMoneyWithCurrency(p['price']);
+  }
+
+  Widget? _buildAddToCartTrailing(Map<String, dynamic> reel) {
+    final productId = reel['product_id']?.toString() ?? '';
+    if (productId.trim().isEmpty) return null;
+    final p = _findProduct(productId);
+    if (p == null) return null;
+
+    return IconButton(
+      onPressed: () {
+        _cartController.addToCart(p, quantity: 1);
+        Get.snackbar(
+          'added'.tr,
+          'added_to_cart_named'.trParams({'name': (p['name'] ?? '').toString()}),
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 2),
+        );
+      },
+      icon: const Icon(Icons.add_shopping_cart, color: Colors.black),
+      tooltip: 'add_to_cart'.tr,
+    );
+  }
 }
 
 class _ActionButton extends StatelessWidget {
@@ -326,11 +376,13 @@ class _ProductPill extends StatelessWidget {
   final String title;
   final String subtitle;
   final VoidCallback onTap;
+  final Widget? trailing;
 
   const _ProductPill({
     required this.title,
     required this.subtitle,
     required this.onTap,
+    this.trailing,
   });
 
   @override
@@ -356,6 +408,10 @@ class _ProductPill extends StatelessWidget {
                 Text(subtitle, style: TextStyle(color: Colors.grey[700], fontSize: 11)),
               ],
             ),
+            if (trailing != null) ...[
+              const SizedBox(width: 6),
+              trailing!,
+            ],
           ],
         ),
       ),
