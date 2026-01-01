@@ -34,9 +34,9 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
       backgroundColor: backgroundColor,
       appBar: AppBar(
         backgroundColor: backgroundColor,
-        title: const Text(
-          'Заказы',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        title: Text(
+          'orders'.tr,
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         automaticallyImplyLeading: false,
         actions: [
@@ -54,19 +54,19 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
-                _buildFilterChip('Все', 'all'),
+                _buildFilterChip('all'.tr, 'all'),
                 const SizedBox(width: 8),
-                _buildFilterChip('Создан', 'created'),
+                _buildFilterChip('status_created'.tr, 'created'),
                 const SizedBox(width: 8),
-                _buildFilterChip('Принят', 'accepted'),
+                _buildFilterChip('status_accepted'.tr, 'accepted'),
                 const SizedBox(width: 8),
-                _buildFilterChip('Готов', 'ready'),
+                _buildFilterChip('status_ready'.tr, 'ready'),
                 const SizedBox(width: 8),
-                _buildFilterChip('В пути', 'in_transit'),
+                _buildFilterChip('status_in_transit'.tr, 'in_transit'),
                 const SizedBox(width: 8),
-                _buildFilterChip('Доставлен', 'delivered'),
+                _buildFilterChip('status_delivered'.tr, 'delivered'),
                 const SizedBox(width: 8),
-                _buildFilterChip('Отменён', 'cancelled'),
+                _buildFilterChip('status_cancelled'.tr, 'cancelled'),
               ],
             ),
           ),
@@ -84,7 +84,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                       Icon(Icons.shopping_bag_outlined, size: 64, color: Colors.grey[700]),
                       const SizedBox(height: 16),
                       Text(
-                        'Нет заказов',
+                        'no_orders'.tr,
                         style: TextStyle(color: Colors.grey[500], fontSize: 16),
                       ),
                     ],
@@ -156,14 +156,14 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
     };
 
     final statusLabels = {
-      'created': 'Создан',
-      'accepted': 'Принят',
-      'ready': 'Готов',
-      'picked_up': 'Забран',
-      'in_transit': 'В пути',
-      'delivered': 'Доставлен',
-      'completed': 'Завершён',
-      'cancelled': 'Отменён',
+      'created': 'status_created'.tr,
+      'accepted': 'status_accepted'.tr,
+      'ready': 'status_ready'.tr,
+      'picked_up': 'status_picked_up'.tr,
+      'in_transit': 'status_in_transit'.tr,
+      'delivered': 'status_delivered'.tr,
+      'completed': 'status_completed'.tr,
+      'cancelled': 'status_cancelled'.tr,
     };
 
     final status = order['status'] ?? 'created';
@@ -187,7 +187,9 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Заказ #${order['id']?.substring(0, 8) ?? ''}',
+                  'order_number_short'.trParams({
+                    'id': (order['id']?.toString() ?? '').substring(0, 8),
+                  }),
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -228,7 +230,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                 ),
                 const Spacer(),
                 Text(
-                  '${items.length} товар(ов)',
+                  'items_count'.trParams({'count': items.length.toString()}),
                   style: TextStyle(color: Colors.grey[500], fontSize: 13),
                 ),
               ],
@@ -272,13 +274,13 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
     };
 
     final statusLabels = {
-      'accepted': 'Принять',
-      'ready': 'Готов к выдаче',
-      'picked_up': 'Забран',
-      'in_transit': 'В пути',
-      'delivered': 'Доставлен',
-      'completed': 'Завершить',
-      'cancelled': 'Отменить',
+      'accepted': 'accept'.tr,
+      'ready': 'ready'.tr,
+      'picked_up': 'status_picked_up'.tr,
+      'in_transit': 'status_in_transit'.tr,
+      'delivered': 'status_delivered'.tr,
+      'completed': 'status_completed'.tr,
+      'cancelled': 'cancel_order'.tr,
     };
 
     if (currentStatus == 'completed' || currentStatus == 'cancelled') {
@@ -312,7 +314,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                 side: const BorderSide(color: Colors.red),
                 padding: const EdgeInsets.symmetric(vertical: 10),
               ),
-              child: const Text('Отменить'),
+              child: Text('cancel_order'.tr),
             ),
           ),
       ],
@@ -323,16 +325,16 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
     final success = await _controller.updateOrderStatus(orderId, newStatus);
     if (success) {
       Get.snackbar(
-        'Успешно',
-        'Статус заказа обновлён',
+        'success'.tr,
+        'status_updated'.tr,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
     } else {
       Get.snackbar(
-        'Ошибка',
-        'Не удалось обновить статус',
+        'error'.tr,
+        'status_update_failed'.tr,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -368,7 +370,9 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
               const SizedBox(height: 20),
               
               Text(
-                'Заказ #${order['id']?.substring(0, 8) ?? ''}',
+                'order_number_short'.trParams({
+                  'id': (order['id']?.toString() ?? '').substring(0, 8),
+                }),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 20,
@@ -378,18 +382,18 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
               const SizedBox(height: 16),
               
               // Buyer info
-              _buildDetailRow('Покупатель', order['buyer_name'] ?? 'Не указан'),
-              _buildDetailRow('Адрес доставки', order['delivery_address'] ?? 'Не указан'),
-              _buildDetailRow('Телефон', order['buyer_phone'] ?? 'Не указан'),
+              _buildDetailRow('buyer'.tr, (order['buyer_name'] ?? 'not_specified'.tr).toString()),
+              _buildDetailRow('delivery_address'.tr, (order['delivery_address'] ?? 'not_specified'.tr).toString()),
+              _buildDetailRow('phone_number'.tr, (order['buyer_phone'] ?? 'not_specified'.tr).toString()),
               
               const SizedBox(height: 16),
               const Divider(color: Colors.grey),
               const SizedBox(height: 16),
               
               // Items
-              const Text(
-                'Товары:',
-                style: TextStyle(
+              Text(
+                'items_title'.trParams({'count': items.length.toString()}),
+                style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                 ),
@@ -403,7 +407,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                   children: [
                     Expanded(
                       child: Text(
-                        '${item['name'] ?? 'Товар'} x${item['quantity'] ?? 1}',
+                        '${item['name'] ?? 'product'.tr} x${item['quantity'] ?? 1}',
                         style: const TextStyle(color: Colors.white),
                       ),
                     ),
@@ -423,9 +427,9 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Итого:',
-                    style: TextStyle(
+                  Text(
+                    '${'total'.tr}:',
+                    style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 18,

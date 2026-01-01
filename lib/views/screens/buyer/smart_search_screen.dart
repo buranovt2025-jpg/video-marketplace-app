@@ -242,8 +242,8 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
 
     if (_sellers.isEmpty) {
       Get.snackbar(
-        'Ошибка',
-        'Не удалось загрузить продавцов',
+        'error'.tr,
+        'failed_load_sellers'.tr,
         snackPosition: SnackPosition.BOTTOM,
       );
       return;
@@ -292,7 +292,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                         controller: q,
                         style: const TextStyle(color: Colors.white),
                         decoration: InputDecoration(
-                          hintText: 'Поиск продавца',
+                          hintText: 'seller_search'.tr,
                           hintStyle: TextStyle(color: Colors.grey[500]),
                           prefixIcon: Icon(Icons.store, color: Colors.grey[400]),
                           filled: true,
@@ -319,7 +319,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                           if (index == 0) {
                             return ListTile(
                               leading: const Icon(Icons.clear, color: Colors.white),
-                              title: const Text('Все продавцы', style: TextStyle(color: Colors.white)),
+                              title: Text('all_sellers'.tr, style: const TextStyle(color: Colors.white)),
                               onTap: () => Navigator.of(context).pop(<String, dynamic>{}),
                             );
                           }
@@ -394,7 +394,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                 children: [
                   const SizedBox(height: 8),
                   Text(
-                    'Фильтры',
+                    'filters'.tr,
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -405,10 +405,10 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.store, color: Colors.white),
-                    title: const Text('Продавец', style: TextStyle(color: Colors.white)),
+                    title: Text('seller'.tr, style: const TextStyle(color: Colors.white)),
                     subtitle: Text(
                       (_selectedSellerId == null || _selectedSellerId!.isEmpty)
-                          ? 'Все продавцы'
+                          ? 'all_sellers'.tr
                           : (_selectedSellerName ?? _selectedSellerId!),
                       style: TextStyle(color: Colors.grey[400]),
                       maxLines: 1,
@@ -432,7 +432,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                           keyboardType: TextInputType.number,
                           style: const TextStyle(color: Colors.white),
                           decoration: InputDecoration(
-                            hintText: 'Мин',
+                            hintText: 'min_short'.tr,
                             hintStyle: TextStyle(color: Colors.grey[500]),
                             filled: true,
                             fillColor: Colors.grey[850],
@@ -450,7 +450,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                           keyboardType: TextInputType.number,
                           style: const TextStyle(color: Colors.white),
                           decoration: InputDecoration(
-                            hintText: 'Макс',
+                            hintText: 'max_short'.tr,
                             hintStyle: TextStyle(color: Colors.grey[500]),
                             filled: true,
                             fillColor: Colors.grey[850],
@@ -482,7 +482,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
-                          child: const Text('Сбросить всё'),
+                          child: Text('reset_all'.tr),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -496,7 +496,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
-                          child: const Text('Применить'),
+                          child: Text('apply'.tr),
                         ),
                       ),
                     ],
@@ -556,7 +556,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
         ),
         actions: [
           IconButton(
-            tooltip: 'Фильтры',
+            tooltip: 'filters'.tr,
             onPressed: _openFilters,
             icon: Stack(
               clipBehavior: Clip.none,
@@ -630,7 +630,9 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                         Chip(
                           backgroundColor: Colors.grey[850],
                           label: Text(
-                            'Продавец: ${_selectedSellerName ?? _selectedSellerId}',
+                            'seller_filter_chip'.trParams({
+                              'name': _selectedSellerName ?? _selectedSellerId!,
+                            }),
                             style: const TextStyle(color: Colors.white),
                           ),
                           deleteIcon: const Icon(Icons.close, color: Colors.white, size: 18),
@@ -657,7 +659,10 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                         Chip(
                           backgroundColor: Colors.grey[850],
                           label: Text(
-                            'Цена: ${formatMoney(_minPrice ?? 0)}–${_maxPrice != null ? formatMoney(_maxPrice!) : '∞'}',
+                            'price_filter_chip'.trParams({
+                              'min': formatMoney(_minPrice ?? 0),
+                              'max': _maxPrice != null ? formatMoney(_maxPrice!) : '∞',
+                            }),
                             style: const TextStyle(color: Colors.white),
                           ),
                           deleteIcon: const Icon(Icons.close, color: Colors.white, size: 18),
@@ -689,7 +694,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                       },
                       icon: Icon(Icons.restart_alt, color: Colors.grey[400], size: 18),
                       label: Text(
-                        'Сбросить фильтры',
+                        'reset_filters'.tr,
                         style: TextStyle(color: Colors.grey[400]),
                       ),
                     ),

@@ -139,7 +139,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        _getCategoryName(product['category']),
+                        (product['category']?.toString() ?? '').tr,
                         style: TextStyle(
                           color: buttonColor,
                           fontSize: 12,
@@ -151,7 +151,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
                   // Product name
                   Text(
-                    product['name'] ?? 'Товар',
+                    product['name'] ?? 'product'.tr,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 24,
@@ -184,7 +184,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        inStock ? 'В наличии' : 'Нет в наличии',
+                        (inStock ? 'in_stock' : 'out_of_stock').tr,
                         style: TextStyle(
                           color: inStock ? Colors.green : Colors.red,
                           fontSize: 14,
@@ -200,9 +200,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
                   // Description
                   if (product['description'] != null && product['description'].isNotEmpty) ...[
-                    const Text(
-                      'Описание',
-                      style: TextStyle(
+                    Text(
+                      'description'.tr,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -222,9 +222,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
                   // Quantity selector
                   if (inStock) ...[
-                    const Text(
-                      'Количество',
-                      style: TextStyle(
+                    Text(
+                      'quantity'.tr,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -246,9 +246,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'Итого:',
-                            style: TextStyle(
+                          Text(
+                            '${'total'.tr}:',
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 16,
                             ),
@@ -309,7 +309,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  product['seller_name'] ?? 'Продавец',
+                  product['seller_name'] ?? 'seller_fallback'.tr,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 16,
@@ -318,7 +318,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Продавец на маркетплейсе',
+                  'seller_on_marketplace'.tr,
                   style: TextStyle(
                     color: Colors.grey[500],
                     fontSize: 12,
@@ -333,7 +333,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               if (product['seller_id'] != null) {
                 Get.to(() => ChatScreen(
                   userId: product['seller_id'],
-                  userName: product['seller_name'] ?? 'Продавец',
+                  userName: product['seller_name'] ?? 'seller_fallback'.tr,
                 ));
               }
             },
@@ -400,8 +400,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 onPressed: () {
                   _cartController.addToCart(product, quantity: _quantity);
                   Get.snackbar(
-                    'Добавлено',
-                    '${product['name']} добавлен в корзину',
+                    'added'.tr,
+                    'added_to_cart_named'.trParams({'name': (product['name'] ?? '').toString()}),
                     snackPosition: SnackPosition.BOTTOM,
                     backgroundColor: Colors.green,
                     colorText: Colors.white,
@@ -409,7 +409,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   );
                 },
                 icon: const Icon(Icons.add_shopping_cart),
-                label: const Text('В корзину'),
+                label: Text('add_to_cart'.tr),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.white,
                   side: BorderSide(color: buttonColor!),
@@ -426,7 +426,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   Get.to(() => const CartScreen());
                 },
                 icon: const Icon(Icons.flash_on),
-                label: const Text('Купить'),
+                label: Text('buy'.tr),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: buttonColor,
                   foregroundColor: Colors.white,
@@ -453,9 +453,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             backgroundColor: Colors.grey[700],
             padding: const EdgeInsets.symmetric(vertical: 16),
           ),
-          child: const Text(
-            'Нет в наличии',
-            style: TextStyle(color: Colors.grey),
+          child: Text(
+            'out_of_stock_message'.tr,
+            style: const TextStyle(color: Colors.grey),
           ),
         ),
       ),
@@ -467,20 +467,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return formatShortMoneyWithCurrency(numPrice);
   }
 
-  String _getCategoryName(String category) {
-    final categories = {
-      'fruits': 'Фрукты',
-      'vegetables': 'Овощи',
-      'meat': 'Мясо',
-      'dairy': 'Молочные',
-      'bakery': 'Выпечка',
-      'drinks': 'Напитки',
-      'spices': 'Специи',
-      'clothes': 'Одежда',
-      'electronics': 'Электроника',
-      'household': 'Для дома',
-      'other': 'Другое',
-    };
-    return categories[category] ?? category;
-  }
+  // Category labels are localized via translations, see `app_translations.dart`.
+  // Example: 'fruits'.tr, 'vegetables'.tr, etc.
 }

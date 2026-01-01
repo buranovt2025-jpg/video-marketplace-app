@@ -53,22 +53,22 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
         backgroundColor: Colors.grey[900],
         selectedItemColor: buttonColor,
         unselectedItemColor: Colors.grey,
-        items: const [
+        items: [
           BottomNavigationBarItem(
             icon: Icon(Icons.dashboard),
-            label: 'Дашборд',
+            label: 'dashboard'.tr,
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.people),
-            label: 'Пользователи',
+            label: 'users'.tr,
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.shopping_bag),
-            label: 'Заказы',
+            label: 'orders'.tr,
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.video_library),
-            label: 'Контент',
+            label: 'content'.tr,
           ),
         ],
       ),
@@ -81,9 +81,9 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
         SliverAppBar(
           floating: true,
           backgroundColor: backgroundColor,
-          title: const Text(
-            'Админ-панель',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          title: Text(
+            'admin_panel'.tr,
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
           actions: [
             IconButton(
@@ -121,9 +121,9 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Добро пожаловать!',
-                        style: TextStyle(
+                      Text(
+                        'welcome_admin'.tr,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -144,9 +144,9 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                 const SizedBox(height: 24),
                 
                 // Stats grid
-                const Text(
-                  'Статистика',
-                  style: TextStyle(
+                Text(
+                  'stats'.tr,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -163,25 +163,25 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                   childAspectRatio: 1.5,
                   children: [
                     _buildStatCard(
-                      'Заказы',
+                      'orders'.tr,
                       _controller.orders.length.toString(),
                       Icons.shopping_bag,
                       Colors.blue,
                     ),
                     _buildStatCard(
-                      'Товары',
+                      'products'.tr,
                       _controller.products.length.toString(),
                       Icons.inventory_2,
                       Colors.green,
                     ),
                     _buildStatCard(
-                      'Рилсы',
+                      'reels'.tr,
                       _controller.reels.length.toString(),
                       Icons.video_library,
                       Colors.purple,
                     ),
                     _buildStatCard(
-                      'Истории',
+                      'stories'.tr,
                       _controller.stories.length.toString(),
                       Icons.auto_stories,
                       Colors.orange,
@@ -192,9 +192,9 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                 const SizedBox(height: 24),
                 
                 // Orders by status
-                const Text(
-                  'Заказы по статусам',
-                  style: TextStyle(
+                Text(
+                  'orders_by_status'.tr,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -207,9 +207,9 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                 const SizedBox(height: 24),
                 
                 // Quick actions
-                const Text(
-                  'Быстрые действия',
-                  style: TextStyle(
+                Text(
+                  'quick_actions'.tr,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -284,14 +284,14 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     }
     
     final statusLabels = {
-      'created': 'Создан',
-      'accepted': 'Принят',
-      'ready': 'Готов',
-      'picked_up': 'Забран',
-      'in_transit': 'В пути',
-      'delivered': 'Доставлен',
-      'completed': 'Завершён',
-      'cancelled': 'Отменён',
+      'created': 'status_created'.tr,
+      'accepted': 'status_accepted'.tr,
+      'ready': 'status_ready'.tr,
+      'picked_up': 'status_picked_up'.tr,
+      'in_transit': 'status_in_transit'.tr,
+      'delivered': 'status_delivered'.tr,
+      'completed': 'status_completed'.tr,
+      'cancelled': 'status_cancelled'.tr,
     };
     
     final statusColors = {
@@ -359,7 +359,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
       children: [
         Expanded(
           child: _buildActionButton(
-            'Создать рилс',
+            'create_reel'.tr,
             Icons.video_call,
             Colors.purple,
             () => setState(() => _currentIndex = 3),
@@ -368,7 +368,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
         const SizedBox(width: 12),
         Expanded(
           child: _buildActionButton(
-            'Создать историю',
+            'create_story'.tr,
             Icons.add_photo_alternate,
             Colors.orange,
             () => setState(() => _currentIndex = 3),

@@ -103,7 +103,7 @@ class _SellerVerificationScreenState extends State<SellerVerificationScreen> {
     
     Get.snackbar(
       'success'.tr,
-      'Продавец верифицирован',
+      'seller_verified'.tr,
       snackPosition: SnackPosition.BOTTOM,
       backgroundColor: Colors.green,
       colorText: Colors.white,
@@ -116,16 +116,13 @@ class _SellerVerificationScreenState extends State<SellerVerificationScreen> {
     final reason = await Get.dialog<String>(
       AlertDialog(
         backgroundColor: Colors.grey[900],
-        title: const Text(
-          'Причина отклонения',
-          style: TextStyle(color: Colors.white),
-        ),
+        title: Text('rejection_reason'.tr, style: const TextStyle(color: Colors.white)),
         content: TextField(
           controller: reasonController,
           style: const TextStyle(color: Colors.white),
           maxLines: 3,
           decoration: InputDecoration(
-            hintText: 'Укажите причину...',
+            hintText: 'enter_reason'.tr,
             hintStyle: TextStyle(color: Colors.grey[600]),
             filled: true,
             fillColor: Colors.grey[800],
@@ -143,7 +140,7 @@ class _SellerVerificationScreenState extends State<SellerVerificationScreen> {
           ElevatedButton(
             onPressed: () => Get.back(result: reasonController.text),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Отклонить'),
+            child: Text('reject_action'.tr),
           ),
         ],
       ),
@@ -169,7 +166,7 @@ class _SellerVerificationScreenState extends State<SellerVerificationScreen> {
     
     Get.snackbar(
       'info'.tr,
-      'Заявка отклонена',
+      'verification_request_rejected'.tr,
       snackPosition: SnackPosition.BOTTOM,
       backgroundColor: Colors.orange,
       colorText: Colors.white,
@@ -199,11 +196,11 @@ class _SellerVerificationScreenState extends State<SellerVerificationScreen> {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                _buildFilterChip('pending', 'На проверке', Icons.hourglass_empty),
+                _buildFilterChip('pending', 'pending_verification'.tr, Icons.hourglass_empty),
                 const SizedBox(width: 8),
-                _buildFilterChip('verified', 'Верифицированы', Icons.verified),
+                _buildFilterChip('verified', 'verified_plural'.tr, Icons.verified),
                 const SizedBox(width: 8),
-                _buildFilterChip('rejected', 'Отклонены', Icons.cancel),
+                _buildFilterChip('rejected', 'rejected_plural'.tr, Icons.cancel),
               ],
             ),
           ),
@@ -221,17 +218,17 @@ class _SellerVerificationScreenState extends State<SellerVerificationScreen> {
               children: [
                 _buildStat(
                   _verificationRequests.where((r) => r['status'] == 'pending').length.toString(),
-                  'Ожидают',
+                  'awaiting'.tr,
                   Colors.orange,
                 ),
                 _buildStat(
                   _verificationRequests.where((r) => r['status'] == 'verified').length.toString(),
-                  'Верифицированы',
+                  'verified_plural'.tr,
                   Colors.green,
                 ),
                 _buildStat(
                   _verificationRequests.where((r) => r['status'] == 'rejected').length.toString(),
-                  'Отклонены',
+                  'rejected_plural'.tr,
                   Colors.red,
                 ),
               ],
@@ -255,7 +252,7 @@ class _SellerVerificationScreenState extends State<SellerVerificationScreen> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'Нет заявок',
+                          'no_requests'.tr,
                           style: TextStyle(color: Colors.grey[500], fontSize: 16),
                         ),
                       ],
@@ -381,8 +378,11 @@ class _SellerVerificationScreenState extends State<SellerVerificationScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    status == 'pending' ? 'На проверке' :
-                    status == 'verified' ? 'Верифицирован' : 'Отклонён',
+                    status == 'pending'
+                        ? 'pending_verification'.tr
+                        : status == 'verified'
+                            ? 'verified_status'.tr
+                            : 'rejected_status'.tr,
                     style: TextStyle(color: statusColor, fontSize: 12),
                   ),
                 ),
@@ -395,13 +395,13 @@ class _SellerVerificationScreenState extends State<SellerVerificationScreen> {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                _buildDetailRow('Название бизнеса', request['business_name']),
-                _buildDetailRow('ИНН', request['inn']),
-                _buildDetailRow('Тип документа', request['document_type']),
-                _buildDetailRow('Товаров', '${request['products_count']}'),
-                _buildDetailRow('Продажи', formatShortMoneyWithCurrency(asDouble(request['total_sales']))),
+                _buildDetailRow('business_name'.tr, request['business_name']),
+                _buildDetailRow('inn'.tr, request['inn']),
+                _buildDetailRow('document_type'.tr, request['document_type']),
+                _buildDetailRow('products_count'.tr, '${request['products_count']}'),
+                _buildDetailRow('sales'.tr, formatShortMoneyWithCurrency(asDouble(request['total_sales']))),
                 if (status == 'rejected' && request['rejection_reason'] != null)
-                  _buildDetailRow('Причина отказа', request['rejection_reason'], isError: true),
+                  _buildDetailRow('rejection_reason_label'.tr, request['rejection_reason'], isError: true),
               ],
             ),
           ),
@@ -419,7 +419,7 @@ class _SellerVerificationScreenState extends State<SellerVerificationScreen> {
                     child: OutlinedButton.icon(
                       onPressed: _isLoading ? null : () => _rejectSeller(request['id']),
                       icon: const Icon(Icons.close, size: 18),
-                      label: const Text('Отклонить'),
+                      label: Text('reject_action'.tr),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.red,
                         side: const BorderSide(color: Colors.red),
@@ -431,7 +431,7 @@ class _SellerVerificationScreenState extends State<SellerVerificationScreen> {
                     child: ElevatedButton.icon(
                       onPressed: _isLoading ? null : () => _verifyeSeller(request['id']),
                       icon: const Icon(Icons.check, size: 18),
-                      label: const Text('Верифицировать'),
+                      label: Text('verify'.tr),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
                       ),

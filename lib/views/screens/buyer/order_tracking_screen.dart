@@ -21,12 +21,12 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   late Map<String, dynamic> _order;
 
   final List<Map<String, dynamic>> _statusSteps = [
-    {'status': 'created', 'title': 'Заказ создан', 'icon': Icons.receipt_long},
-    {'status': 'accepted', 'title': 'Принят продавцом', 'icon': Icons.store},
-    {'status': 'ready', 'title': 'Готов к отправке', 'icon': Icons.inventory},
-    {'status': 'picked_up', 'title': 'Забран курьером', 'icon': Icons.local_shipping},
-    {'status': 'in_transit', 'title': 'В пути', 'icon': Icons.directions_bike},
-    {'status': 'delivered', 'title': 'Доставлен', 'icon': Icons.check_circle},
+    {'status': 'created', 'titleKey': 'order_created_step', 'icon': Icons.receipt_long},
+    {'status': 'accepted', 'titleKey': 'accepted_by_seller_step', 'icon': Icons.store},
+    {'status': 'ready', 'titleKey': 'status_ready_for_shipping', 'icon': Icons.inventory},
+    {'status': 'picked_up', 'titleKey': 'picked_up_by_courier_step', 'icon': Icons.local_shipping},
+    {'status': 'in_transit', 'titleKey': 'status_in_transit', 'icon': Icons.directions_bike},
+    {'status': 'delivered', 'titleKey': 'status_delivered', 'icon': Icons.check_circle},
   ];
 
   @override
@@ -53,9 +53,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       backgroundColor: backgroundColor,
       appBar: AppBar(
         backgroundColor: backgroundColor,
-        title: const Text(
-          'Отслеживание заказа',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        title: Text(
+          'order_tracking'.tr,
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -79,9 +79,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
             // Status timeline
             if (!isCancelled) ...[
-              const Text(
-                'Статус заказа',
-                style: TextStyle(
+              Text(
+                'order_status'.tr,
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -98,9 +98,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             const SizedBox(height: 24),
 
             // Order items
-            const Text(
-              'Товары в заказе',
-              style: TextStyle(
+            Text(
+              'order_items'.tr,
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -133,7 +133,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Заказ #${_order['id']?.substring(0, 8) ?? 'N/A'}',
+                'order_number_short'.trParams({
+                  'id': (_order['id']?.toString() ?? 'N/A').substring(0, 8),
+                }),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
@@ -162,7 +164,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Сумма:',
+                '${'amount'.tr}:',
                 style: TextStyle(color: Colors.grey[400]),
               ),
               Text(
@@ -195,7 +197,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
           return _buildTimelineStep(
             icon: step['icon'],
-            title: step['title'],
+            title: (step['titleKey']?.toString() ?? '').tr,
             isCompleted: isCompleted,
             isCurrent: isCurrent,
             isLast: index == _statusSteps.length - 1,
@@ -256,7 +258,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
-                      'Текущий статус',
+                      'current_status_label'.tr,
                       style: TextStyle(
                         color: Colors.green,
                         fontSize: 12,
@@ -297,17 +299,17 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Заказ отменён',
-                  style: TextStyle(
+                  'order_cancelled'.tr,
+                  style: const TextStyle(
                     color: Colors.red,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
-                  'Свяжитесь с продавцом для уточнения деталей',
-                  style: TextStyle(
+                  'contact_seller_hint'.tr,
+                  style: const TextStyle(
                     color: Colors.grey,
                     fontSize: 14,
                   ),
@@ -330,9 +332,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Доставка',
-            style: TextStyle(
+          Text(
+            'delivery'.tr,
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -345,7 +347,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  _order['delivery_address'] ?? 'Адрес не указан',
+                  (_order['delivery_address'] ?? 'address_not_specified'.tr).toString(),
                   style: const TextStyle(color: Colors.white, fontSize: 14),
                 ),
               ),
@@ -357,7 +359,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             child: OutlinedButton.icon(
               onPressed: _openInMaps,
               icon: const Icon(Icons.map),
-              label: const Text('Открыть в навигаторе'),
+              label: Text('open_in_navigation'.tr),
               style: OutlinedButton.styleFrom(
                 foregroundColor: buttonColor,
                 side: BorderSide(color: buttonColor!),
@@ -398,7 +400,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item['product_name'] ?? 'Товар',
+                        item['product_name'] ?? 'product'.tr,
                         style: const TextStyle(color: Colors.white, fontSize: 14),
                       ),
                       Text(
@@ -436,12 +438,12 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   if (_order['seller_id'] != null) {
                     Get.to(() => ChatScreen(
                       userId: _order['seller_id'],
-                      userName: _order['seller_name'] ?? 'Продавец',
+                              userName: _order['seller_name'] ?? 'seller_fallback'.tr,
                     ));
                   }
                 },
                 icon: const Icon(Icons.chat),
-                label: const Text('Чат с продавцом'),
+                        label: Text('chat_with_seller'.tr),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.white,
                   side: BorderSide(color: Colors.grey[700]!),
@@ -456,18 +458,18 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   if (_order['courier_id'] != null) {
                     Get.to(() => ChatScreen(
                       userId: _order['courier_id'],
-                      userName: _order['courier_name'] ?? 'Курьер',
+                              userName: _order['courier_name'] ?? 'courier'.tr,
                     ));
                   } else {
                     Get.snackbar(
-                      'Курьер не назначен',
-                      'Курьер ещё не принял заказ',
+                              'courier_not_assigned'.tr,
+                              'courier_not_accepted_yet'.tr,
                       snackPosition: SnackPosition.BOTTOM,
                     );
                   }
                 },
                 icon: const Icon(Icons.chat),
-                label: const Text('Чат с курьером'),
+                        label: Text('chat_with_courier'.tr),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.white,
                   side: BorderSide(color: Colors.grey[700]!),
@@ -485,7 +487,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               child: ElevatedButton.icon(
                 onPressed: () => _callPhone(_order['seller_phone'] ?? '+998901234567'),
                 icon: const Icon(Icons.phone),
-                label: const Text('Позвонить продавцу'),
+                label: Text('call_seller'.tr),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
                   foregroundColor: Colors.white,
@@ -501,14 +503,14 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                     _callPhone(_order['courier_phone'] ?? '+998901234568');
                   } else {
                     Get.snackbar(
-                      'Курьер не назначен',
-                      'Курьер ещё не принял заказ',
+                      'courier_not_assigned'.tr,
+                      'courier_not_accepted_yet'.tr,
                       snackPosition: SnackPosition.BOTTOM,
                     );
                   }
                 },
                 icon: const Icon(Icons.phone),
-                label: const Text('Позвонить курьеру'),
+                label: Text('call_courier'.tr),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _order['courier_id'] != null ? Colors.green : Colors.grey,
                   foregroundColor: Colors.white,
@@ -529,15 +531,15 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         await launchUrl(phoneUri);
       } else {
         Get.snackbar(
-          'Ошибка',
-          'Не удалось открыть приложение для звонков',
+          'error'.tr,
+          'call_failed'.tr,
           snackPosition: SnackPosition.BOTTOM,
         );
       }
     } catch (e) {
       Get.snackbar(
-        'Ошибка',
-        'Не удалось позвонить: $e',
+        'error'.tr,
+        '${'call_failed'.tr}: $e',
         snackPosition: SnackPosition.BOTTOM,
       );
     }
@@ -559,8 +561,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     
     if (lat == null || lng == null) {
       Get.snackbar(
-        'Ошибка',
-        'Координаты не указаны',
+        'error'.tr,
+        'coordinates_missing'.tr,
         snackPosition: SnackPosition.BOTTOM,
       );
       return;
@@ -581,8 +583,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       }
     } catch (e) {
       Get.snackbar(
-        'Ошибка',
-        'Не удалось открыть навигатор',
+        'error'.tr,
+        'navigation_open_failed'.tr,
         snackPosition: SnackPosition.BOTTOM,
       );
     }
@@ -594,17 +596,26 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   }
 
   String _getStatusText(String? status) {
-    final statuses = {
-      'created': 'Создан',
-      'accepted': 'Принят',
-      'ready': 'Готов',
-      'picked_up': 'Забран',
-      'in_transit': 'В пути',
-      'delivered': 'Доставлен',
-      'completed': 'Завершён',
-      'cancelled': 'Отменён',
-    };
-    return statuses[status] ?? status ?? 'Неизвестно';
+    switch (status) {
+      case 'created':
+        return 'status_created'.tr;
+      case 'accepted':
+        return 'status_accepted'.tr;
+      case 'ready':
+        return 'status_ready'.tr;
+      case 'picked_up':
+        return 'status_picked_up'.tr;
+      case 'in_transit':
+        return 'status_in_transit'.tr;
+      case 'delivered':
+        return 'status_delivered'.tr;
+      case 'completed':
+        return 'status_completed'.tr;
+      case 'cancelled':
+        return 'status_cancelled'.tr;
+      default:
+        return status ?? 'unknown_status'.tr;
+    }
   }
 
   Color _getStatusColor(String? status) {

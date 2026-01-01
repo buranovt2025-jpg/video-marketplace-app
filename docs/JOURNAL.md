@@ -839,3 +839,7 @@ Fallback — временная мера для демо‑контента. П�
 ### Важно по “загрузке видео”
 - В OpenAPI backend (`/openapi.json`) **нет** endpoint’а для загрузки файла (reels/stories принимают только `video_url`/`image_url` строками).
 - Значит “настоящий upload” для Reels/Stories сейчас требует отдельной задачи на backend (upload → storage → URL в `ContentCreate`).
+
+### Дополнение (следующий шаг)
+- Продолжена долокализация buyer‑витрины: `CartScreen`, `OrderTrackingScreen`, `ProductDetailScreen`, а также кабинеты `BuyerCabinetScreen` / `SellerCabinetScreen`.
+- Остаток по проекту (ещё есть RU‑строки): `MarketplaceHomeScreen`, `NearbySellersScreen`, `ChatScreen`, `qr_scanner_screen_stub.dart`, причины удаления аккаунта и demo‑данные в `seller_verification_screen.dart`.
