@@ -5,6 +5,7 @@ import 'package:tiktok_tutorial/controllers/cart_controller.dart';
 import 'package:tiktok_tutorial/utils/formatters.dart';
 import 'package:tiktok_tutorial/utils/money.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/cart_screen.dart';
+import 'package:tiktok_tutorial/views/screens/buyer/checkout_screen.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/product_detail_screen.dart';
 import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
 
@@ -19,6 +20,9 @@ class ProductQuickBuySheet extends StatelessWidget {
     final name = (product['name'] ?? 'product'.tr).toString();
     final priceText = formatMoneyWithCurrency(product['price']);
     final sellerName = (product['seller_name'] ?? 'seller_fallback'.tr).toString();
+    final sellerId = (product['seller_id'] ?? '').toString();
+    final ratingAvg = asDouble(product['rating_avg']);
+    final ratingCount = asInt(product['rating_count'] ?? product['reviews_count'] ?? product['review_count'] ?? 0);
 
     return SafeArea(
       child: Container(
@@ -83,6 +87,26 @@ class ProductQuickBuySheet extends StatelessWidget {
                         priceText,
                         style: TextStyle(color: buttonColor ?? primaryColor, fontSize: 18, fontWeight: FontWeight.bold),
                       ),
+                    if (ratingAvg > 0 || ratingCount > 0) ...[
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          _Stars(value: ratingAvg),
+                          const SizedBox(width: 6),
+                          Text(
+                            ratingAvg > 0 ? ratingAvg.toStringAsFixed(1) : '-',
+                            style: TextStyle(color: Colors.grey[300], fontSize: 12),
+                          ),
+                          if (ratingCount > 0) ...[
+                            const SizedBox(width: 6),
+                            Text(
+                              '($ratingCount)',
+                              style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
                       const SizedBox(height: 4),
                       Text(
                         sellerName,
@@ -133,7 +157,11 @@ class ProductQuickBuySheet extends StatelessWidget {
                     onPressed: () {
                       cart.addToCart(product, quantity: 1);
                       Get.back();
-                      Get.to(() => const CartScreen());
+                      if (sellerId.trim().isNotEmpty) {
+                        Get.to(() => CheckoutScreen(sellerId: sellerId));
+                      } else {
+                        Get.to(() => const CartScreen());
+                      }
                     },
                     icon: const Icon(Icons.flash_on),
                     label: Text('buy_now'.tr),
@@ -175,6 +203,30 @@ class ProductQuickBuySheet extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _Stars extends StatelessWidget {
+  final double value;
+  const _Stars({required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    final v = value.clamp(0, 5);
+    final full = v.floor();
+    final half = (v - full) >= 0.5;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(5, (i) {
+        if (i < full) {
+          return const Icon(Icons.star, size: 14, color: Colors.amber);
+        }
+        if (i == full && half) {
+          return const Icon(Icons.star_half, size: 14, color: Colors.amber);
+        }
+        return Icon(Icons.star_border, size: 14, color: Colors.grey[600]);
+      }),
     );
   }
 }

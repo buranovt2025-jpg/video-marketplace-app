@@ -33,6 +33,7 @@ import 'package:tiktok_tutorial/utils/share_utils.dart';
 import 'package:tiktok_tutorial/views/screens/chat/conversations_screen.dart';
 import 'package:tiktok_tutorial/views/screens/common/notifications_screen.dart';
 import 'package:tiktok_tutorial/views/widgets/comments_coming_soon_sheet.dart';
+import 'package:tiktok_tutorial/views/widgets/product_quick_buy_sheet.dart';
 
 class MarketplaceHomeScreen extends StatefulWidget {
   final bool isGuestMode;
@@ -804,7 +805,18 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                     tooltip: 'add_to_cart'.tr,
                   ),
                   ElevatedButton.icon(
-                    onPressed: () => _openProductFromReel(reel),
+                    onPressed: () {
+                      final productId = reel['product_id']?.toString() ?? '';
+                      final p = productId.trim().isEmpty ? null : _findProductById(productId);
+                      if (p != null) {
+                        Get.bottomSheet(
+                          ProductQuickBuySheet(product: Map<String, dynamic>.from(p)),
+                          isScrollControlled: true,
+                        );
+                        return;
+                      }
+                      _openProductFromReel(reel);
+                    },
                     icon: const Icon(Icons.shopping_cart, size: 18),
                     label: Text('buy_now'.tr),
                     style: ElevatedButton.styleFrom(

@@ -10,10 +10,11 @@ set -euo pipefail
 # Optional env:
 #   FLUTTER_BIN=/opt/flutter/bin/flutter
 #   PWA_STRATEGY=none|offline-first (default: none)
-#   (no other options)
+#   DART_DEFINES="KEY=VALUE KEY2=VALUE2" (optional)
 
 FLUTTER_BIN="${FLUTTER_BIN:-}"
 PWA_STRATEGY="${PWA_STRATEGY:-none}"
+DART_DEFINES="${DART_DEFINES:-}"
 
 resolve_flutter() {
   if [ -n "${FLUTTER_BIN:-}" ] && [ -x "${FLUTTER_BIN:-}" ]; then
@@ -31,13 +32,22 @@ echo "== Build Flutter Web =="
 resolve_flutter
 echo "FLUTTER_BIN=$FLUTTER_BIN"
 echo "PWA_STRATEGY=$PWA_STRATEGY"
+echo "DART_DEFINES=$DART_DEFINES"
 
 echo "== Flutter clean/pub get =="
 "$FLUTTER_BIN" clean
 "$FLUTTER_BIN" pub get
 
 echo "== flutter build web --release =="
-"$FLUTTER_BIN" build web --release --pwa-strategy="$PWA_STRATEGY"
+extra_defines=()
+if [ -n "${DART_DEFINES}" ]; then
+  # Accept space-separated KEY=VALUE pairs.
+  for pair in ${DART_DEFINES}; do
+    extra_defines+=( "--dart-define=${pair}" )
+  done
+fi
+
+"$FLUTTER_BIN" build web --release --pwa-strategy="$PWA_STRATEGY" "${extra_defines[@]}"
 
 echo "== Build OK =="
 

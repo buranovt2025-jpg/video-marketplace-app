@@ -343,7 +343,12 @@ class _ReelsViewerScreenState extends State<ReelsViewerScreen> {
     if (productId.trim().isEmpty) return 'open_product_card'.tr;
     final p = _findProduct(productId);
     if (p == null) return 'open_product_card'.tr;
-    return formatMoneyWithCurrency(p['price']);
+    final price = formatMoneyWithCurrency(p['price']);
+    final avg = asDouble(p['rating_avg']);
+    final cnt = asInt(p['rating_count'] ?? p['reviews_count'] ?? p['review_count'] ?? 0);
+    if (avg > 0 && cnt > 0) return '$price • ★${avg.toStringAsFixed(1)} ($cnt)';
+    if (avg > 0) return '$price • ★${avg.toStringAsFixed(1)}';
+    return price;
   }
 
   Widget? _buildAddToCartTrailing(Map<String, dynamic> reel) {
