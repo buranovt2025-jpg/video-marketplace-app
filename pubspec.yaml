@@ -37,7 +37,8 @@ dependencies:
   get: ^4.6.6
   http: ^1.6.0
   image_picker: ^1.0.7
-  mobile_scanner: ^4.0.1
+  # Keep mobile_scanner up to date to avoid web build/plugin conflicts.
+  mobile_scanner: ^7.1.4
   qr_flutter: ^4.1.0
   shared_preferences: ^2.2.3
   timeago: ^3.6.0
