@@ -7,8 +7,18 @@
 - **Deploy workflow**: `.github/workflows/deploy_web.yml` (name: **Deploy Flutter Web (SSH)**)
 - **Prod Web**: `https://165.232.81.31`
 - **Prod API**: `https://app-owphiuvd.fly.dev`
-- **Last deployed web commit**: `5b2f12cd3a4623fccdf0715efad606e024fd78ff` (from `/.last_build_id`)
+- **Last deployed web commit**: `8bd63ebd243d06bc66a800fcd7e9543f4f5dc170` (from `/.last_build_id`)
 - **Smoke test**: `bash scripts/smoke_test_prod.sh` (passed after the deploy above)
+
+## Feature flags (build-time)
+
+Feature flags are controlled via `--dart-define` and can be passed from CI/server via `DART_DEFINES`:
+- `ENABLE_MEDIA_UPLOAD=true` — enables upload mode in Create Reel/Story (requires backend `/api/uploads`)
+- `ENABLE_PRODUCT_REVIEWS=true` — enables product reviews UI (requires backend reviews endpoints)
+
+Docs:
+- `docs/DEPLOYMENT.md` (how to set `DART_DEFINES`)
+- `docs/BACKEND_TASKS.md`, `docs/MEDIA_UPLOAD.md`, `docs/REVIEWS_API.md`
 
 ## What we changed recently
 

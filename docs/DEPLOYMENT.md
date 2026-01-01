@@ -63,8 +63,25 @@ Workflow использует GitHub Secrets (точные названия — 
 - `DEPLOY_PROJECT_DIR`, `DEPLOY_WEB_ROOT`, `DEPLOY_FLUTTER_BIN`
 - `DEPLOY_SSH_KEY_B64` (предпочтительно) или `DEPLOY_SSH_KEY`
 
+## Feature flags / включение фич без кода (DART_DEFINES)
+
+Можно включать фичи через build-time defines без правок кода:
+
+- В GitHub → **Settings → Secrets and variables → Actions → Variables**
+- Создать Variable: **`DART_DEFINES`**
+- Значение (пример):
+
+```text
+ENABLE_MEDIA_UPLOAD=true ENABLE_PRODUCT_REVIEWS=true
+```
+
+Этот параметр будет прокинут в:
+- CI preflight web build
+- server-side build при деплое
+
 ## См. также
 
 - `docs/HANDOFF.md` — текущее состояние, урлы, грабли, последний деплой
 - `docs/DEPLOY_AUTOMATION_GITHUB_ACTIONS.md` — детали настройки автодеплоя
+- `docs/BACKEND_TASKS.md` — список задач для backend (upload/reviews)
 
