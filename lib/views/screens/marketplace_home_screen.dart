@@ -53,23 +53,23 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   void _promptLogin(String action) {
     Get.dialog(
       AlertDialog(
-        backgroundColor: Colors.grey[900],
-        title: Text('login_required'.tr, style: const TextStyle(color: Colors.white)),
+        backgroundColor: cardColor,
+        title: Text('login_required'.tr, style: AppUI.h2),
         content: Text(
           'Войдите, чтобы $action',
-          style: const TextStyle(color: Colors.white70),
+          style: AppUI.muted,
         ),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: Text('cancel'.tr, style: const TextStyle(color: Colors.grey)),
+            child: Text('cancel'.tr, style: AppUI.muted),
           ),
           ElevatedButton(
             onPressed: () {
               Get.back();
               Get.to(() => const MarketplaceLoginScreen());
             },
-            style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
+            style: AppUI.primaryButton(),
             child: Text('login'.tr),
           ),
         ],
@@ -930,45 +930,40 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     return Obx(() {
       if (!_controller.isSeller && !_controller.isAdmin) {
         return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.lock, size: 64, color: Colors.grey[700]),
-              const SizedBox(height: 16),
-              Text(
-                'Только для продавцов',
-                style: TextStyle(color: Colors.grey[500], fontSize: 16),
+          child: Padding(
+            padding: AppUI.pagePadding,
+            child: Container(
+              width: double.infinity,
+              padding: AppUI.cardPadding,
+              decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.lock, size: 56, color: Colors.white.withOpacity(0.28)),
+                  const SizedBox(height: 14),
+                  Text('Только для продавцов', style: AppUI.h2),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Зарегистрируйтесь как продавец,\nчтобы создавать контент',
+                    style: AppUI.muted,
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Зарегистрируйтесь как продавец,\nчтобы создавать контент',
-                style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                textAlign: TextAlign.center,
-              ),
-            ],
+            ),
           ),
         );
       }
       
       return Padding(
-        padding: const EdgeInsets.all(24),
+        padding: AppUI.pagePadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SizedBox(height: 40),
-            const Text(
-              'Создать',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            const SizedBox(height: 12),
+            Text('Создать', style: AppUI.h1),
             const SizedBox(height: 8),
-            Text(
-              'Выберите что хотите создать',
-              style: TextStyle(color: Colors.grey[400]),
-            ),
+            Text('Выберите что хотите создать', style: AppUI.muted),
             const SizedBox(height: 32),
             
             _buildCreateOption(
@@ -1001,11 +996,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               onPressed: () => Get.to(() => const MyProductsScreen()),
               icon: const Icon(Icons.list),
               label: const Text('Мои товары'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.white,
-                side: BorderSide(color: Colors.grey[700]!),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
+              style: AppUI.outlineButton(),
             ),
           ],
         ),
@@ -1019,25 +1010,22 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     required String description,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(AppUI.radiusL),
       child: Container(
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.grey[900],
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey[800]!),
-        ),
+        decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
         child: Row(
           children: [
             Container(
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: buttonColor!.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12),
+                color: primaryColor.withOpacity(0.16),
+                borderRadius: BorderRadius.circular(AppUI.radiusM),
               ),
-              child: Icon(icon, color: buttonColor, size: 28),
+              child: Icon(icon, color: primaryColor, size: 28),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -1046,21 +1034,17 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: AppUI.h2.copyWith(fontSize: 18),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     description,
-                    style: TextStyle(color: Colors.grey[500], fontSize: 14),
+                    style: AppUI.muted.copyWith(fontSize: 14),
                   ),
                 ],
               ),
             ),
-            Icon(Icons.arrow_forward_ios, color: Colors.grey[600], size: 16),
+            Icon(Icons.arrow_forward_ios, color: Colors.white.withOpacity(0.35), size: 16),
           ],
         ),
       ),
@@ -1070,13 +1054,10 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   Widget _buildOrdersTab() {
     return CustomScrollView(
       slivers: [
-        const SliverAppBar(
+        SliverAppBar(
           floating: true,
           backgroundColor: backgroundColor,
-          title: Text(
-            'Заказы',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-          ),
+          title: Text('Заказы', style: AppUI.h2),
         ),
         
         Obx(() {
@@ -1084,19 +1065,21 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
           
           if (orders.isEmpty) {
             return SliverToBoxAdapter(
-              child: Container(
-                height: 400,
+              child: SizedBox(
+                height: 320,
                 child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.shopping_bag_outlined, size: 64, color: Colors.grey[700]),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Пока нет заказов',
-                        style: TextStyle(color: Colors.grey[500], fontSize: 16),
-                      ),
-                    ],
+                  child: Padding(
+                    padding: AppUI.pagePadding,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.shopping_bag_outlined, size: 64, color: Colors.white.withOpacity(0.22)),
+                        const SizedBox(height: 16),
+                        Text('Пока нет заказов', style: AppUI.h2.copyWith(color: Colors.white.withOpacity(0.9))),
+                        const SizedBox(height: 8),
+                        Text('Когда появятся — они будут здесь', style: AppUI.muted, textAlign: TextAlign.center),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -1142,15 +1125,15 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     
       final status = order['status'] ?? 'created';
     
+      final rawAmount = order['total_amount'];
+      final amountText = rawAmount is num ? rawAmount.toStringAsFixed(0) : (rawAmount?.toString() ?? '0');
+      
       return GestureDetector(
         onTap: () => Get.to(() => OrderTrackingScreen(order: order)),
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.grey[900],
-            borderRadius: BorderRadius.circular(12),
-          ),
+          decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1161,21 +1144,21 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                     'Заказ #${order['id']?.substring(0, 8) ?? ''}',
                     style: const TextStyle(
                       color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: statusColors[status]?.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
                       statusLabels[status] ?? status,
                       style: TextStyle(
                         color: statusColors[status],
                         fontSize: 12,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
@@ -1183,19 +1166,19 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Сумма: ${order['total_amount']?.toStringAsFixed(0) ?? '0'} сум',
-                style: TextStyle(color: Colors.grey[400]),
+                'Сумма: $amountText сум',
+                style: AppUI.muted,
               ),
               if (order['delivery_address'] != null) ...[
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Icon(Icons.location_on, size: 14, color: Colors.grey[500]),
+                    Icon(Icons.location_on, size: 14, color: Colors.white.withOpacity(0.45)),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         order['delivery_address'],
-                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                        style: AppUI.muted.copyWith(fontSize: 12),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
