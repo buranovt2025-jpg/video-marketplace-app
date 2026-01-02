@@ -4,6 +4,7 @@ import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/cart_controller.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/ui/app_ui.dart';
+import 'package:tiktok_tutorial/ui/app_media.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/order_success_screen.dart';
 import 'package:tiktok_tutorial/views/screens/common/location_picker_screen.dart';
 
@@ -184,14 +185,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             child: item.imageUrl != null
                 ? ClipRRect(
                     borderRadius: BorderRadius.circular(AppUI.radiusM),
-                    child: Image.network(
-                      item.imageUrl!,
+                    child: AppMedia.image(
+                      item.imageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Icon(
-                        Icons.inventory_2,
-                        color: Colors.grey[600],
-                        size: 20,
-                      ),
+                      width: 50,
+                      height: 50,
                     ),
                   )
                 : Icon(

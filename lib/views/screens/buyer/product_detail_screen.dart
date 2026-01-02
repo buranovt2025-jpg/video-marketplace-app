@@ -5,8 +5,10 @@ import 'package:tiktok_tutorial/controllers/cart_controller.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/utils/responsive_helper.dart';
 import 'package:tiktok_tutorial/ui/app_ui.dart';
+import 'package:tiktok_tutorial/ui/app_media.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/cart_screen.dart';
 import 'package:tiktok_tutorial/views/screens/chat/chat_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final Map<String, dynamic> product;
@@ -35,6 +37,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget build(BuildContext context) {
     final product = widget.product;
     final bool inStock = product['in_stock'] ?? true;
+    final videoUrl = product['video_url']?.toString();
     
     // Responsive image height
     final imageHeight = ResponsiveHelper.responsiveValue(
@@ -113,13 +116,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               )),
             ],
             flexibleSpace: FlexibleSpaceBar(
-              background: product['image_url'] != null
-                  ? Image.network(
-                      product['image_url'],
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _buildPlaceholderImage(),
-                    )
-                  : _buildPlaceholderImage(),
+              background: AppMedia.image(
+                product['image_url'],
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+              ),
             ),
           ),
 
@@ -201,6 +203,47 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     Text(
                       product['description'],
                       style: AppUI.muted.copyWith(fontSize: 14, height: 1.5),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+
+                  // Product video (optional)
+                  if (videoUrl != null && videoUrl.isNotEmpty) ...[
+                    Text('Видео', style: AppUI.h2),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: AppUI.cardPadding,
+                      decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: primaryColor.withOpacity(0.16),
+                              borderRadius: BorderRadius.circular(AppUI.radiusM),
+                            ),
+                            child: const Icon(Icons.play_circle, color: primaryColor),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              _isHttpUrl(videoUrl) ? 'Открыть видео товара' : 'Видео прикреплено',
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                            ),
+                          ),
+                          if (_isHttpUrl(videoUrl))
+                            OutlinedButton(
+                              onPressed: () => _openUrl(videoUrl),
+                              style: AppUI.outlineButton().copyWith(
+                                foregroundColor: const WidgetStatePropertyAll(primaryColor),
+                                side: WidgetStatePropertyAll(BorderSide(color: primaryColor.withOpacity(0.6))),
+                                padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
+                              ),
+                              child: const Text('Открыть'),
+                            ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 24),
                   ],
@@ -448,5 +491,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       'other': 'Другое',
     };
     return categories[category] ?? category;
+  }
+
+  bool _isHttpUrl(String? url) {
+    if (url == null) return false;
+    return url.startsWith('http://') || url.startsWith('https://');
+  }
+
+  Future<void> _openUrl(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 }

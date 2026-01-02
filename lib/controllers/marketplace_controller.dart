@@ -181,6 +181,7 @@ class MarketplaceController extends GetxController {
     required double price,
     String? description,
     String? imageUrl,
+    String? videoUrl,
     String? category,
     int? quantity,
   }) async {
@@ -193,6 +194,7 @@ class MarketplaceController extends GetxController {
         price: price,
         description: description,
         imageUrl: imageUrl,
+        videoUrl: videoUrl,
         category: category,
         quantity: quantity,
       );

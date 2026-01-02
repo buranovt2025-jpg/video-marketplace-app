@@ -34,52 +34,11 @@
 
   <!-- Performance: preload main bundle -->
   <link rel="preload" href="main.dart.js" as="script">
-
-  <!-- Simple HTML splash while Flutter loads -->
   <style>
     html, body { height: 100%; margin: 0; background: #000; }
-    #splash {
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      color: #fff;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    }
-    #splash .logo {
-      width: 72px; height: 72px;
-      border-radius: 16px;
-      background: #ff6b00;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-    }
-    #splash .title { margin-top: 12px; font-size: 18px; font-weight: 700; }
-    #splash .subtitle { margin-top: 6px; font-size: 13px; color: rgba(255,255,255,.7); }
   </style>
 </head>
 <body>
-  <div id="splash">
-    <div class="logo">G</div>
-    <div class="title">GoGoMarket</div>
-    <div class="subtitle">Загрузка…</div>
-  </div>
-
-  <script>
-    // Remove splash on first Flutter frame; fallback after 10s.
-    window.addEventListener('flutter-first-frame', function () {
-      var el = document.getElementById('splash');
-      if (el) el.remove();
-    });
-    setTimeout(function () {
-      var el = document.getElementById('splash');
-      if (el) el.remove();
-    }, 10000);
-  </script>
-
   <script src="main.dart.js" defer></script>
 </body>
 </html>

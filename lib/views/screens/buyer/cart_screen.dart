@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/cart_controller.dart';
 import 'package:tiktok_tutorial/ui/app_ui.dart';
+import 'package:tiktok_tutorial/ui/app_media.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/checkout_screen.dart';
 
 class CartScreen extends StatefulWidget {
@@ -195,13 +196,11 @@ class _CartScreenState extends State<CartScreen> {
             child: item.imageUrl != null
                 ? ClipRRect(
                     borderRadius: BorderRadius.circular(AppUI.radiusM),
-                    child: Image.network(
-                      item.imageUrl!,
+                    child: AppMedia.image(
+                      item.imageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Icon(
-                        Icons.inventory_2,
-                        color: Colors.grey[600],
-                      ),
+                      width: 80,
+                      height: 80,
                     ),
                   )
                 : Icon(

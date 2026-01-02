@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/ui/app_ui.dart';
+import 'package:tiktok_tutorial/ui/app_media.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/product_detail_screen.dart';
 
 class SmartSearchScreen extends StatefulWidget {
@@ -355,14 +356,11 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                   ClipRRect(
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(AppUI.radiusL)),
                     child: product['image_url'] != null
-                        ? Image.network(
+                        ? AppMedia.image(
                             product['image_url'],
                             width: double.infinity,
+                            height: double.infinity,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
-                              color: surfaceColor,
-                              child: Icon(Icons.image, color: Colors.grey[600], size: 40),
-                            ),
                           )
                         : Container(
                             color: surfaceColor,

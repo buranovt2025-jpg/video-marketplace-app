@@ -6,6 +6,7 @@ import 'package:tiktok_tutorial/controllers/cart_controller.dart';
 import 'package:tiktok_tutorial/controllers/favorites_controller.dart';
 import 'package:tiktok_tutorial/utils/responsive_helper.dart';
 import 'package:tiktok_tutorial/ui/app_ui.dart';
+import 'package:tiktok_tutorial/ui/app_media.dart';
 import 'package:tiktok_tutorial/views/screens/seller/create_product_screen.dart';
 import 'package:tiktok_tutorial/views/screens/seller/create_reel_screen.dart';
 import 'package:tiktok_tutorial/views/screens/seller/create_story_screen.dart';
@@ -425,12 +426,11 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 child: Container(
                   color: surfaceColor,
                   child: product['image_url'] != null
-                      ? Image.network(
+                      ? AppMedia.image(
                           product['image_url'],
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Center(
-                            child: Icon(Icons.image, color: Colors.white.withOpacity(0.35)),
-                          ),
+                          width: double.infinity,
+                          height: double.infinity,
                         )
                       : Center(
                           child: Icon(Icons.inventory_2, color: Colors.white.withOpacity(0.35)),
@@ -732,16 +732,11 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                     child: Container(
                       color: surfaceColor,
                       child: thumbUrl != null
-                          ? Image.network(
+                          ? AppMedia.image(
                               thumbUrl,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Center(
-                                child: Icon(
-                                  Icons.play_circle_outline,
-                                  size: 74,
-                                  color: Colors.white.withOpacity(0.28),
-                                ),
-                              ),
+                              width: double.infinity,
+                              height: double.infinity,
                             )
                           : Center(
                               child: Icon(
@@ -1038,13 +1033,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
           children: [
             Container(color: surfaceColor),
             if (product['image_url'] != null)
-              Image.network(
-                product['image_url'],
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Center(
-                  child: Icon(Icons.image, color: Colors.white.withOpacity(0.35)),
-                ),
-              )
+              AppMedia.image(product['image_url'], fit: BoxFit.cover)
             else
               Center(
                 child: Icon(Icons.inventory_2, color: Colors.white.withOpacity(0.35)),

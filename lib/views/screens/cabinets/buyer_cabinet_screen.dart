@@ -7,6 +7,7 @@ import 'package:tiktok_tutorial/controllers/cart_controller.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/order_tracking_screen.dart';
 import 'package:tiktok_tutorial/views/screens/common/location_picker_screen.dart';
 import 'package:tiktok_tutorial/ui/app_ui.dart';
+import 'package:tiktok_tutorial/ui/app_media.dart';
 
 class BuyerCabinetScreen extends StatefulWidget {
   const BuyerCabinetScreen({Key? key}) : super(key: key);
@@ -330,14 +331,11 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
                   child: product['image_url'] != null
                       ? ClipRRect(
                           borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                          child: Image.network(
+                          child: AppMedia.image(
                             product['image_url'],
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Icon(
-                              Icons.inventory_2,
-                              color: Colors.grey[600],
-                              size: 48,
-                            ),
+                            width: double.infinity,
+                            height: double.infinity,
                           ),
                         )
                       : Icon(Icons.inventory_2, color: Colors.grey[600], size: 48),
