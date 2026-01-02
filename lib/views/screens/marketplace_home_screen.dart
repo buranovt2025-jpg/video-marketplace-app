@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
@@ -13,6 +14,7 @@ import 'package:tiktok_tutorial/views/screens/seller/create_story_screen.dart';
 import 'package:tiktok_tutorial/views/screens/seller/my_products_screen.dart';
 import 'package:tiktok_tutorial/views/screens/auth/marketplace_login_screen.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/product_detail_screen.dart';
+import 'package:tiktok_tutorial/views/screens/buyer/seller_products_screen.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/cart_screen.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/favorites_screen.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/order_history_screen.dart';
@@ -308,6 +310,12 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
           floating: true,
           backgroundColor: backgroundColor,
           title: Text('GoGoMarket', style: AppUI.h2),
+          bottom: (!_isSeller)
+              ? PreferredSize(
+                  preferredSize: const Size.fromHeight(110),
+                  child: _buildStoriesRow(),
+                )
+              : null,
           actions: [
             // Search moved out of bottom nav for buyers/guests.
             if (!_isSeller)
@@ -326,10 +334,11 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
           ],
         ),
         
-        // Stories row
-        SliverToBoxAdapter(
-          child: _buildStoriesRow(),
-        ),
+        // Stories row moved into AppBar for buyer/guest (top-most content).
+        if (_isSeller)
+          SliverToBoxAdapter(
+            child: _buildStoriesRow(),
+          ),
 
         // Products section (buyer-friendly home)
         SliverToBoxAdapter(
@@ -682,6 +691,8 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     final likesCount = reel['likes_count'] ?? reel['likes'] ?? 0;
     final commentsCount = reel['comments_count'] ?? 0;
     final caption = (reel['caption'] ?? '').toString();
+    final sellerId = (linkedProduct['seller_id'] ?? reel['author_id'] ?? reel['seller_id'])?.toString();
+    final sellerName = (linkedProduct['seller_name'] ?? reel['author_name'] ?? 'seller'.tr).toString();
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -853,7 +864,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                   onTap: () {},
                 ),
                 const Spacer(),
-                // Buy button for reels with linked product
+                // Buy / Seller / Share quick actions for reels with linked product
                 if (linkedProduct.isNotEmpty) ...[
                   ElevatedButton.icon(
                     onPressed: () => _openProductFromReel(reel),
@@ -864,6 +875,37 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
+                  if (sellerId != null && sellerId.isNotEmpty) ...[
+                    OutlinedButton.icon(
+                      onPressed: () => Get.to(
+                        () => SellerProductsScreen(
+                          sellerId: sellerId,
+                          sellerName: sellerName,
+                        ),
+                      ),
+                      icon: const Icon(Icons.store, size: 18),
+                      label: Text('seller'.tr),
+                      style: AppUI.outlineButton().copyWith(
+                        padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
+                        foregroundColor: const WidgetStatePropertyAll(primaryColor),
+                        side: WidgetStatePropertyAll(BorderSide(color: primaryColor.withOpacity(0.6))),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      // Minimal share: copy identifier (works on web/mobile without extra deps).
+                      // TODO: replace with share_plus when backend provides shareable URLs.
+                      final id = (linkedProduct['id'] ?? reel['id'] ?? '').toString();
+                      _copyToClipboard('GoGoMarket: $id');
+                    },
+                    icon: const Icon(Icons.share, size: 18),
+                    label: Text('share'.tr),
+                    style: AppUI.outlineButton().copyWith(
+                      padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
+                    ),
+                  ),
                 ],
               ],
             ),
@@ -932,6 +974,24 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _copyToClipboard(String text) async {
+    try {
+      // Clipboard is available on web/mobile.
+      // ignore: avoid_web_libraries_in_flutter
+      await Clipboard.setData(ClipboardData(text: text));
+      Get.snackbar(
+        'success'.tr,
+        'Скопировано',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 1),
+      );
+    } catch (_) {
+      // No-op
+    }
   }
 
   Widget _buildExploreTab() {
