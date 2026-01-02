@@ -357,7 +357,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
           backgroundColor: backgroundColor,
           title: Text(
             'reels'.tr,
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            style: AppUI.h2,
           ),
           actions: [
             IconButton(
@@ -1109,8 +1109,8 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
             floating: true,
             backgroundColor: backgroundColor,
             title: Text(
-              _controller.userName,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              'profile'.tr,
+              style: AppUI.h2,
             ),
             actions: [
               IconButton(
@@ -1129,100 +1129,112 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
           
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: AppUI.pagePadding,
               child: Column(
                 children: [
-                  // Avatar
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundColor: Colors.grey[800],
-                    backgroundImage: _controller.userAvatar.isNotEmpty
-                        ? NetworkImage(_controller.userAvatar)
-                        : null,
-                    child: _controller.userAvatar.isEmpty
-                        ? const Icon(Icons.person, size: 50, color: Colors.white)
-                        : null,
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Name
-                  Text(
-                    _controller.userName,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  
-                  // Role badge
+                  // Header card (avatar + identity)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: buttonColor!.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      _getRoleLabel(_controller.userRole),
-                      style: TextStyle(
-                        color: buttonColor,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    width: double.infinity,
+                    padding: AppUI.cardPadding,
+                    decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 30,
+                          backgroundColor: Colors.white.withOpacity(0.08),
+                          backgroundImage: _controller.userAvatar.isNotEmpty
+                              ? NetworkImage(_controller.userAvatar)
+                              : null,
+                          child: _controller.userAvatar.isEmpty
+                              ? const Icon(Icons.person, size: 26, color: Colors.white)
+                              : null,
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(_controller.userName, style: AppUI.h2),
+                              const SizedBox(height: 6),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: primaryColor.withOpacity(0.18),
+                                      borderRadius: BorderRadius.circular(999),
+                                      border: Border.all(color: primaryColor.withOpacity(0.35)),
+                                    ),
+                                    child: Text(
+                                      _getRoleLabel(_controller.userRole),
+                                      style: const TextStyle(
+                                        color: primaryColor,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                  Text(_controller.userEmail, style: AppUI.muted),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  
-                  // Email
-                  Text(
-                    _controller.userEmail,
-                    style: TextStyle(color: Colors.grey[500]),
-                  ),
-                  
-                  const SizedBox(height: 32),
+
+                  const SizedBox(height: 12),
                   
                   // Stats row
-                  Builder(
-                    builder: (context) {
-                      final favoritesController = Get.find<FavoritesController>();
-                      final cartController = Get.find<CartController>();
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+                    decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
+                    child: Builder(
+                      builder: (context) {
+                        final favoritesController = Get.find<FavoritesController>();
+                        final cartController = Get.find<CartController>();
 
-                      final buyerOrdersCount = _controller.orders
-                          .where((o) => o['buyer_id'] == _controller.userId)
-                          .length;
+                        final buyerOrdersCount = _controller.orders
+                            .where((o) => o['buyer_id'] == _controller.userId)
+                            .length;
 
-                      final sellerOrdersCount = _controller.orders
-                          .where((o) => o['seller_id'] == _controller.userId)
-                          .length;
+                        final sellerOrdersCount = _controller.orders
+                            .where((o) => o['seller_id'] == _controller.userId)
+                            .length;
 
-                      final myReelsCount = _controller.reels
-                          .where((r) => r['author_id'] == _controller.userId)
-                          .length;
+                        final myReelsCount = _controller.reels
+                            .where((r) => r['author_id'] == _controller.userId)
+                            .length;
 
-                      if (_isBuyer) {
+                        if (_isBuyer) {
+                          return Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              _buildStatItem('orders'.tr, buyerOrdersCount.toString()),
+                              _buildStatItem('favorites'.tr, favoritesController.count.toString()),
+                              _buildStatItem('cart'.tr, cartController.itemCount.toString()),
+                            ],
+                          );
+                        }
+
                         return Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            _buildStatItem('orders'.tr, buyerOrdersCount.toString()),
-                            _buildStatItem('favorites'.tr, favoritesController.count.toString()),
-                            _buildStatItem('cart'.tr, cartController.itemCount.toString()),
+                            _buildStatItem('Товары', _controller.myProducts.length.toString()),
+                            _buildStatItem('orders'.tr, sellerOrdersCount.toString()),
+                            _buildStatItem('reels'.tr, myReelsCount.toString()),
                           ],
                         );
-                      }
-
-                      return Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          _buildStatItem('Товары', _controller.myProducts.length.toString()),
-                          _buildStatItem('orders'.tr, sellerOrdersCount.toString()),
-                          _buildStatItem('reels'.tr, myReelsCount.toString()),
-                        ],
-                      );
-                    },
+                      },
+                    ),
                   ),
                   
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 16),
 
                   // Buyer: Orders entry point (Orders moved out of bottom nav)
                   if (_isBuyer) ...[
@@ -1232,14 +1244,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                         onPressed: () => Get.to(() => const OrderHistoryScreen()),
                         icon: const Icon(Icons.receipt_long),
                         label: Text('orders'.tr),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
+                        style: AppUI.primaryButton(),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -1250,14 +1255,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                             onPressed: () => Get.to(() => const FavoritesScreen()),
                             icon: const Icon(Icons.favorite_border),
                             label: Text('favorites'.tr),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.white,
-                              side: BorderSide(color: Colors.grey[700]!),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
+                            style: AppUI.outlineButton(),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -1266,14 +1264,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                             onPressed: () => Get.to(() => const CartScreen()),
                             icon: const Icon(Icons.shopping_cart_outlined),
                             label: Text('cart'.tr),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.white,
-                              side: BorderSide(color: Colors.grey[700]!),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
+                            style: AppUI.outlineButton(),
                           ),
                         ),
                       ],
@@ -1294,14 +1285,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                       },
                       icon: const Icon(Icons.dashboard),
                       label: Text('my_cabinet'.tr),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
+                      style: AppUI.primaryButton(),
                     ),
                   ),
                   
@@ -1316,14 +1300,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                       },
                       icon: const Icon(Icons.language),
                       label: Text('language'.tr),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        side: BorderSide(color: Colors.grey[700]!),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
+                      style: AppUI.outlineButton(),
                     ),
                   ),
                   
@@ -1337,14 +1314,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                         onPressed: () => Get.to(() => const NearbySellersScreen()),
                         icon: const Icon(Icons.location_on),
                         label: Text('nearby_sellers'.tr),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          side: BorderSide(color: Colors.grey[700]!),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
+                        style: AppUI.outlineButton(),
                       ),
                     ),
                   
@@ -1357,14 +1327,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                         onPressed: () => Get.to(() => const SellerVerificationScreen()),
                         icon: const Icon(Icons.verified_user),
                         label: Text('seller_verification'.tr),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          side: BorderSide(color: Colors.grey[700]!),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
+                        style: AppUI.outlineButton(),
                       ),
                     ),
                   ],
@@ -1440,16 +1403,12 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
       children: [
         Text(
           value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 4),
         Text(
           label,
-          style: TextStyle(color: Colors.grey[500]),
+          style: AppUI.muted.copyWith(fontSize: 12),
         ),
       ],
     );
