@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/ui/app_ui.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/product_detail_screen.dart';
 
 class SmartSearchScreen extends StatefulWidget {
@@ -173,7 +174,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
       appBar: AppBar(
         backgroundColor: backgroundColor,
         elevation: 0,
-        title: Text('search'.tr, style: const TextStyle(color: Colors.white)),
+        title: Text('search'.tr, style: AppUI.h2),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Get.back(),
@@ -183,7 +184,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
         children: [
           // Search bar
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: AppUI.pagePadding,
             child: Column(
               children: [
                 TextField(
@@ -209,7 +210,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                           )
                         : null,
                     filled: true,
-                    fillColor: Colors.grey[900],
+                    fillColor: surfaceColor,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
@@ -223,8 +224,9 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                   Container(
                     margin: const EdgeInsets.only(top: 4),
                     decoration: BoxDecoration(
-                      color: Colors.grey[850],
-                      borderRadius: BorderRadius.circular(12),
+                      color: cardColor,
+                      borderRadius: BorderRadius.circular(AppUI.radiusL),
+                      border: Border.all(color: Colors.white.withOpacity(0.08)),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.3),
@@ -281,7 +283,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                       color: isSelected ? Colors.white : Colors.grey[300],
                       fontSize: 13,
                     ),
-                    backgroundColor: Colors.grey[850],
+                    backgroundColor: surfaceColor,
                     selectedColor: primaryColor,
                     checkmarkColor: Colors.white,
                     showCheckmark: false,
@@ -297,7 +299,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
           // Results
           Expanded(
             child: _isSearching
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(child: CircularProgressIndicator(color: primaryColor))
                 : _searchResults.isEmpty
                     ? Center(
                         child: Column(
@@ -309,13 +311,13 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                               _searchController.text.isEmpty
                                   ? 'enter_search_query'.tr
                                   : 'no_results'.tr,
-                              style: TextStyle(color: Colors.grey[500], fontSize: 16),
+                              style: AppUI.muted.copyWith(fontSize: 15),
                             ),
                           ],
                         ),
                       )
                     : GridView.builder(
-                        padding: const EdgeInsets.all(16),
+                        padding: AppUI.pagePadding,
                         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
                           childAspectRatio: 0.75,
@@ -341,10 +343,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
     return GestureDetector(
       onTap: () => Get.to(() => ProductDetailScreen(product: product)),
       child: Container(
-        decoration: BoxDecoration(
-          color: Colors.grey[900],
-          borderRadius: BorderRadius.circular(12),
-        ),
+        decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -354,19 +353,19 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
               child: Stack(
                 children: [
                   ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(AppUI.radiusL)),
                     child: product['image_url'] != null
                         ? Image.network(
                             product['image_url'],
                             width: double.infinity,
                             fit: BoxFit.cover,
                             errorBuilder: (_, __, ___) => Container(
-                              color: Colors.grey[800],
+                              color: surfaceColor,
                               child: Icon(Icons.image, color: Colors.grey[600], size: 40),
                             ),
                           )
                         : Container(
-                            color: Colors.grey[800],
+                            color: surfaceColor,
                             child: Icon(Icons.image, color: Colors.grey[600], size: 40),
                           ),
                   ),
@@ -375,7 +374,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                       child: Container(
                         decoration: BoxDecoration(
                           color: Colors.black54,
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppUI.radiusL)),
                         ),
                         child: Center(
                           child: Container(
@@ -434,7 +433,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                       '${_formatPrice(product['price'])} сум',
                       style: TextStyle(
                         color: primaryColor,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w800,
                         fontSize: 13,
                       ),
                     ),
@@ -446,7 +445,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                         Expanded(
                           child: Text(
                             product['seller_name'] ?? 'seller'.tr,
-                            style: TextStyle(color: Colors.grey[500], fontSize: 11),
+                            style: AppUI.muted.copyWith(fontSize: 11),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
