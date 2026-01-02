@@ -373,6 +373,40 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         SliverToBoxAdapter(
           child: _buildProductsSection(),
         ),
+
+        // Reels preview on Feed (full reels are in Reels tab)
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 6, bottom: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      Expanded(child: Text('reels'.tr, style: AppUI.h2)),
+                      TextButton(
+                        onPressed: () {
+                          if (!_isSeller) {
+                            setState(() => _currentIndex = 1);
+                            if (_controller.reels.isEmpty) _controller.fetchReels(perPage: 10);
+                            if (_controller.products.isEmpty) _controller.fetchProducts();
+                          }
+                        },
+                        child: const Text(
+                          'Все',
+                          style: TextStyle(color: primaryColor, fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                _buildReelsFeed(limit: 3),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
