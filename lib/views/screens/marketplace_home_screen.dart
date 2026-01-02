@@ -85,12 +85,13 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   }
 
   Future<void> _loadData() async {
-    await _controller.fetchProducts();
-    await _controller.fetchReels();
-    await _controller.fetchStories();
-    if (_controller.isLoggedIn) {
-      await _controller.fetchOrders();
-    }
+    final futures = <Future<void>>[
+      _controller.fetchProducts(),
+      _controller.fetchReels(),
+      _controller.fetchStories(),
+      if (_controller.isLoggedIn) _controller.fetchOrders(),
+    ];
+    await Future.wait(futures);
   }
 
   void _openProductFromReel(Map<String, dynamic> reel) {

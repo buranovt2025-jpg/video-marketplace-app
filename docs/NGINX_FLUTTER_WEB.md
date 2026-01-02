@@ -19,6 +19,21 @@ server {
   index index.html;
 
   # ---------------------------
+  # Security headers (Lighthouse Best Practices / Security)
+  # ---------------------------
+  add_header X-Content-Type-Options "nosniff" always;
+  add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+  add_header X-Frame-Options "DENY" always;
+  add_header Cross-Origin-Opener-Policy "same-origin" always;
+
+  # CSP для Flutter Web обычно требует 'unsafe-inline' и иногда 'unsafe-eval'.
+  # Если CSP ломает запуск — сначала включите Report-Only и посмотрите, что блокируется.
+  add_header Content-Security-Policy "default-src 'self' https: data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: blob: https:; font-src 'self' data: https:; connect-src 'self' https: wss:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'" always;
+
+  # HSTS включайте только когда уверены в TLS и лучше на домене (не на IP).
+  # add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+
+  # ---------------------------
   # Сжатие (gzip)
   # ---------------------------
   gzip on;
