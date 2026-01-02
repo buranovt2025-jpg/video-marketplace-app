@@ -564,6 +564,11 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
             orElse: () => <String, dynamic>{},
           );
 
+    final thumbUrl = reel['thumbnail_url'] ?? reel['image_url'];
+    final likesCount = reel['likes_count'] ?? reel['likes'] ?? 0;
+    final commentsCount = reel['comments_count'] ?? 0;
+    final caption = (reel['caption'] ?? '').toString();
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
@@ -572,7 +577,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         children: [
           // Header
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: AppUI.cardPadding,
             child: Row(
               children: [
                 CircleAvatar(
@@ -604,91 +609,139 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
           
           // Video placeholder - responsive height
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final videoHeight = ResponsiveHelper.responsiveValue(
-                  context,
-                  mobile: 420.0,
-                  tablet: 520.0,
-                  desktop: 620.0,
-                );
-                return ClipRRect(
-                  borderRadius: BorderRadius.circular(AppUI.radiusL),
-                  child: Stack(
-                    children: [
-                      Container(
-                        height: videoHeight,
-                        width: double.infinity,
-                        color: surfaceColor,
-                        child: Center(
-                          child: Icon(
-                            Icons.play_circle_outline,
-                            size: 74,
-                            color: Colors.white.withOpacity(0.28),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppUI.radiusL),
+              child: Stack(
+                children: [
+                  AspectRatio(
+                    aspectRatio: 9 / 16,
+                    child: Container(
+                      color: surfaceColor,
+                      child: thumbUrl != null
+                          ? Image.network(
+                              thumbUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Center(
+                                child: Icon(
+                                  Icons.play_circle_outline,
+                                  size: 74,
+                                  color: Colors.white.withOpacity(0.28),
+                                ),
+                              ),
+                            )
+                          : Center(
+                              child: Icon(
+                                Icons.play_circle_outline,
+                                size: 74,
+                                color: Colors.white.withOpacity(0.28),
+                              ),
+                            ),
+                    ),
+                  ),
+                  // subtle gradient for overlay readability
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                            colors: [
+                              Colors.black.withOpacity(0.55),
+                              Colors.transparent,
+                            ],
+                            stops: const [0.0, 0.55],
                           ),
                         ),
                       ),
-                      if (linkedProduct.isNotEmpty)
-                        Positioned(
-                          left: 12,
-                          top: 12,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.55),
-                              borderRadius: BorderRadius.circular(999),
-                              border: Border.all(color: Colors.white.withOpacity(0.12)),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.shopping_bag_outlined, size: 16, color: Colors.white),
-                                const SizedBox(width: 8),
-                                ConstrainedBox(
-                                  constraints: const BoxConstraints(maxWidth: 210),
-                                  child: Text(
-                                    linkedProduct['name'] ?? 'Товар',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                    ],
+                    ),
                   ),
-                );
-              },
+                  // Play icon overlay
+                  Positioned.fill(
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.50),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white.withOpacity(0.10)),
+                        ),
+                        child: const Icon(Icons.play_arrow, color: Colors.white, size: 26),
+                      ),
+                    ),
+                  ),
+                  // Linked product badge
+                  if (linkedProduct.isNotEmpty)
+                    Positioned(
+                      left: 12,
+                      top: 12,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.55),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: Colors.white.withOpacity(0.12)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.shopping_bag_outlined, size: 16, color: Colors.white),
+                            const SizedBox(width: 8),
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 210),
+                              child: Text(
+                                linkedProduct['name'] ?? 'Товар',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  // Quick stats
+                  Positioned(
+                    left: 12,
+                    bottom: 12,
+                    child: Row(
+                      children: [
+                        _buildReelStatChip(icon: Icons.favorite, value: '$likesCount', color: Colors.redAccent),
+                        const SizedBox(width: 8),
+                        _buildReelStatChip(icon: Icons.chat_bubble_outline, value: '$commentsCount'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           
           // Actions
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
             child: Row(
               children: [
-                IconButton(
-                  icon: const Icon(Icons.favorite_border, color: Colors.white),
-                  onPressed: () => _controller.likeContent(reel['id']),
-                ),
-                Text(
-                  '${reel['likes'] ?? 0}',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                _buildReelAction(
+                  icon: Icons.favorite_border,
+                  label: '$likesCount',
+                  onTap: () => _controller.likeContent(reel['id']),
                 ),
                 const SizedBox(width: 10),
-                IconButton(
-                  icon: const Icon(Icons.comment_outlined, color: Colors.white),
-                  onPressed: () {},
+                _buildReelAction(
+                  icon: Icons.comment_outlined,
+                  label: '$commentsCount',
+                  onTap: () {},
                 ),
-                IconButton(
-                  icon: const Icon(Icons.share_outlined, color: Colors.white),
-                  onPressed: () {},
+                const SizedBox(width: 10),
+                _buildReelAction(
+                  icon: Icons.share_outlined,
+                  label: 'share'.tr,
+                  onTap: () {},
                 ),
                 const Spacer(),
                 // Buy button for reels with linked product
@@ -708,14 +761,65 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
           ),
           
           // Caption
-          if (reel['caption'] != null && reel['caption'].isNotEmpty)
+          if (caption.isNotEmpty)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Text(
-                reel['caption'],
+                caption,
                 style: AppUI.body.copyWith(color: Colors.white.withOpacity(0.9)),
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReelAction({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: Colors.white, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReelStatChip({
+    required IconData icon,
+    required String value,
+    Color color = Colors.white,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.45),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withOpacity(0.10)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 6),
+          Text(
+            value,
+            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+          ),
         ],
       ),
     );

@@ -325,7 +325,13 @@ class MarketplaceController extends GetxController {
   
   Future<void> likeContent(String contentId) async {
     try {
-      await ApiService.likeContent(contentId);
+      final updated = await ApiService.likeContent(contentId);
+      final idx = reels.indexWhere((r) => r['id'] == contentId);
+      if (idx != -1) {
+        final current = reels[idx];
+        reels[idx] = <String, dynamic>{...current, ...updated};
+        reels.refresh();
+      }
     } catch (e) {
       error.value = e.toString();
     }
