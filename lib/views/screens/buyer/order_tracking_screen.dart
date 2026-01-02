@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/ui/app_ui.dart';
 import 'package:tiktok_tutorial/views/screens/chat/chat_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -51,10 +52,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       backgroundColor: backgroundColor,
       appBar: AppBar(
         backgroundColor: backgroundColor,
-        title: const Text(
-          'Отслеживание заказа',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
+        title: Text('Отслеживание', style: AppUI.h2),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Get.back(),
@@ -67,7 +65,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: AppUI.pagePadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -77,14 +75,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
             // Status timeline
             if (!isCancelled) ...[
-              const Text(
-                'Статус заказа',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              Text('Статус заказа', style: AppUI.h2),
               const SizedBox(height: 16),
               _buildStatusTimeline(currentStep),
             ] else
@@ -96,14 +87,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             const SizedBox(height: 24),
 
             // Order items
-            const Text(
-              'Товары в заказе',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            Text('Товары в заказе', style: AppUI.h2),
             const SizedBox(height: 12),
             _buildOrderItems(),
             const SizedBox(height: 24),
@@ -120,10 +104,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   Widget _buildOrderHeader() {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[900],
-        borderRadius: BorderRadius.circular(12),
-      ),
+      decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -135,7 +116,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
               Container(
@@ -149,7 +130,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   style: TextStyle(
                     color: _getStatusColor(_order['status']),
                     fontSize: 12,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
@@ -161,14 +142,14 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             children: [
               Text(
                 'Сумма:',
-                style: TextStyle(color: Colors.grey[400]),
+                style: AppUI.muted,
               ),
               Text(
                 '${_formatPrice(_order['total_amount'])} сум',
                 style: TextStyle(
                   color: buttonColor,
                   fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ],
@@ -181,10 +162,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   Widget _buildStatusTimeline(int currentStep) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[900],
-        borderRadius: BorderRadius.circular(12),
-      ),
+      decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
       child: Column(
         children: List.generate(_statusSteps.length, (index) {
           final step = _statusSteps[index];
@@ -247,7 +225,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   style: TextStyle(
                     color: isCompleted ? Colors.white : Colors.grey[500],
                     fontSize: 14,
-                    fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                    fontWeight: isCurrent ? FontWeight.w700 : FontWeight.normal,
                   ),
                 ),
                 if (isCurrent)
@@ -321,21 +299,11 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   Widget _buildDeliveryInfo() {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[900],
-        borderRadius: BorderRadius.circular(12),
-      ),
+      decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Доставка',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          Text('Доставка', style: AppUI.h2.copyWith(fontSize: 16)),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -344,7 +312,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               Expanded(
                 child: Text(
                   _order['delivery_address'] ?? 'Адрес не указан',
-                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                  style: AppUI.body,
                 ),
               ),
             ],
@@ -356,9 +324,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               onPressed: _openInMaps,
               icon: const Icon(Icons.map),
               label: const Text('Открыть в навигаторе'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: buttonColor,
-                side: BorderSide(color: buttonColor!),
+              style: AppUI.outlineButton().copyWith(
+                foregroundColor: const WidgetStatePropertyAll(primaryColor),
+                side: WidgetStatePropertyAll(BorderSide(color: primaryColor.withOpacity(0.6))),
               ),
             ),
           ),
@@ -371,10 +339,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     final items = _order['items'] as List<dynamic>? ?? [];
 
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.grey[900],
-        borderRadius: BorderRadius.circular(12),
-      ),
+      decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
       child: Column(
         children: items.map<Widget>((item) {
           return Padding(
@@ -385,8 +350,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   width: 50,
                   height: 50,
                   decoration: BoxDecoration(
-                    color: Colors.grey[800],
-                    borderRadius: BorderRadius.circular(8),
+                    color: surfaceColor,
+                    borderRadius: BorderRadius.circular(AppUI.radiusM),
                   ),
                   child: Icon(Icons.inventory_2, color: Colors.grey[600], size: 24),
                 ),
@@ -397,11 +362,11 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                     children: [
                       Text(
                         item['product_name'] ?? 'Товар',
-                        style: const TextStyle(color: Colors.white, fontSize: 14),
+                        style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
                       ),
                       Text(
                         '${item['quantity']} x ${_formatPrice(item['price'])} сум',
-                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                        style: AppUI.muted.copyWith(fontSize: 12),
                       ),
                     ],
                   ),
@@ -411,7 +376,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 14,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
@@ -440,11 +405,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 },
                 icon: const Icon(Icons.chat),
                 label: const Text('Чат с продавцом'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: BorderSide(color: Colors.grey[700]!),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
+                style: AppUI.outlineButton(),
               ),
             ),
             const SizedBox(width: 12),
@@ -466,11 +427,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 },
                 icon: const Icon(Icons.chat),
                 label: const Text('Чат с курьером'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: BorderSide(color: Colors.grey[700]!),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
+                style: AppUI.outlineButton(),
               ),
             ),
           ],
@@ -487,7 +444,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppUI.radiusM)),
                 ),
               ),
             ),
@@ -510,7 +468,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _order['courier_id'] != null ? Colors.green : Colors.grey,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppUI.radiusM)),
                 ),
               ),
             ),

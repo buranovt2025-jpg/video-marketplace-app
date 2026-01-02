@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/services/location_service.dart';
+import 'package:tiktok_tutorial/ui/app_ui.dart';
 
 class LocationPickerScreen extends StatefulWidget {
   final String? initialAddress;
@@ -120,7 +121,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
         backgroundColor: backgroundColor,
         title: Text(
           'select_location'.tr,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: AppUI.h2,
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -128,7 +129,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: AppUI.pagePadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -147,11 +148,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
             // Address input
             Text(
               'delivery_address'.tr,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: AppUI.h2,
             ),
             const SizedBox(height: 12),
             _buildAddressInput(),
@@ -173,16 +170,12 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   Widget _buildMapPreview() {
     return Container(
       height: 200,
-      decoration: BoxDecoration(
-        color: Colors.grey[900],
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[800]!),
-      ),
+      decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
       child: Stack(
         children: [
           // Map placeholder with grid
           ClipRRect(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppUI.radiusL),
             child: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -229,7 +222,8 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: Colors.black.withOpacity(0.7),
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: Colors.white.withOpacity(0.10)),
               ),
               child: Text(
                 '${_latitude.toStringAsFixed(4)}, ${_longitude.toStringAsFixed(4)}',
@@ -265,12 +259,9 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
           _isLoading ? 'getting_location'.tr : 'use_current_location'.tr,
           style: const TextStyle(color: Colors.white),
         ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+        style: AppUI.primaryButton().copyWith(
+          backgroundColor: const WidgetStatePropertyAll(primaryColor),
+          disabledBackgroundColor: WidgetStatePropertyAll(Colors.grey[700]),
         ),
       ),
     );
@@ -279,10 +270,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   Widget _buildCoordinatesCard() {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[900],
-        borderRadius: BorderRadius.circular(12),
-      ),
+      decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -292,10 +280,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
               const SizedBox(width: 8),
               Text(
                 'coordinates'.tr,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: AppUI.h2.copyWith(fontSize: 14),
               ),
             ],
           ),
@@ -341,7 +326,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
       children: [
         Text(
           label,
-          style: TextStyle(color: Colors.grey[500], fontSize: 12),
+          style: AppUI.muted.copyWith(fontSize: 12),
         ),
         const SizedBox(height: 4),
         TextFormField(
@@ -350,10 +335,10 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           decoration: InputDecoration(
             filled: true,
-            fillColor: Colors.grey[800],
+            fillColor: surfaceColor,
             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppUI.radiusM),
               borderSide: BorderSide.none,
             ),
           ),
@@ -377,14 +362,14 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
         hintText: 'enter_full_address'.tr,
         hintStyle: TextStyle(color: Colors.grey[600]),
         filled: true,
-        fillColor: Colors.grey[900],
+        fillColor: surfaceColor,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppUI.radiusM),
           borderSide: BorderSide.none,
         ),
         prefixIcon: Padding(
           padding: const EdgeInsets.only(left: 12, bottom: 40),
-          child: Icon(Icons.home, color: primaryColor),
+          child: const Icon(Icons.home, color: primaryColor),
         ),
       ),
     );
@@ -395,7 +380,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: primaryColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppUI.radiusL),
         border: Border.all(color: primaryColor.withOpacity(0.3)),
       ),
       child: Row(
@@ -405,10 +390,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
           Expanded(
             child: Text(
               'location_info'.tr,
-              style: TextStyle(
-                color: primaryColor,
-                fontSize: 12,
-              ),
+              style: AppUI.muted.copyWith(color: primaryColor, fontSize: 12),
             ),
           ),
         ],
@@ -421,14 +403,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
       onPressed: _openInMaps,
       icon: const Icon(Icons.map),
       label: Text('view_in_maps'.tr),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: Colors.white,
-        side: BorderSide(color: Colors.grey[700]!),
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
+      style: AppUI.outlineButton(),
     );
   }
 
@@ -436,7 +411,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[900],
+        color: cardColor,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.3),
@@ -450,20 +425,10 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
           width: double.infinity,
           child: ElevatedButton(
             onPressed: _confirmLocation,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primaryColor,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
+            style: AppUI.primaryButton(),
             child: Text(
               'confirm_location'.tr,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(color: Colors.white),
             ),
           ),
         ),

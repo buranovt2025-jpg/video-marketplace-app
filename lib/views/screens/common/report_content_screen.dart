@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
+import 'package:tiktok_tutorial/ui/app_ui.dart';
 
 class ReportContentScreen extends StatefulWidget {
   final String contentId;
@@ -76,21 +77,17 @@ class _ReportContentScreenState extends State<ReportContentScreen> {
         ),
         title: Text(
           'report_content'.tr,
-          style: const TextStyle(color: Colors.white),
+          style: AppUI.h2,
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: AppUI.pagePadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'report_reason'.tr,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: AppUI.h2,
             ),
             const SizedBox(height: 16),
             
@@ -102,7 +99,7 @@ class _ReportContentScreenState extends State<ReportContentScreen> {
             // Details text field
             Text(
               'Дополнительная информация',
-              style: TextStyle(color: Colors.grey[400]),
+              style: AppUI.muted,
             ),
             const SizedBox(height: 8),
             TextField(
@@ -113,9 +110,9 @@ class _ReportContentScreenState extends State<ReportContentScreen> {
                 hintText: 'Опишите проблему подробнее (необязательно)...',
                 hintStyle: TextStyle(color: Colors.grey[600]),
                 filled: true,
-                fillColor: Colors.grey[900],
+                fillColor: surfaceColor,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppUI.radiusM),
                   borderSide: BorderSide.none,
                 ),
               ),
@@ -132,9 +129,7 @@ class _ReportContentScreenState extends State<ReportContentScreen> {
                   backgroundColor: Colors.red,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppUI.radiusM)),
                 ),
                 child: _isSubmitting
                     ? const SizedBox(
@@ -145,13 +140,7 @@ class _ReportContentScreenState extends State<ReportContentScreen> {
                           color: Colors.white,
                         ),
                       )
-                    : Text(
-                        'Отправить жалобу',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                    : const Text('Отправить жалобу', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
               ),
             ),
           ],
@@ -173,10 +162,10 @@ class _ReportContentScreenState extends State<ReportContentScreen> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.grey[900],
-          borderRadius: BorderRadius.circular(12),
+          color: cardColor,
+          borderRadius: BorderRadius.circular(AppUI.radiusL),
           border: Border.all(
-            color: isSelected ? Colors.red : Colors.transparent,
+            color: isSelected ? Colors.red : Colors.white.withOpacity(0.06),
             width: 2,
           ),
         ),
@@ -201,8 +190,9 @@ class _ReportContentScreenState extends State<ReportContentScreen> {
             Text(
               reason['label']!.tr,
               style: TextStyle(
-                color: isSelected ? Colors.white : Colors.grey[400],
+                color: isSelected ? Colors.white : Colors.white.withOpacity(0.75),
                 fontSize: 16,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
               ),
             ),
           ],

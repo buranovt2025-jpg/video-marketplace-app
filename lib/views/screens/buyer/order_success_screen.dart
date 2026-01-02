@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
+import 'package:tiktok_tutorial/ui/app_ui.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/order_tracking_screen.dart';
 import 'package:tiktok_tutorial/views/screens/marketplace_home_screen.dart';
 
@@ -15,7 +16,7 @@ class OrderSuccessScreen extends StatelessWidget {
       backgroundColor: backgroundColor,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: AppUI.pagePadding,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -36,31 +37,18 @@ class OrderSuccessScreen extends StatelessWidget {
               const SizedBox(height: 32),
 
               // Success message
-              const Text(
-                'Заказ оформлен!',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              Text('Заказ оформлен!', style: AppUI.h1.copyWith(fontSize: 26)),
               const SizedBox(height: 12),
               Text(
                 'Номер заказа: ${order['id']?.substring(0, 8) ?? 'N/A'}',
-                style: TextStyle(
-                  color: Colors.grey[400],
-                  fontSize: 16,
-                ),
+                style: AppUI.muted.copyWith(fontSize: 14),
               ),
               const SizedBox(height: 32),
 
               // Order info card
               Container(
                 padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.grey[900],
-                  borderRadius: BorderRadius.circular(16),
-                ),
+                decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
                 child: Column(
                   children: [
                     _buildInfoRow(
@@ -96,21 +84,18 @@ class OrderSuccessScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: buttonColor!.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: buttonColor!.withOpacity(0.3)),
+                  color: primaryColor.withOpacity(0.10),
+                  borderRadius: BorderRadius.circular(AppUI.radiusL),
+                  border: Border.all(color: primaryColor.withOpacity(0.25)),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.info_outline, color: buttonColor, size: 24),
+                    const Icon(Icons.info_outline, color: primaryColor, size: 24),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         'Продавец получил ваш заказ. Курьер скоро заберёт его и доставит вам.',
-                        style: TextStyle(
-                          color: Colors.grey[300],
-                          fontSize: 14,
-                        ),
+                        style: AppUI.body.copyWith(color: Colors.white.withOpacity(0.85)),
                       ),
                     ),
                   ],
@@ -124,17 +109,8 @@ class OrderSuccessScreen extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () => Get.off(() => OrderTrackingScreen(order: order)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: buttonColor,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  child: const Text(
-                    'Отследить заказ',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  style: AppUI.primaryButton(),
+                  child: const Text('Отследить заказ'),
                 ),
               ),
               const SizedBox(height: 12),
@@ -142,11 +118,7 @@ class OrderSuccessScreen extends StatelessWidget {
                 width: double.infinity,
                 child: OutlinedButton(
                   onPressed: () => Get.offAll(() => const MarketplaceHomeScreen()),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: BorderSide(color: Colors.grey[700]!),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
+                  style: AppUI.outlineButton(),
                   child: const Text(
                     'На главную',
                     style: TextStyle(fontSize: 16),
@@ -167,8 +139,8 @@ class OrderSuccessScreen extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: Colors.grey[800],
-            borderRadius: BorderRadius.circular(8),
+            color: surfaceColor,
+            borderRadius: BorderRadius.circular(AppUI.radiusM),
           ),
           child: Icon(icon, color: Colors.grey[400], size: 20),
         ),
@@ -179,10 +151,7 @@ class OrderSuccessScreen extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: TextStyle(
-                  color: Colors.grey[500],
-                  fontSize: 12,
-                ),
+                style: AppUI.muted.copyWith(fontSize: 12),
               ),
               const SizedBox(height: 2),
               Text(
@@ -190,7 +159,7 @@ class OrderSuccessScreen extends StatelessWidget {
                 style: TextStyle(
                   color: valueColor ?? Colors.white,
                   fontSize: 14,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w600,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/cart_controller.dart';
+import 'package:tiktok_tutorial/ui/app_ui.dart';
+import 'package:tiktok_tutorial/ui/app_media.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/checkout_screen.dart';
 
 class CartScreen extends StatefulWidget {
@@ -29,10 +31,7 @@ class _CartScreenState extends State<CartScreen> {
       backgroundColor: backgroundColor,
       appBar: AppBar(
         backgroundColor: backgroundColor,
-        title: const Text(
-          'Корзина',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
+        title: Text('cart'.tr, style: AppUI.h2),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Get.back(),
@@ -76,7 +75,7 @@ class _CartScreenState extends State<CartScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Корзина пуста',
+            'empty_cart'.tr,
             style: TextStyle(
               color: Colors.grey[500],
               fontSize: 18,
@@ -93,10 +92,7 @@ class _CartScreenState extends State<CartScreen> {
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: () => Get.back(),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: buttonColor,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-            ),
+            style: AppUI.primaryButton(),
             child: const Text('К покупкам'),
           ),
         ],
@@ -108,7 +104,7 @@ class _CartScreenState extends State<CartScreen> {
     final sellerIds = _cartController.sellerIds;
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: AppUI.pagePadding,
       itemCount: sellerIds.length,
       itemBuilder: (context, index) {
         final sellerId = sellerIds[index];
@@ -125,10 +121,7 @@ class _CartScreenState extends State<CartScreen> {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.grey[900],
-        borderRadius: BorderRadius.circular(12),
-      ),
+      decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -149,7 +142,7 @@ class _CartScreenState extends State<CartScreen> {
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
@@ -158,13 +151,13 @@ class _CartScreenState extends State<CartScreen> {
                   style: TextStyle(
                     color: buttonColor,
                     fontSize: 14,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ],
             ),
           ),
-          const Divider(color: Colors.grey, height: 1),
+          Divider(color: Colors.white.withOpacity(0.08), height: 1),
 
           // Items
           ...items.map((item) => _buildCartItem(item)),
@@ -176,10 +169,7 @@ class _CartScreenState extends State<CartScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () => Get.to(() => CheckoutScreen(sellerId: sellerId)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: buttonColor,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
+                style: AppUI.primaryButton(),
                 child: const Text('Оформить заказ'),
               ),
             ),
@@ -200,19 +190,17 @@ class _CartScreenState extends State<CartScreen> {
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: Colors.grey[800],
-              borderRadius: BorderRadius.circular(8),
+              color: surfaceColor,
+              borderRadius: BorderRadius.circular(AppUI.radiusM),
             ),
             child: item.imageUrl != null
                 ? ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      item.imageUrl!,
+                    borderRadius: BorderRadius.circular(AppUI.radiusM),
+                    child: AppMedia.image(
+                      item.imageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Icon(
-                        Icons.inventory_2,
-                        color: Colors.grey[600],
-                      ),
+                      width: 80,
+                      height: 80,
                     ),
                   )
                 : Icon(
@@ -232,7 +220,7 @@ class _CartScreenState extends State<CartScreen> {
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -240,10 +228,7 @@ class _CartScreenState extends State<CartScreen> {
                 const SizedBox(height: 4),
                 Text(
                   '${_formatPrice(item.price)} сум',
-                  style: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 12,
-                  ),
+                  style: AppUI.muted,
                 ),
                 const SizedBox(height: 8),
 
@@ -275,7 +260,7 @@ class _CartScreenState extends State<CartScreen> {
                       style: TextStyle(
                         color: buttonColor,
                         fontSize: 14,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                   ],
@@ -301,8 +286,8 @@ class _CartScreenState extends State<CartScreen> {
         width: 28,
         height: 28,
         decoration: BoxDecoration(
-          color: Colors.grey[800],
-          borderRadius: BorderRadius.circular(6),
+          color: surfaceColor,
+          borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(icon, color: Colors.white, size: 16),
       ),
@@ -313,7 +298,7 @@ class _CartScreenState extends State<CartScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[900],
+        color: cardColor,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.3),
@@ -332,10 +317,7 @@ class _CartScreenState extends State<CartScreen> {
                 children: [
                   Text(
                     'Всего:',
-                    style: TextStyle(
-                      color: Colors.grey[400],
-                      fontSize: 12,
-                    ),
+                    style: AppUI.muted.copyWith(fontSize: 12),
                   ),
                   const SizedBox(height: 4),
                   Obx(() => Text(
@@ -343,7 +325,7 @@ class _CartScreenState extends State<CartScreen> {
                     style: TextStyle(
                       color: buttonColor,
                       fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w800,
                     ),
                   )),
                 ],
@@ -351,10 +333,7 @@ class _CartScreenState extends State<CartScreen> {
             ),
             Obx(() => Text(
               '${_cartController.itemCount} товар(ов)',
-              style: TextStyle(
-                color: Colors.grey[400],
-                fontSize: 14,
-              ),
+              style: AppUI.muted,
             )),
           ],
         ),

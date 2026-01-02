@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'dart:convert';
+import 'package:image_picker/image_picker.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/ui/app_ui.dart';
 
 class CreateStoryScreen extends StatefulWidget {
   const CreateStoryScreen({Key? key}) : super(key: key);
@@ -15,6 +18,9 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
   final TextEditingController _imageUrlController = TextEditingController();
   final TextEditingController _videoUrlController = TextEditingController();
   final MarketplaceController _controller = Get.find<MarketplaceController>();
+  final ImagePicker _picker = ImagePicker();
+  XFile? _selectedMedia;
+  bool _isPickingMedia = false;
   
   String? _selectedProductId;
   bool _isVideo = false;
@@ -90,10 +96,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
           icon: const Icon(Icons.close, color: Colors.white),
           onPressed: () => Get.back(),
         ),
-        title: const Text(
-          'Новая история',
-          style: TextStyle(color: Colors.white),
-        ),
+        title: Text('Новая история', style: AppUI.h2),
         actions: [
           Obx(() => TextButton(
             onPressed: _controller.isLoading.value ? null : _createStory,
@@ -109,8 +112,8 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                 : Text(
                     'Опубликовать',
                     style: TextStyle(
-                      color: buttonColor,
-                      fontWeight: FontWeight.bold,
+                      color: primaryColor,
+                      fontWeight: FontWeight.w800,
                       fontSize: 16,
                     ),
                   ),
@@ -118,7 +121,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: AppUI.pagePadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -131,10 +134,10 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
-                        color: !_isVideo ? buttonColor!.withOpacity(0.2) : Colors.grey[900],
-                        borderRadius: BorderRadius.circular(12),
+                        color: !_isVideo ? primaryColor.withOpacity(0.18) : surfaceColor,
+                        borderRadius: BorderRadius.circular(AppUI.radiusM),
                         border: Border.all(
-                          color: !_isVideo ? buttonColor! : Colors.grey[800]!,
+                          color: !_isVideo ? primaryColor.withOpacity(0.6) : Colors.white.withOpacity(0.10),
                         ),
                       ),
                       child: Row(
@@ -142,14 +145,14 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                         children: [
                           Icon(
                             Icons.photo,
-                            color: !_isVideo ? buttonColor : Colors.grey[500],
+                            color: !_isVideo ? primaryColor : Colors.white.withOpacity(0.45),
                           ),
                           const SizedBox(width: 8),
                           Text(
                             'Фото',
                             style: TextStyle(
-                              color: !_isVideo ? Colors.white : Colors.grey[500],
-                              fontWeight: FontWeight.bold,
+                              color: !_isVideo ? Colors.white : Colors.white.withOpacity(0.55),
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ],
@@ -164,10 +167,10 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
-                        color: _isVideo ? buttonColor!.withOpacity(0.2) : Colors.grey[900],
-                        borderRadius: BorderRadius.circular(12),
+                        color: _isVideo ? primaryColor.withOpacity(0.18) : surfaceColor,
+                        borderRadius: BorderRadius.circular(AppUI.radiusM),
                         border: Border.all(
-                          color: _isVideo ? buttonColor! : Colors.grey[800]!,
+                          color: _isVideo ? primaryColor.withOpacity(0.6) : Colors.white.withOpacity(0.10),
                         ),
                       ),
                       child: Row(
@@ -175,14 +178,14 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                         children: [
                           Icon(
                             Icons.videocam,
-                            color: _isVideo ? buttonColor : Colors.grey[500],
+                            color: _isVideo ? primaryColor : Colors.white.withOpacity(0.45),
                           ),
                           const SizedBox(width: 8),
                           Text(
                             'Видео',
                             style: TextStyle(
-                              color: _isVideo ? Colors.white : Colors.grey[500],
-                              fontWeight: FontWeight.bold,
+                              color: _isVideo ? Colors.white : Colors.white.withOpacity(0.55),
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ],
@@ -195,41 +198,45 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
             const SizedBox(height: 24),
             
             // Media preview area
-            GestureDetector(
-              onTap: () {
-                // TODO: Implement media picker
-              },
+            InkWell(
+              onTap: _showMediaSourceDialog,
+              borderRadius: BorderRadius.circular(AppUI.radiusL),
               child: Container(
                 height: 300,
-                decoration: BoxDecoration(
-                  color: Colors.grey[900],
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey[800]!),
-                ),
+                decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
                       _isVideo ? Icons.video_call : Icons.add_photo_alternate,
                       size: 64,
-                      color: Colors.grey[600],
+                      color: Colors.white.withOpacity(0.25),
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      _isVideo ? 'Добавить видео' : 'Добавить фото',
+                      _selectedMedia != null ? 'Выбрано: ${_selectedMedia!.name}' : (_isVideo ? 'Добавить видео' : 'Добавить фото'),
                       style: TextStyle(
-                        color: Colors.grey[500],
+                        color: Colors.white.withOpacity(0.8),
                         fontSize: 16,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'История исчезнет через 24 часа',
                       style: TextStyle(
-                        color: Colors.grey[600],
+                        color: Colors.white.withOpacity(0.55),
                         fontSize: 12,
                       ),
                     ),
+                    if (_isPickingMedia) ...[
+                      const SizedBox(height: 14),
+                      const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: primaryColor),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -243,20 +250,16 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   labelText: 'URL видео *',
-                  labelStyle: TextStyle(color: Colors.grey[400]),
+                  labelStyle: AppUI.muted,
                   hintText: 'https://example.com/video.mp4',
                   hintStyle: TextStyle(color: Colors.grey[600]),
-                  prefixIcon: Icon(Icons.link, color: Colors.grey[400]),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey[700]!),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: buttonColor!),
-                  ),
+                  prefixIcon: Icon(Icons.link, color: Colors.white.withOpacity(0.55)),
                   filled: true,
-                  fillColor: Colors.grey[900],
+                  fillColor: surfaceColor,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppUI.radiusM),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
               )
             else
@@ -265,20 +268,16 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   labelText: 'URL изображения *',
-                  labelStyle: TextStyle(color: Colors.grey[400]),
+                  labelStyle: AppUI.muted,
                   hintText: 'https://example.com/image.jpg',
                   hintStyle: TextStyle(color: Colors.grey[600]),
-                  prefixIcon: Icon(Icons.link, color: Colors.grey[400]),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey[700]!),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: buttonColor!),
-                  ),
+                  prefixIcon: Icon(Icons.link, color: Colors.white.withOpacity(0.55)),
                   filled: true,
-                  fillColor: Colors.grey[900],
+                  fillColor: surfaceColor,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppUI.radiusM),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
               ),
             const SizedBox(height: 24),
@@ -291,33 +290,23 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
               maxLength: 200,
               decoration: InputDecoration(
                 labelText: 'Подпись',
-                labelStyle: TextStyle(color: Colors.grey[400]),
+                labelStyle: AppUI.muted,
                 hintText: 'Добавьте подпись...',
                 hintStyle: TextStyle(color: Colors.grey[600]),
                 alignLabelWithHint: true,
                 counterStyle: TextStyle(color: Colors.grey[500]),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey[700]!),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: buttonColor!),
-                ),
                 filled: true,
-                fillColor: Colors.grey[900],
+                fillColor: surfaceColor,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppUI.radiusM),
+                  borderSide: BorderSide.none,
+                ),
               ),
             ),
             const SizedBox(height: 16),
             
             // Link to product
-            Text(
-              'Привязать к товару',
-              style: TextStyle(
-                color: Colors.grey[300],
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            Text('Привязать к товару', style: AppUI.h2.copyWith(fontSize: 14)),
             const SizedBox(height: 8),
             
             Obx(() {
@@ -326,19 +315,15 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
               if (products.isEmpty) {
                 return Container(
                   padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[900],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey[800]!),
-                  ),
+                  decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline, color: Colors.grey[500]),
+                      Icon(Icons.info_outline, color: Colors.white.withOpacity(0.45)),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           'У вас пока нет товаров.',
-                          style: TextStyle(color: Colors.grey[500], fontSize: 13),
+                          style: AppUI.muted,
                         ),
                       ),
                     ],
@@ -348,20 +333,16 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
               
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: Colors.grey[900],
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey[700]!),
-                ),
+                decoration: AppUI.inputDecoration(),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String?>(
                     value: _selectedProductId,
                     isExpanded: true,
-                    dropdownColor: Colors.grey[900],
+                    dropdownColor: cardColor,
                     icon: Icon(Icons.arrow_drop_down, color: Colors.grey[400]),
                     hint: Text(
                       'Выберите товар (опционально)',
-                      style: TextStyle(color: Colors.grey[500]),
+                      style: AppUI.muted,
                     ),
                     style: const TextStyle(color: Colors.white),
                     items: [
@@ -369,7 +350,7 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                         value: null,
                         child: Text(
                           'Без товара',
-                          style: TextStyle(color: Colors.grey[500]),
+                          style: AppUI.muted,
                         ),
                       ),
                       ...products.map((product) {
@@ -405,19 +386,15 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
             // Info
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.orange.withOpacity(0.3)),
-              ),
+              decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
               child: Row(
                 children: [
-                  Icon(Icons.access_time, color: Colors.orange[300]),
+                  const Icon(Icons.access_time, color: primaryColor),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       'Истории видны 24 часа и отображаются в кружочках вверху ленты',
-                      style: TextStyle(color: Colors.orange[300], fontSize: 13),
+                      style: AppUI.muted,
                     ),
                   ),
                 ],
@@ -427,5 +404,113 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
         ),
       ),
     );
+  }
+
+  void _showMediaSourceDialog() {
+    Get.bottomSheet(
+      Container(
+        padding: AppUI.pagePadding,
+        decoration: const BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.16),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(_isVideo ? 'Видео для истории' : 'Фото для истории', style: AppUI.h2),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: primaryColor.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(_isVideo ? Icons.video_library : Icons.photo_library, color: primaryColor),
+              ),
+              title: Text('Галерея', style: AppUI.body),
+              subtitle: Text('Выбрать файл', style: AppUI.muted),
+              onTap: () {
+                Get.back();
+                _pickMedia(ImageSource.gallery);
+              },
+            ),
+            const SizedBox(height: 8),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: primaryColor.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(_isVideo ? Icons.videocam : Icons.camera_alt, color: primaryColor),
+              ),
+              title: Text('Камера', style: AppUI.body),
+              subtitle: Text(_isVideo ? 'Снять видео' : 'Сделать фото', style: AppUI.muted),
+              onTap: () {
+                Get.back();
+                _pickMedia(ImageSource.camera);
+              },
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickMedia(ImageSource source) async {
+    if (_isPickingMedia) return;
+    setState(() => _isPickingMedia = true);
+    try {
+      final XFile? file = _isVideo
+          ? await _picker.pickVideo(source: source, maxDuration: const Duration(minutes: 1))
+          : await _picker.pickImage(source: source, maxWidth: 1024, maxHeight: 1024, imageQuality: 85);
+      if (file != null) {
+        String? imageDataUrl;
+        if (!_isVideo) {
+          final bytes = await file.readAsBytes();
+          final mime = _inferImageMime(file.name);
+          imageDataUrl = 'data:$mime;base64,${base64Encode(bytes)}';
+        }
+        setState(() {
+          _selectedMedia = file;
+          if (_isVideo) {
+            _videoUrlController.text = file.path;
+            _imageUrlController.clear();
+          } else {
+            _imageUrlController.text = imageDataUrl ?? '';
+            _videoUrlController.clear();
+          }
+        });
+      }
+    } catch (_) {
+      Get.snackbar(
+        'error'.tr,
+        'Не удалось выбрать файл',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      setState(() => _isPickingMedia = false);
+    }
+  }
+
+  String _inferImageMime(String name) {
+    final lower = name.toLowerCase();
+    if (lower.endsWith('.png')) return 'image/png';
+    if (lower.endsWith('.webp')) return 'image/webp';
+    if (lower.endsWith('.gif')) return 'image/gif';
+    return 'image/jpeg';
   }
 }

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/services/api_service.dart';
+import 'package:tiktok_tutorial/ui/app_ui.dart';
 import 'package:tiktok_tutorial/views/screens/auth/marketplace_login_screen.dart';
 
 class DeleteAccountScreen extends StatefulWidget {
@@ -62,23 +63,25 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
     // Show confirmation dialog
     final confirmed = await Get.dialog<bool>(
       AlertDialog(
-        backgroundColor: Colors.grey[900],
-        title: const Text(
-          'Удалить аккаунт?',
-          style: TextStyle(color: Colors.white),
-        ),
-        content: const Text(
+        backgroundColor: cardColor,
+        title: Text('Удалить аккаунт?', style: AppUI.h2),
+        content: Text(
           'Это действие нельзя отменить. Все ваши данные будут удалены навсегда.',
-          style: TextStyle(color: Colors.white70),
+          style: AppUI.muted,
         ),
         actions: [
           TextButton(
             onPressed: () => Get.back(result: false),
-            child: Text('cancel'.tr, style: const TextStyle(color: Colors.grey)),
+            child: Text('cancel'.tr, style: AppUI.muted),
           ),
           ElevatedButton(
             onPressed: () => Get.back(result: true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppUI.radiusM)),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
             child: const Text('Удалить'),
           ),
         ],
@@ -133,11 +136,11 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
         ),
         title: Text(
           'delete_account'.tr,
-          style: const TextStyle(color: Colors.white),
+          style: AppUI.h2,
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: AppUI.pagePadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -159,20 +162,11 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
             const SizedBox(height: 24),
             
             // Warning text
-            const Center(
-              child: Text(
-                'Удаление аккаунта',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
+            Center(child: Text('Удаление аккаунта', style: AppUI.h1)),
             const SizedBox(height: 12),
             Text(
               'После удаления аккаунта вы потеряете:',
-              style: TextStyle(color: Colors.grey[400], fontSize: 16),
+              style: AppUI.muted.copyWith(fontSize: 14),
             ),
             const SizedBox(height: 16),
             
@@ -192,28 +186,22 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
             // Reason selection
             Text(
               'Причина удаления',
-              style: TextStyle(color: Colors.grey[400], fontSize: 14),
+              style: AppUI.muted,
             ),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: Colors.grey[900],
-                borderRadius: BorderRadius.circular(12),
-              ),
+              decoration: AppUI.inputDecoration(),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
                   value: _selectedReason,
-                  hint: const Text(
-                    'Выберите причину',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                  dropdownColor: Colors.grey[900],
+                  hint: Text('Выберите причину', style: AppUI.muted),
+                  dropdownColor: cardColor,
                   isExpanded: true,
                   items: _reasons.map((reason) {
                     return DropdownMenuItem(
                       value: reason,
-                      child: Text(reason, style: const TextStyle(color: Colors.white)),
+                      child: Text(reason, style: AppUI.body),
                     );
                   }).toList(),
                   onChanged: (value) {
@@ -233,9 +221,9 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                   hintText: 'Опишите причину...',
                   hintStyle: TextStyle(color: Colors.grey[600]),
                   filled: true,
-                  fillColor: Colors.grey[900],
+                  fillColor: surfaceColor,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppUI.radiusM),
                     borderSide: BorderSide.none,
                   ),
                 ),
@@ -247,7 +235,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
             // Password confirmation
             Text(
               'Подтвердите паролем',
-              style: TextStyle(color: Colors.grey[400], fontSize: 14),
+              style: AppUI.muted,
             ),
             const SizedBox(height: 8),
             TextField(
@@ -258,10 +246,10 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                 hintText: 'Введите пароль',
                 hintStyle: TextStyle(color: Colors.grey[600]),
                 filled: true,
-                fillColor: Colors.grey[900],
-                prefixIcon: Icon(Icons.lock, color: Colors.grey[600]),
+                fillColor: surfaceColor,
+                prefixIcon: Icon(Icons.lock, color: Colors.white.withOpacity(0.55)),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppUI.radiusM),
                   borderSide: BorderSide.none,
                 ),
               ),
@@ -282,7 +270,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                 Expanded(
                   child: Text(
                     'Я понимаю, что это действие необратимо',
-                    style: TextStyle(color: Colors.grey[400]),
+                    style: AppUI.muted,
                   ),
                 ),
               ],
@@ -298,8 +286,9 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                 onPressed: _isLoading ? null : _deleteAccount,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppUI.radiusM),
                   ),
                 ),
                 child: _isLoading
@@ -308,7 +297,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                         'delete_account'.tr,
                         style: const TextStyle(
                           fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
               ),
@@ -322,15 +311,10 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
               height: 50,
               child: OutlinedButton(
                 onPressed: () => Get.back(),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.grey),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
+                style: AppUI.outlineButton(),
                 child: Text(
                   'cancel'.tr,
-                  style: const TextStyle(color: Colors.grey, fontSize: 16),
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
                 ),
               ),
             ),
@@ -347,7 +331,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
         children: [
           const Icon(Icons.remove_circle, color: Colors.red, size: 20),
           const SizedBox(width: 12),
-          Text(text, style: const TextStyle(color: Colors.white70)),
+          Text(text, style: AppUI.muted),
         ],
       ),
     );

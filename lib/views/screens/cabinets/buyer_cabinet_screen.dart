@@ -6,6 +6,8 @@ import 'package:tiktok_tutorial/controllers/favorites_controller.dart';
 import 'package:tiktok_tutorial/controllers/cart_controller.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/order_tracking_screen.dart';
 import 'package:tiktok_tutorial/views/screens/common/location_picker_screen.dart';
+import 'package:tiktok_tutorial/ui/app_ui.dart';
+import 'package:tiktok_tutorial/ui/app_media.dart';
 
 class BuyerCabinetScreen extends StatefulWidget {
   const BuyerCabinetScreen({Key? key}) : super(key: key);
@@ -60,7 +62,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
       backgroundColor: backgroundColor,
       appBar: AppBar(
         backgroundColor: backgroundColor,
-        title: Text('my_cabinet'.tr, style: const TextStyle(color: Colors.white)),
+        title: Text('my_cabinet'.tr, style: AppUI.h2),
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: primaryColor,
@@ -96,16 +98,16 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.shopping_bag_outlined, size: 64, color: Colors.grey[700]),
+              Icon(Icons.shopping_bag_outlined, size: 64, color: Colors.white.withOpacity(0.22)),
               const SizedBox(height: 16),
               Text(
                 'Нет заказов',
-                style: TextStyle(color: Colors.grey[500], fontSize: 16),
+                style: AppUI.h2.copyWith(color: Colors.white.withOpacity(0.9)),
               ),
               const SizedBox(height: 8),
               Text(
                 'Ваши заказы появятся здесь',
-                style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                style: AppUI.muted,
               ),
             ],
           ),
@@ -116,7 +118,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
         onRefresh: _loadData,
         color: primaryColor,
         child: ListView.builder(
-          padding: const EdgeInsets.all(16),
+          padding: AppUI.pagePadding,
           itemCount: orders.length,
           itemBuilder: (context, index) {
             final order = orders[index];
@@ -128,40 +130,47 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
   }
 
   Widget _buildOrderCard(Map<String, dynamic> order) {
-    final status = order['status'] ?? 'pending';
+    final status = (order['status'] ?? 'created').toString();
+    final rawAmount = order['total_amount'];
+    final amountText = rawAmount is num ? rawAmount.toStringAsFixed(0) : (rawAmount?.toString() ?? '0');
     
     Color statusColor;
     String statusText;
     IconData statusIcon;
     switch (status) {
-      case 'pending':
-        statusColor = Colors.orange;
-        statusText = 'Ожидает подтверждения';
-        statusIcon = Icons.pending;
+      case 'created':
+        statusColor = Colors.blue;
+        statusText = 'Создан';
+        statusIcon = Icons.receipt_long;
         break;
       case 'accepted':
-        statusColor = Colors.blue;
+        statusColor = Colors.orange;
         statusText = 'Принят продавцом';
-        statusIcon = Icons.check_circle;
+        statusIcon = Icons.store;
         break;
       case 'ready':
-        statusColor = Colors.purple;
-        statusText = 'Готов к выдаче';
+        statusColor = Colors.orange;
+        statusText = 'Готов к отправке';
         statusIcon = Icons.inventory;
         break;
-      case 'in_delivery':
-        statusColor = primaryColor;
-        statusText = 'В пути';
+      case 'picked_up':
+        statusColor = Colors.purple;
+        statusText = 'Забран курьером';
         statusIcon = Icons.local_shipping;
+        break;
+      case 'in_transit':
+        statusColor = Colors.purple;
+        statusText = 'В пути';
+        statusIcon = Icons.directions_bike;
         break;
       case 'delivered':
         statusColor = Colors.green;
         statusText = 'Доставлен';
-        statusIcon = Icons.done_all;
+        statusIcon = Icons.check_circle;
         break;
-      case 'rejected':
+      case 'cancelled':
         statusColor = Colors.red;
-        statusText = 'Отклонён';
+        statusText = 'Отменён';
         statusIcon = Icons.cancel;
         break;
       default:
@@ -170,14 +179,14 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
         statusIcon = Icons.help;
     }
 
-    return Card(
-      color: cardColor,
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
+      decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
       child: InkWell(
         onTap: () => Get.to(() => OrderTrackingScreen(order: order)),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppUI.radiusL),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: AppUI.cardPadding,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -186,13 +195,9 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
                 children: [
                   Text(
                     'Заказ #${order['id']?.toString().substring(0, 8) ?? ''}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16),
                   ),
-                  Icon(Icons.chevron_right, color: Colors.grey[600]),
+                  Icon(Icons.chevron_right, color: Colors.white.withOpacity(0.25)),
                 ],
               ),
               const SizedBox(height: 12),
@@ -200,29 +205,23 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
                 children: [
                   Icon(statusIcon, color: statusColor, size: 20),
                   const SizedBox(width: 8),
-                  Text(
-                    statusText,
-                    style: TextStyle(color: statusColor),
-                  ),
+                  Text(statusText, style: TextStyle(color: statusColor, fontWeight: FontWeight.w700)),
                 ],
               ),
               const SizedBox(height: 8),
-              Text(
-                'Сумма: ${order['total_amount']?.toStringAsFixed(0) ?? '0'} сум',
-                style: const TextStyle(color: Colors.white70),
-              ),
+              Text('Сумма: $amountText сум', style: AppUI.muted),
               const SizedBox(height: 12),
               
-              // Problem button for non-delivered orders
-              if (status != 'delivered' && status != 'rejected')
+              // Problem button for non-final orders
+              if (status != 'delivered' && status != 'cancelled')
                 OutlinedButton.icon(
                   onPressed: () => _reportProblem(order),
                   icon: const Icon(Icons.warning_amber, size: 18),
                   label: Text('problem_with_order'.tr),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.orange,
-                    side: const BorderSide(color: Colors.orange),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  style: AppUI.outlineButton().copyWith(
+                    foregroundColor: const WidgetStatePropertyAll(Colors.orange),
+                    side: const WidgetStatePropertyAll(BorderSide(color: Colors.orange)),
+                    padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
                   ),
                 ),
             ],
@@ -236,7 +235,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
     Get.dialog(
       AlertDialog(
         backgroundColor: cardColor,
-        title: Text('report_problem'.tr, style: const TextStyle(color: Colors.white)),
+        title: Text('report_problem'.tr, style: AppUI.h2),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -249,7 +248,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: Text('cancel'.tr, style: const TextStyle(color: Colors.grey)),
+            child: Text('cancel'.tr, style: AppUI.muted),
           ),
         ],
       ),
@@ -259,7 +258,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
   Widget _buildProblemOption(String text, IconData icon) {
     return ListTile(
       leading: Icon(icon, color: Colors.orange),
-      title: Text(text, style: const TextStyle(color: Colors.white)),
+      title: Text(text, style: AppUI.body),
       onTap: () {
         Get.back();
         Get.snackbar(
@@ -280,16 +279,16 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.favorite_border, size: 64, color: Colors.grey[700]),
+              Icon(Icons.favorite_border, size: 64, color: Colors.white.withOpacity(0.22)),
               const SizedBox(height: 16),
               Text(
                 'no_favorites'.tr,
-                style: TextStyle(color: Colors.grey[500], fontSize: 16),
+                style: AppUI.h2.copyWith(color: Colors.white.withOpacity(0.9)),
               ),
               const SizedBox(height: 8),
               Text(
                 'add_to_favorites'.tr,
-                style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                style: AppUI.muted,
                 textAlign: TextAlign.center,
               ),
             ],
@@ -298,7 +297,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
       }
 
       return GridView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: AppUI.pagePadding,
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           mainAxisSpacing: 12,
@@ -332,14 +331,11 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
                   child: product['image_url'] != null
                       ? ClipRRect(
                           borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                          child: Image.network(
+                          child: AppMedia.image(
                             product['image_url'],
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Icon(
-                              Icons.inventory_2,
-                              color: Colors.grey[600],
-                              size: 48,
-                            ),
+                            width: double.infinity,
+                            height: double.infinity,
                           ),
                         )
                       : Icon(Icons.inventory_2, color: Colors.grey[600], size: 48),
@@ -424,7 +420,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
         children: [
           Expanded(
             child: ListView.builder(
-              padding: const EdgeInsets.all(16),
+              padding: AppUI.pagePadding,
               itemCount: _addresses.length,
               itemBuilder: (context, index) {
                 final address = _addresses[index];
@@ -433,18 +429,14 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: AppUI.pagePadding,
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: _addNewAddress,
                 icon: const Icon(Icons.add),
                 label: const Text('Добавить адрес'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
+                style: AppUI.primaryButton(),
               ),
             ),
           ),

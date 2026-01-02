@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/services/api_service.dart';
+import 'package:tiktok_tutorial/ui/app_ui.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({Key? key}) : super(key: key);
@@ -51,19 +52,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Future<void> _pickImage() async {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.grey[900],
+      backgroundColor: cardColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: AppUI.pagePadding,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
                 leading: const Icon(Icons.camera_alt, color: Colors.white),
-                title: const Text('Камера', style: TextStyle(color: Colors.white)),
+                title: Text('Камера', style: AppUI.body),
                 onTap: () async {
                   Navigator.pop(context);
                   final XFile? image = await _picker.pickImage(
@@ -81,7 +82,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.photo_library, color: Colors.white),
-                title: const Text('Галерея', style: TextStyle(color: Colors.white)),
+                title: Text('Галерея', style: AppUI.body),
                 onTap: () async {
                   Navigator.pop(context);
                   final XFile? image = await _picker.pickImage(
@@ -100,7 +101,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               if (_avatarUrl != null || _selectedImage != null)
                 ListTile(
                   leading: const Icon(Icons.delete, color: Colors.red),
-                  title: const Text('Удалить фото', style: TextStyle(color: Colors.red)),
+                  title: const Text('Удалить фото', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w700)),
                   onTap: () {
                     Navigator.pop(context);
                     setState(() {
@@ -182,10 +183,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       backgroundColor: backgroundColor,
       appBar: AppBar(
         backgroundColor: backgroundColor,
-        title: const Text(
-          'Редактировать профиль',
-          style: TextStyle(color: Colors.white),
-        ),
+        title: Text('Редактировать профиль', style: AppUI.h2),
         leading: IconButton(
           icon: const Icon(Icons.close, color: Colors.white),
           onPressed: () => Get.back(),
@@ -202,18 +200,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       color: Colors.white,
                     ),
                   )
-                : Text(
-                    'Сохранить',
-                    style: TextStyle(
-                      color: buttonColor,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                : const Text('Сохранить', style: TextStyle(color: primaryColor, fontWeight: FontWeight.w800)),
           ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: AppUI.pagePadding,
         child: Column(
           children: [
             // Avatar section
@@ -223,7 +215,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 children: [
                   CircleAvatar(
                     radius: 60,
-                    backgroundColor: Colors.grey[800],
+                    backgroundColor: Colors.white.withOpacity(0.08),
                     backgroundImage: _selectedImage != null
                         ? FileImage(_selectedImage!)
                         : (_avatarUrl != null ? NetworkImage(_avatarUrl!) : null) as ImageProvider?,
@@ -237,7 +229,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: buttonColor,
+                        color: primaryColor,
                         shape: BoxShape.circle,
                         border: Border.all(color: backgroundColor, width: 3),
                       ),
@@ -254,7 +246,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             const SizedBox(height: 8),
             Text(
               'Изменить фото',
-              style: TextStyle(color: buttonColor, fontSize: 14),
+              style: const TextStyle(color: primaryColor, fontSize: 14, fontWeight: FontWeight.w700),
             ),
             
             const SizedBox(height: 32),
@@ -290,19 +282,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             // Info card
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey[900],
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey[800]!),
-              ),
+              decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline, color: Colors.grey[500]),
+                  Icon(Icons.info_outline, color: Colors.white.withOpacity(0.45)),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       'Email и роль нельзя изменить. Обратитесь в поддержку если нужна помощь.',
-                      style: TextStyle(color: Colors.grey[500], fontSize: 13),
+                      style: AppUI.muted,
                     ),
                   ),
                 ],
@@ -314,13 +302,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             // Current email (read-only)
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey[900],
-                borderRadius: BorderRadius.circular(12),
-              ),
+              decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
               child: Row(
                 children: [
-                  Icon(Icons.email, color: Colors.grey[600]),
+                  Icon(Icons.email, color: Colors.white.withOpacity(0.5)),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -328,17 +313,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       children: [
                         Text(
                           'Email',
-                          style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                          style: AppUI.muted.copyWith(fontSize: 12),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           _controller.userEmail,
-                          style: const TextStyle(color: Colors.white),
+                          style: AppUI.body,
                         ),
                       ],
                     ),
                   ),
-                  Icon(Icons.lock, color: Colors.grey[700], size: 16),
+                  Icon(Icons.lock, color: Colors.white.withOpacity(0.25), size: 16),
                 ],
               ),
             ),
@@ -348,13 +333,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             // Current role (read-only)
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey[900],
-                borderRadius: BorderRadius.circular(12),
-              ),
+              decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
               child: Row(
                 children: [
-                  Icon(Icons.badge, color: Colors.grey[600]),
+                  Icon(Icons.badge, color: Colors.white.withOpacity(0.5)),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -362,17 +344,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       children: [
                         Text(
                           'Роль',
-                          style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                          style: AppUI.muted.copyWith(fontSize: 12),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           _getRoleLabel(_controller.userRole),
-                          style: const TextStyle(color: Colors.white),
+                          style: AppUI.body,
                         ),
                       ],
                     ),
                   ),
-                  Icon(Icons.lock, color: Colors.grey[700], size: 16),
+                  Icon(Icons.lock, color: Colors.white.withOpacity(0.25), size: 16),
                 ],
               ),
             ),
@@ -397,18 +379,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         labelText: required ? '$label *' : label,
-        labelStyle: TextStyle(color: Colors.grey[400]),
-        prefixIcon: Icon(icon, color: Colors.grey[400]),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[700]!),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: buttonColor!),
-        ),
+        labelStyle: AppUI.muted,
+        prefixIcon: Icon(icon, color: Colors.white.withOpacity(0.55)),
         filled: true,
-        fillColor: Colors.grey[900],
+        fillColor: surfaceColor,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppUI.radiusM),
+          borderSide: BorderSide.none,
+        ),
       ),
     );
   }

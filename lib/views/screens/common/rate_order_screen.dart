@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
+import 'package:tiktok_tutorial/ui/app_ui.dart';
 
 class RateOrderScreen extends StatefulWidget {
   final Map<String, dynamic> order;
@@ -73,17 +74,17 @@ class _RateOrderScreenState extends State<RateOrderScreen> {
         ),
         title: Text(
           widget.rateType == 'seller' ? 'rate_seller'.tr : 'rate_courier'.tr,
-          style: const TextStyle(color: Colors.white),
+          style: AppUI.h2,
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: AppUI.pagePadding,
         child: Column(
           children: [
             // Target avatar and name
             CircleAvatar(
               radius: 50,
-              backgroundColor: Colors.grey[800],
+              backgroundColor: Colors.white.withOpacity(0.08),
               child: Icon(
                 widget.rateType == 'seller' ? Icons.store : Icons.delivery_dining,
                 size: 50,
@@ -93,23 +94,19 @@ class _RateOrderScreenState extends State<RateOrderScreen> {
             const SizedBox(height: 16),
             Text(
               targetName,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: AppUI.h1.copyWith(fontSize: 20),
             ),
             const SizedBox(height: 8),
             Text(
               'Заказ #${widget.order['id']?.substring(0, 8) ?? ''}',
-              style: TextStyle(color: Colors.grey[500]),
+              style: AppUI.muted,
             ),
             const SizedBox(height: 32),
 
             // Rating stars
             Text(
               'your_rating'.tr,
-              style: TextStyle(color: Colors.grey[400], fontSize: 16),
+              style: AppUI.muted.copyWith(fontSize: 14),
             ),
             const SizedBox(height: 16),
             Row(
@@ -145,14 +142,14 @@ class _RateOrderScreenState extends State<RateOrderScreen> {
               maxLines: 4,
               decoration: InputDecoration(
                 labelText: 'write_review'.tr,
-                labelStyle: TextStyle(color: Colors.grey[400]),
+                labelStyle: AppUI.muted,
                 hintText: 'Расскажите о вашем опыте...',
                 hintStyle: TextStyle(color: Colors.grey[600]),
                 alignLabelWithHint: true,
                 filled: true,
-                fillColor: Colors.grey[900],
+                fillColor: surfaceColor,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppUI.radiusM),
                   borderSide: BorderSide.none,
                 ),
               ),
@@ -164,13 +161,8 @@ class _RateOrderScreenState extends State<RateOrderScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: _isSubmitting ? null : _submitRating,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                style: AppUI.primaryButton().copyWith(
+                  disabledBackgroundColor: WidgetStatePropertyAll(Colors.grey[700]),
                 ),
                 child: _isSubmitting
                     ? const SizedBox(
@@ -181,13 +173,7 @@ class _RateOrderScreenState extends State<RateOrderScreen> {
                           color: Colors.white,
                         ),
                       )
-                    : Text(
-                        'confirm'.tr,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                    : Text('confirm'.tr),
               ),
             ),
           ],

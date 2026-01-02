@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/ui/app_ui.dart';
 
 class ChatScreen extends StatefulWidget {
   final String userId;
@@ -99,7 +100,7 @@ class _ChatScreenState extends State<ChatScreen> {
           children: [
             CircleAvatar(
               radius: 18,
-              backgroundColor: Colors.grey[800],
+              backgroundColor: Colors.white.withOpacity(0.08),
               child: const Icon(Icons.person, color: Colors.white, size: 20),
             ),
             const SizedBox(width: 12),
@@ -109,11 +110,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 children: [
                   Text(
                     widget.userName,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
                   ),
                   Text(
                     'Онлайн',
@@ -139,7 +136,7 @@ class _ChatScreenState extends State<ChatScreen> {
           // Messages list
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(child: CircularProgressIndicator(color: primaryColor))
                 : _messages.isEmpty
                     ? _buildEmptyChat()
                     : _buildMessagesList(),
@@ -160,23 +157,17 @@ class _ChatScreenState extends State<ChatScreen> {
           Icon(
             Icons.chat_bubble_outline,
             size: 64,
-            color: Colors.grey[700],
+            color: Colors.white.withOpacity(0.22),
           ),
           const SizedBox(height: 16),
           Text(
             'Начните диалог',
-            style: TextStyle(
-              color: Colors.grey[500],
-              fontSize: 16,
-            ),
+            style: AppUI.h2.copyWith(color: Colors.white.withOpacity(0.9)),
           ),
           const SizedBox(height: 8),
           Text(
             'Напишите сообщение ${widget.userName}',
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 14,
-            ),
+            style: AppUI.muted,
           ),
         ],
       ),
@@ -186,7 +177,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget _buildMessagesList() {
     return ListView.builder(
       controller: _scrollController,
-      padding: const EdgeInsets.all(16),
+      padding: AppUI.pagePadding,
       itemCount: _messages.length,
       itemBuilder: (context, index) {
         final message = _messages[index];
@@ -207,7 +198,7 @@ class _ChatScreenState extends State<ChatScreen> {
           if (!isMe) ...[
             CircleAvatar(
               radius: 14,
-              backgroundColor: Colors.grey[800],
+              backgroundColor: Colors.white.withOpacity(0.08),
               child: const Icon(Icons.person, color: Colors.white, size: 14),
             ),
             const SizedBox(width: 8),
@@ -217,7 +208,7 @@ class _ChatScreenState extends State<ChatScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: isMe ? buttonColor : Colors.grey[800],
+                color: isMe ? primaryColor : surfaceColor,
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(16),
                   topRight: const Radius.circular(16),
@@ -265,7 +256,7 @@ class _ChatScreenState extends State<ChatScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey[900],
+        color: cardColor,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.2),
@@ -291,7 +282,7 @@ class _ChatScreenState extends State<ChatScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
-                  color: Colors.grey[800],
+                  color: surfaceColor,
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: TextField(
@@ -301,7 +292,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   textCapitalization: TextCapitalization.sentences,
                   decoration: InputDecoration(
                     hintText: 'Сообщение...',
-                    hintStyle: TextStyle(color: Colors.grey[500]),
+                    hintStyle: AppUI.muted,
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(vertical: 10),
                   ),
@@ -316,7 +307,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: buttonColor,
+                  color: primaryColor,
                   shape: BoxShape.circle,
                 ),
                 child: _isSending

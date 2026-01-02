@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/views/screens/seller/create_product_screen.dart';
+import 'package:tiktok_tutorial/ui/app_media.dart';
 
 class MyProductsScreen extends StatefulWidget {
   const MyProductsScreen({Key? key}) : super(key: key);
@@ -127,11 +128,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
               width: double.infinity,
               color: Colors.grey[800],
               child: product['image_url'] != null
-                  ? Image.network(
-                      product['image_url'],
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _buildImagePlaceholder(),
-                    )
+                  ? AppMedia.image(product['image_url'], fit: BoxFit.cover, width: double.infinity, height: double.infinity)
                   : _buildImagePlaceholder(),
             ),
           ),

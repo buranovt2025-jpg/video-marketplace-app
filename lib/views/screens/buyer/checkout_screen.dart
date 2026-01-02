@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/cart_controller.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/ui/app_ui.dart';
+import 'package:tiktok_tutorial/ui/app_media.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/order_success_screen.dart';
 import 'package:tiktok_tutorial/views/screens/common/location_picker_screen.dart';
 
@@ -66,17 +68,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       backgroundColor: backgroundColor,
       appBar: AppBar(
         backgroundColor: backgroundColor,
-        title: const Text(
-          'Оформление заказа',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
+        title: Text('Оформление заказа', style: AppUI.h2),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Get.back(),
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: AppUI.pagePadding,
         child: Form(
           key: _formKey,
           child: Column(
@@ -87,27 +86,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               const SizedBox(height: 24),
 
               // Order items
-              const Text(
-                'Товары',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              Text('Товары', style: AppUI.h2),
               const SizedBox(height: 12),
               _buildOrderItems(items),
               const SizedBox(height: 24),
 
               // Delivery address
-              const Text(
-                'Адрес доставки',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              Text('Адрес доставки', style: AppUI.h2),
               const SizedBox(height: 12),
               _buildAddressField(),
               const SizedBox(height: 16),
@@ -115,40 +100,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               const SizedBox(height: 24),
 
               // Notes
-              const Text(
-                'Комментарий к заказу',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              Text('Комментарий к заказу', style: AppUI.h2),
               const SizedBox(height: 12),
               _buildNotesField(),
               const SizedBox(height: 24),
 
               // Delivery tariff
-              const Text(
-                'Тариф доставки',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              Text('Тариф доставки', style: AppUI.h2),
               const SizedBox(height: 12),
               _buildDeliveryTariff(total),
               const SizedBox(height: 24),
 
               // Payment method
-              const Text(
-                'Способ оплаты',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              Text('Способ оплаты', style: AppUI.h2),
               const SizedBox(height: 12),
               _buildPaymentMethod(),
               const SizedBox(height: 24),
@@ -167,15 +131,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget _buildSellerCard(String sellerName) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[900],
-        borderRadius: BorderRadius.circular(12),
-      ),
+      decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
       child: Row(
         children: [
           CircleAvatar(
             radius: 20,
-            backgroundColor: Colors.grey[800],
+            backgroundColor: Colors.white.withOpacity(0.08),
             child: const Icon(Icons.store, color: Colors.white),
           ),
           const SizedBox(width: 12),
@@ -185,19 +146,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               children: [
                 Text(
                   sellerName,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Продавец',
-                  style: TextStyle(
-                    color: Colors.grey[500],
-                    fontSize: 12,
-                  ),
+                  style: AppUI.muted.copyWith(fontSize: 12),
                 ),
               ],
             ),
@@ -209,10 +163,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Widget _buildOrderItems(List<CartItem> items) {
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.grey[900],
-        borderRadius: BorderRadius.circular(12),
-      ),
+      decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
       child: Column(
         children: items.map((item) => _buildOrderItem(item)).toList(),
       ),
@@ -228,20 +179,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: Colors.grey[800],
-              borderRadius: BorderRadius.circular(8),
+              color: surfaceColor,
+              borderRadius: BorderRadius.circular(AppUI.radiusM),
             ),
             child: item.imageUrl != null
                 ? ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      item.imageUrl!,
+                    borderRadius: BorderRadius.circular(AppUI.radiusM),
+                    child: AppMedia.image(
+                      item.imageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Icon(
-                        Icons.inventory_2,
-                        color: Colors.grey[600],
-                        size: 20,
-                      ),
+                      width: 50,
+                      height: 50,
                     ),
                   )
                 : Icon(
@@ -257,19 +205,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               children: [
                 Text(
                   item.productName,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                  ),
+                  style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
                   '${item.quantity} x ${_formatPrice(item.price)} сум',
-                  style: TextStyle(
-                    color: Colors.grey[500],
-                    fontSize: 12,
-                  ),
+                  style: AppUI.muted.copyWith(fontSize: 12),
                 ),
               ],
             ),
@@ -279,7 +221,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             style: const TextStyle(
               color: Colors.white,
               fontSize: 14,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],
@@ -298,12 +240,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             hintText: 'enter_full_address'.tr,
             hintStyle: TextStyle(color: Colors.grey[600]),
             filled: true,
-            fillColor: Colors.grey[900],
+            fillColor: surfaceColor,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppUI.radiusM),
               borderSide: BorderSide.none,
             ),
-            prefixIcon: Icon(Icons.location_on, color: buttonColor),
+            prefixIcon: const Icon(Icons.location_on, color: primaryColor),
           ),
           validator: (value) {
             if (value == null || value.isEmpty) {
@@ -317,17 +259,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           width: double.infinity,
           child: OutlinedButton.icon(
             onPressed: _openLocationPicker,
-            icon: Icon(Icons.map, color: primaryColor),
-            label: Text(
-              'select_location'.tr,
-              style: TextStyle(color: primaryColor),
-            ),
-            style: OutlinedButton.styleFrom(
-              side: BorderSide(color: primaryColor.withOpacity(0.5)),
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+            icon: const Icon(Icons.map),
+            label: Text('select_location'.tr),
+            style: AppUI.outlineButton().copyWith(
+              foregroundColor: const WidgetStatePropertyAll(primaryColor),
+              side: WidgetStatePropertyAll(BorderSide(color: primaryColor.withOpacity(0.6))),
             ),
           ),
         ),
@@ -355,9 +291,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey[900],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[800]!),
+        color: surfaceColor,
+        borderRadius: BorderRadius.circular(AppUI.radiusM),
+        border: Border.all(color: Colors.white.withOpacity(0.10)),
       ),
       child: Row(
         children: [
@@ -366,10 +302,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           Expanded(
             child: Text(
               'Курьер увидит ваш адрес и сможет открыть навигатор для маршрута',
-              style: TextStyle(
-                color: Colors.grey[500],
-                fontSize: 12,
-              ),
+              style: AppUI.muted.copyWith(fontSize: 12),
             ),
           ),
         ],
@@ -386,9 +319,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         hintText: 'Комментарий для курьера (необязательно)',
         hintStyle: TextStyle(color: Colors.grey[600]),
         filled: true,
-        fillColor: Colors.grey[900],
+        fillColor: surfaceColor,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppUI.radiusM),
           borderSide: BorderSide.none,
         ),
       ),
@@ -399,9 +332,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[900],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: buttonColor!, width: 2),
+        color: cardColor,
+        borderRadius: BorderRadius.circular(AppUI.radiusL),
+        border: Border.all(color: primaryColor.withOpacity(0.45), width: 2),
       ),
       child: Row(
         children: [
@@ -409,10 +342,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: buttonColor!.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(8),
+              color: primaryColor.withOpacity(0.16),
+              borderRadius: BorderRadius.circular(AppUI.radiusM),
             ),
-            child: Icon(Icons.money, color: buttonColor),
+            child: const Icon(Icons.money, color: primaryColor),
           ),
           const SizedBox(width: 12),
           const Expanded(
@@ -424,7 +357,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 SizedBox(height: 4),
@@ -438,7 +371,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ],
             ),
           ),
-          Icon(Icons.check_circle, color: buttonColor),
+          const Icon(Icons.check_circle, color: primaryColor),
         ],
       ),
     );
@@ -617,10 +550,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[900],
-        borderRadius: BorderRadius.circular(12),
-      ),
+      decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
       child: Column(
         children: [
           _buildSummaryRow('Товары (${items.length})', '${_formatPrice(itemsTotal)} сум'),
@@ -630,7 +560,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             deliveryFee == 0 ? 'Бесплатно' : '${_formatPrice(deliveryFee)} сум',
             valueColor: deliveryFee == 0 ? Colors.green : null,
           ),
-          const Divider(color: Colors.grey, height: 24),
+          Divider(color: Colors.white.withOpacity(0.12), height: 24),
           _buildSummaryRow(
             'Итого',
             '${_formatPrice(grandTotal)} сум',
@@ -651,7 +581,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           style: TextStyle(
             color: isBold ? Colors.white : Colors.grey[400],
             fontSize: isBold ? 16 : 14,
-            fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+            fontWeight: isBold ? FontWeight.w700 : FontWeight.normal,
           ),
         ),
         Text(
@@ -659,7 +589,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           style: TextStyle(
             color: valueColor ?? Colors.white,
             fontSize: isBold ? 18 : 14,
-            fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+            fontWeight: isBold ? FontWeight.w800 : FontWeight.normal,
           ),
         ),
       ],
@@ -673,7 +603,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[900],
+        color: cardColor,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.3),
@@ -687,10 +617,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           width: double.infinity,
           child: ElevatedButton(
             onPressed: _isLoading ? null : _placeOrder,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: buttonColor,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              disabledBackgroundColor: Colors.grey[700],
+            style: AppUI.primaryButton().copyWith(
+              backgroundColor: const WidgetStatePropertyAll(primaryColor),
+              disabledBackgroundColor: WidgetStatePropertyAll(Colors.grey[700]),
+              padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(vertical: 16)),
             ),
             child: _isLoading
                 ? const SizedBox(

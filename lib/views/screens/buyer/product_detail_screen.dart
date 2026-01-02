@@ -4,8 +4,11 @@ import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/cart_controller.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/utils/responsive_helper.dart';
+import 'package:tiktok_tutorial/ui/app_ui.dart';
+import 'package:tiktok_tutorial/ui/app_media.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/cart_screen.dart';
 import 'package:tiktok_tutorial/views/screens/chat/chat_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final Map<String, dynamic> product;
@@ -34,6 +37,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget build(BuildContext context) {
     final product = widget.product;
     final bool inStock = product['in_stock'] ?? true;
+    final videoUrl = product['video_url']?.toString();
     
     // Responsive image height
     final imageHeight = ResponsiveHelper.responsiveValue(
@@ -112,20 +116,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               )),
             ],
             flexibleSpace: FlexibleSpaceBar(
-              background: product['image_url'] != null
-                  ? Image.network(
-                      product['image_url'],
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _buildPlaceholderImage(),
-                    )
-                  : _buildPlaceholderImage(),
+              background: AppMedia.image(
+                product['image_url'],
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+              ),
             ),
           ),
 
           // Product details
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: AppUI.pagePadding,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -151,11 +154,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   // Product name
                   Text(
                     product['name'] ?? 'Товар',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: AppUI.h1,
                   ),
                   const SizedBox(height: 8),
 
@@ -165,7 +164,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     style: TextStyle(
                       color: buttonColor,
                       fontSize: 28,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -199,21 +198,51 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
                   // Description
                   if (product['description'] != null && product['description'].isNotEmpty) ...[
-                    const Text(
-                      'Описание',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    Text('Описание', style: AppUI.h2),
                     const SizedBox(height: 8),
                     Text(
                       product['description'],
-                      style: TextStyle(
-                        color: Colors.grey[400],
-                        fontSize: 14,
-                        height: 1.5,
+                      style: AppUI.muted.copyWith(fontSize: 14, height: 1.5),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+
+                  // Product video (optional)
+                  if (videoUrl != null && videoUrl.isNotEmpty) ...[
+                    Text('Видео', style: AppUI.h2),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: AppUI.cardPadding,
+                      decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: primaryColor.withOpacity(0.16),
+                              borderRadius: BorderRadius.circular(AppUI.radiusM),
+                            ),
+                            child: const Icon(Icons.play_circle, color: primaryColor),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              _isHttpUrl(videoUrl) ? 'Открыть видео товара' : 'Видео прикреплено',
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                            ),
+                          ),
+                          if (_isHttpUrl(videoUrl))
+                            OutlinedButton(
+                              onPressed: () => _openUrl(videoUrl),
+                              style: AppUI.outlineButton().copyWith(
+                                foregroundColor: const WidgetStatePropertyAll(primaryColor),
+                                side: WidgetStatePropertyAll(BorderSide(color: primaryColor.withOpacity(0.6))),
+                                padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
+                              ),
+                              child: const Text('Открыть'),
+                            ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -221,14 +250,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
                   // Quantity selector
                   if (inStock) ...[
-                    const Text(
-                      'Количество',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    Text('Количество', style: AppUI.h2),
                     const SizedBox(height: 12),
                     _buildQuantitySelector(),
                     const SizedBox(height: 24),
@@ -238,10 +260,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   if (inStock)
                     Container(
                       padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[900],
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      decoration: AppUI.cardDecoration(radius: AppUI.radiusM),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -257,7 +276,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             style: TextStyle(
                               color: buttonColor,
                               fontSize: 20,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
                         ],
@@ -291,15 +310,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget _buildSellerCard(Map<String, dynamic> product) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[900],
-        borderRadius: BorderRadius.circular(12),
-      ),
+      decoration: AppUI.cardDecoration(radius: AppUI.radiusM),
       child: Row(
         children: [
           CircleAvatar(
             radius: 24,
-            backgroundColor: Colors.grey[800],
+            backgroundColor: Colors.white.withOpacity(0.08),
             child: const Icon(Icons.store, color: Colors.white),
           ),
           const SizedBox(width: 12),
@@ -312,16 +328,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Продавец на маркетплейсе',
-                  style: TextStyle(
-                    color: Colors.grey[500],
-                    fontSize: 12,
-                  ),
+                  style: AppUI.muted,
                 ),
               ],
             ),
@@ -344,10 +357,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   Widget _buildQuantitySelector() {
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.grey[900],
-        borderRadius: BorderRadius.circular(12),
-      ),
+      decoration: AppUI.cardDecoration(radius: AppUI.radiusM),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -381,7 +391,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[900],
+        color: cardColor,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.3),
@@ -409,10 +419,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 },
                 icon: const Icon(Icons.add_shopping_cart),
                 label: const Text('В корзину'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: BorderSide(color: buttonColor!),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                style: AppUI.outlineButton().copyWith(
+                  side: WidgetStatePropertyAll(BorderSide(color: buttonColor!.withOpacity(0.8))),
                 ),
               ),
             ),
@@ -426,11 +434,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 },
                 icon: const Icon(Icons.flash_on),
                 label: const Text('Купить'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: buttonColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
+                style: AppUI.primaryButton(),
               ),
             ),
           ],
@@ -487,5 +491,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       'other': 'Другое',
     };
     return categories[category] ?? category;
+  }
+
+  bool _isHttpUrl(String? url) {
+    if (url == null) return false;
+    return url.startsWith('http://') || url.startsWith('https://');
+  }
+
+  Future<void> _openUrl(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 }

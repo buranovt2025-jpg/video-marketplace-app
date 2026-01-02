@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/favorites_controller.dart';
 import 'package:tiktok_tutorial/controllers/cart_controller.dart';
+import 'package:tiktok_tutorial/ui/app_ui.dart';
+import 'package:tiktok_tutorial/ui/app_media.dart';
 
 class FavoritesScreen extends StatelessWidget {
   const FavoritesScreen({Key? key}) : super(key: key);
@@ -19,7 +20,7 @@ class FavoritesScreen extends StatelessWidget {
         backgroundColor: backgroundColor,
         title: Text(
           'favorites'.tr,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: AppUI.h2,
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -56,18 +57,12 @@ class FavoritesScreen extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             'no_favorites'.tr,
-            style: TextStyle(
-              color: Colors.grey[500],
-              fontSize: 18,
-            ),
+            style: AppUI.h2.copyWith(color: Colors.white.withOpacity(0.9)),
           ),
           const SizedBox(height: 8),
           Text(
             'add_to_favorites'.tr,
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 14,
-            ),
+            style: AppUI.muted,
           ),
         ],
       ),
@@ -76,7 +71,7 @@ class FavoritesScreen extends StatelessWidget {
 
   Widget _buildFavoritesList(FavoritesController favoritesController, CartController cartController) {
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: AppUI.pagePadding,
       itemCount: favoritesController.favorites.length,
       itemBuilder: (context, index) {
         final product = favoritesController.favorites[index];
@@ -92,40 +87,24 @@ class FavoritesScreen extends StatelessWidget {
   ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.grey[900],
-        borderRadius: BorderRadius.circular(12),
-      ),
+      decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
       child: Row(
         children: [
           // Product image
           ClipRRect(
             borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(12),
-              bottomLeft: Radius.circular(12),
+              topLeft: Radius.circular(AppUI.radiusL),
+              bottomLeft: Radius.circular(AppUI.radiusL),
             ),
             child: SizedBox(
               width: 100,
               height: 100,
-              child: product['image_url'] != null
-                  ? CachedNetworkImage(
-                      imageUrl: product['image_url'],
-                      fit: BoxFit.cover,
-                      placeholder: (_, __) => Container(
-                        color: Colors.grey[800],
-                        child: const Center(
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      ),
-                      errorWidget: (_, __, ___) => Container(
-                        color: Colors.grey[800],
-                        child: Icon(Icons.inventory_2, color: Colors.grey[600]),
-                      ),
-                    )
-                  : Container(
-                      color: Colors.grey[800],
-                      child: Icon(Icons.inventory_2, color: Colors.grey[600]),
-                    ),
+              child: AppMedia.image(
+                product['image_url'],
+                width: 100,
+                height: 100,
+                fit: BoxFit.cover,
+              ),
             ),
           ),
           
@@ -138,11 +117,7 @@ class FavoritesScreen extends StatelessWidget {
                 children: [
                   Text(
                     product['name'] ?? 'Product',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -150,10 +125,7 @@ class FavoritesScreen extends StatelessWidget {
                   if (product['seller_name'] != null)
                     Text(
                       product['seller_name'],
-                      style: TextStyle(
-                        color: Colors.grey[500],
-                        fontSize: 12,
-                      ),
+                      style: AppUI.muted.copyWith(fontSize: 12),
                     ),
                   const SizedBox(height: 8),
                   Text(
@@ -161,7 +133,7 @@ class FavoritesScreen extends StatelessWidget {
                     style: TextStyle(
                       color: primaryColor,
                       fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ],
@@ -209,19 +181,19 @@ class FavoritesScreen extends StatelessWidget {
   void _showClearDialog(FavoritesController controller) {
     Get.dialog(
       AlertDialog(
-        backgroundColor: Colors.grey[900],
+        backgroundColor: cardColor,
         title: Text(
           'delete'.tr,
           style: const TextStyle(color: Colors.white),
         ),
         content: Text(
-          'Clear all favorites?',
-          style: TextStyle(color: Colors.grey[400]),
+          'Очистить избранное?',
+          style: AppUI.muted,
         ),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: Text('cancel'.tr),
+            child: Text('cancel'.tr, style: const TextStyle(color: textSecondaryColor)),
           ),
           TextButton(
             onPressed: () {

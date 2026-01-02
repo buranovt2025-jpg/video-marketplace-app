@@ -181,6 +181,7 @@ class MarketplaceController extends GetxController {
     required double price,
     String? description,
     String? imageUrl,
+    String? videoUrl,
     String? category,
     int? quantity,
   }) async {
@@ -193,6 +194,7 @@ class MarketplaceController extends GetxController {
         price: price,
         description: description,
         imageUrl: imageUrl,
+        videoUrl: videoUrl,
         category: category,
         quantity: quantity,
       );
@@ -251,9 +253,9 @@ class MarketplaceController extends GetxController {
   }
   
   // Content methods
-  Future<void> fetchReels() async {
+  Future<void> fetchReels({int page = 1, int perPage = 10}) async {
     try {
-      final data = await ApiService.getReels();
+      final data = await ApiService.getReels(page: page, perPage: perPage);
       reels.value = List<Map<String, dynamic>>.from(data);
     } catch (e) {
       error.value = e.toString();
@@ -325,7 +327,13 @@ class MarketplaceController extends GetxController {
   
   Future<void> likeContent(String contentId) async {
     try {
-      await ApiService.likeContent(contentId);
+      final updated = await ApiService.likeContent(contentId);
+      final idx = reels.indexWhere((r) => r['id'] == contentId);
+      if (idx != -1) {
+        final current = reels[idx];
+        reels[idx] = <String, dynamic>{...current, ...updated};
+        reels.refresh();
+      }
     } catch (e) {
       error.value = e.toString();
     }
