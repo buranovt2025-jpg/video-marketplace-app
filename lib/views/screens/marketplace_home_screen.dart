@@ -5,6 +5,7 @@ import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/controllers/cart_controller.dart';
 import 'package:tiktok_tutorial/controllers/favorites_controller.dart';
 import 'package:tiktok_tutorial/utils/responsive_helper.dart';
+import 'package:tiktok_tutorial/ui/app_ui.dart';
 import 'package:tiktok_tutorial/views/screens/seller/create_product_screen.dart';
 import 'package:tiktok_tutorial/views/screens/seller/create_reel_screen.dart';
 import 'package:tiktok_tutorial/views/screens/seller/create_story_screen.dart';
@@ -316,13 +317,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         SliverAppBar(
           floating: true,
           backgroundColor: backgroundColor,
-          title: const Text(
-            'Video Marketplace',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          title: Text('GoGoMarket', style: AppUI.h2),
           actions: [
             // Search moved out of bottom nav for buyers/guests.
             if (!_isSeller)
@@ -381,13 +376,13 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   Widget _buildStoriesRow() {
     return Container(
       height: 110,
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       child: Obx(() {
         final stories = _controller.stories;
         
         return ListView.builder(
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           itemCount: stories.length + 1,
           itemBuilder: (context, index) {
             if (index == 0) {
@@ -405,7 +400,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
 
   Widget _buildAddStoryButton() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6),
       child: Column(
         children: [
           GestureDetector(
@@ -421,11 +416,11 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               }
             },
             child: Container(
-              width: 70,
-              height: 70,
+              width: 72,
+              height: 72,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.grey[700]!, width: 2),
+                border: Border.all(color: Colors.white.withOpacity(0.18), width: 2),
               ),
               child: Icon(
                 Icons.add,
@@ -438,7 +433,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
           const Text(
             'Добавить',
             style: TextStyle(
-              color: Colors.white,
+              color: textSecondaryColor,
               fontSize: 11,
             ),
           ),
@@ -460,19 +455,19 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         );
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 6),
         child: Column(
           children: [
             Container(
-              width: 70,
-              height: 70,
+              width: 72,
+              height: 72,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
                   colors: [
-                    Colors.purple,
-                    Colors.pink,
-                    Colors.orange,
+                    primaryColor,
+                    accentColor,
+                    Colors.white.withOpacity(0.85),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -502,7 +497,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               child: Text(
                 story['author_name'] ?? 'User',
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: textSecondaryColor,
                   fontSize: 11,
                 ),
                 textAlign: TextAlign.center,
@@ -564,8 +559,9 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.grey[900],
-        borderRadius: BorderRadius.circular(12),
+        color: cardColor,
+        borderRadius: BorderRadius.circular(AppUI.radiusL),
+        border: Border.all(color: Colors.white.withOpacity(0.06)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -577,8 +573,8 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               children: [
                 CircleAvatar(
                   radius: 18,
-                  backgroundColor: Colors.grey[800],
-                  child: const Icon(Icons.person, color: Colors.white, size: 20),
+                  backgroundColor: Colors.white.withOpacity(0.08),
+                  child: const Icon(Icons.person, color: Colors.white, size: 18),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -587,10 +583,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                     children: [
                       Text(
                         reel['author_name'] ?? 'User',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
                       ),
                     ],
                   ),
@@ -615,16 +608,19 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               return Container(
                 height: videoHeight,
                 width: double.infinity,
-                color: Colors.grey[800],
+                decoration: BoxDecoration(
+                  color: surfaceColor,
+                  borderRadius: BorderRadius.circular(AppUI.radiusM),
+                ),
                 child: Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.play_circle_outline, size: 64, color: Colors.grey[600]),
+                      Icon(Icons.play_circle_outline, size: 64, color: Colors.white.withOpacity(0.35)),
                       const SizedBox(height: 8),
                       Text(
                         'Видео',
-                        style: TextStyle(color: Colors.grey[600]),
+                        style: AppUI.muted,
                       ),
                     ],
                   ),
@@ -687,7 +683,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Text(
                 reel['caption'],
-                style: const TextStyle(color: Colors.white),
+                style: AppUI.body.copyWith(color: Colors.white.withOpacity(0.9)),
               ),
             ),
         ],
@@ -703,10 +699,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
           backgroundColor: backgroundColor,
           title: Container(
             height: 40,
-            decoration: BoxDecoration(
-              color: Colors.grey[900],
-              borderRadius: BorderRadius.circular(10),
-            ),
+            decoration: AppUI.inputDecoration(),
             child: TextField(
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
