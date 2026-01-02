@@ -250,62 +250,50 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   Widget _buildGuestProfileTab() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircleAvatar(
-              radius: 50,
-              backgroundColor: Colors.grey[800],
-              child: Icon(Icons.person_outline, size: 60, color: Colors.grey[600]),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Добро пожаловать!',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+        padding: AppUI.pagePadding,
+        child: Container(
+          width: double.infinity,
+          padding: AppUI.cardPadding,
+          decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircleAvatar(
+                radius: 44,
+                backgroundColor: Colors.white.withOpacity(0.08),
+                child: Icon(Icons.person_outline, size: 54, color: Colors.white.withOpacity(0.5)),
               ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Войдите или зарегистрируйтесь,\nчтобы делать покупки',
-              style: TextStyle(color: Colors.grey[400], fontSize: 16),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Get.to(() => const MarketplaceLoginScreen()),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryColor,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+              const SizedBox(height: 18),
+              Text('Добро пожаловать!', style: AppUI.h1),
+              const SizedBox(height: 10),
+              Text(
+                'Войдите или зарегистрируйтесь,\nчтобы делать покупки',
+                style: AppUI.muted.copyWith(fontSize: 14),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Get.to(() => const MarketplaceLoginScreen()),
+                  style: AppUI.primaryButton(),
+                  child: Text('login'.tr),
                 ),
-                child: Text('login'.tr, style: const TextStyle(fontSize: 16)),
               ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () => Get.to(() => const MarketplaceLoginScreen()),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: primaryColor,
-                  side: const BorderSide(color: primaryColor),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () => Get.to(() => const MarketplaceLoginScreen()),
+                  style: AppUI.outlineButton().copyWith(
+                    foregroundColor: const WidgetStatePropertyAll(primaryColor),
+                    side: WidgetStatePropertyAll(BorderSide(color: primaryColor.withOpacity(0.6))),
                   ),
+                  child: Text('register'.tr),
                 ),
-                child: Text('register'.tr, style: const TextStyle(fontSize: 16)),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -382,7 +370,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         
         return ListView.builder(
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           itemCount: stories.length + 1,
           itemBuilder: (context, index) {
             if (index == 0) {
@@ -403,7 +391,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 6),
       child: Column(
         children: [
-          GestureDetector(
+          InkWell(
             onTap: () {
               if (_controller.isSeller || _controller.isAdmin) {
                 Get.to(() => const CreateStoryScreen());
@@ -415,6 +403,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 );
               }
             },
+            borderRadius: BorderRadius.circular(999),
             child: Container(
               width: 72,
               height: 72,
@@ -422,21 +411,11 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.white.withOpacity(0.18), width: 2),
               ),
-              child: Icon(
-                Icons.add,
-                color: buttonColor,
-                size: 30,
-              ),
+              child: const Icon(Icons.add, color: primaryColor, size: 30),
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            'Добавить',
-            style: TextStyle(
-              color: textSecondaryColor,
-              fontSize: 11,
-            ),
-          ),
+          Text('Добавить', style: AppUI.muted.copyWith(fontSize: 11)),
         ],
       ),
     );
@@ -496,10 +475,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               width: 70,
               child: Text(
                 story['author_name'] ?? 'User',
-                style: const TextStyle(
-                  color: textSecondaryColor,
-                  fontSize: 11,
-                ),
+                style: AppUI.muted.copyWith(fontSize: 11),
                 textAlign: TextAlign.center,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -855,19 +831,21 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
             
             if (products.isEmpty) {
               return SliverToBoxAdapter(
-                child: Container(
-                  height: 300,
+                child: SizedBox(
+                  height: 320,
                   child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.inventory_2, size: 64, color: Colors.grey[700]),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Пока нет товаров',
-                          style: TextStyle(color: Colors.grey[500], fontSize: 16),
-                        ),
-                      ],
+                    child: Padding(
+                      padding: AppUI.pagePadding,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.inventory_2, size: 64, color: Colors.white.withOpacity(0.22)),
+                          const SizedBox(height: 16),
+                          Text('Пока нет товаров', style: AppUI.h2.copyWith(color: Colors.white.withOpacity(0.9))),
+                          const SizedBox(height: 8),
+                          Text('Зайдите позже — каталог обновляется', style: AppUI.muted, textAlign: TextAlign.center),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -902,48 +880,43 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     );
   }
 
-    Widget _buildProductGridItem(Map<String, dynamic> product) {
-      return GestureDetector(
-        onTap: () {
-          Get.to(() => ProductDetailScreen(product: product));
-        },
-      child: Container(
-        color: Colors.grey[900],
+  Widget _buildProductGridItem(Map<String, dynamic> product) {
+    final rawPrice = product['price'];
+    final priceText = rawPrice is num ? rawPrice.toStringAsFixed(0) : (rawPrice?.toString() ?? '0');
+
+    return GestureDetector(
+      onTap: () => Get.to(() => ProductDetailScreen(product: product)),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppUI.radiusM),
         child: Stack(
           fit: StackFit.expand,
           children: [
+            Container(color: surfaceColor),
             if (product['image_url'] != null)
               Image.network(
                 product['image_url'],
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  color: Colors.grey[800],
-                  child: Icon(Icons.image, color: Colors.grey[600]),
+                errorBuilder: (_, __, ___) => Center(
+                  child: Icon(Icons.image, color: Colors.white.withOpacity(0.35)),
                 ),
               )
             else
-              Container(
-                color: Colors.grey[800],
-                child: Icon(Icons.inventory_2, color: Colors.grey[600]),
+              Center(
+                child: Icon(Icons.inventory_2, color: Colors.white.withOpacity(0.35)),
               ),
-            
-            // Price tag
             Positioned(
-              bottom: 4,
-              left: 4,
+              bottom: 6,
+              left: 6,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.7),
-                  borderRadius: BorderRadius.circular(4),
+                  color: Colors.black.withOpacity(0.55),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: Colors.white.withOpacity(0.10)),
                 ),
                 child: Text(
-                  '${product['price']?.toStringAsFixed(0) ?? '0'} сум',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  '$priceText сум',
+                  style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
                 ),
               ),
             ),
