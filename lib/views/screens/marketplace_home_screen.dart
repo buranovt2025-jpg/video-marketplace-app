@@ -515,29 +515,29 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
       final reels = _controller.reels;
       
       if (reels.isEmpty) {
-        return Container(
-          height: 300,
+        return SizedBox(
+          height: 320,
           child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.video_library, size: 64, color: Colors.grey[700]),
-                const SizedBox(height: 16),
-                Text(
-                  'Пока нет рилсов',
-                  style: TextStyle(color: Colors.grey[500], fontSize: 16),
-                ),
-                if (_controller.isSeller || _controller.isAdmin) ...[
+            child: Padding(
+              padding: AppUI.pagePadding,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.video_library, size: 64, color: Colors.white.withOpacity(0.25)),
                   const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => Get.to(() => const CreateReelScreen()),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: buttonColor,
+                  Text('Пока нет рилсов', style: AppUI.h2.copyWith(color: Colors.white.withOpacity(0.9))),
+                  const SizedBox(height: 8),
+                  Text('Попробуйте позже — здесь появятся видео от продавцов', style: AppUI.muted, textAlign: TextAlign.center),
+                  if (_controller.isSeller || _controller.isAdmin) ...[
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => Get.to(() => const CreateReelScreen()),
+                      style: AppUI.primaryButton(),
+                      child: const Text('Создать первый рилс'),
                     ),
-                    child: const Text('Создать первый рилс'),
-                  ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         );
@@ -556,13 +556,17 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   }
 
   Widget _buildReelCard(Map<String, dynamic> reel) {
+    final productId = reel['product_id'];
+    final Map<String, dynamic> linkedProduct = productId == null
+        ? const <String, dynamic>{}
+        : _controller.products.firstWhere(
+            (p) => p['id'] == productId,
+            orElse: () => <String, dynamic>{},
+          );
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(AppUI.radiusL),
-        border: Border.all(color: Colors.white.withOpacity(0.06)),
-      ),
+      decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -585,6 +589,8 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                         reel['author_name'] ?? 'User',
                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
                       ),
+                      const SizedBox(height: 2),
+                      Text('GoGoMarket', style: AppUI.muted.copyWith(fontSize: 11)),
                     ],
                   ),
                 ),
@@ -597,36 +603,69 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
           ),
           
           // Video placeholder - responsive height
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final videoHeight = ResponsiveHelper.responsiveValue(
-                context,
-                mobile: 400.0,
-                tablet: 500.0,
-                desktop: 600.0,
-              );
-              return Container(
-                height: videoHeight,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: surfaceColor,
-                  borderRadius: BorderRadius.circular(AppUI.radiusM),
-                ),
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final videoHeight = ResponsiveHelper.responsiveValue(
+                  context,
+                  mobile: 420.0,
+                  tablet: 520.0,
+                  desktop: 620.0,
+                );
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(AppUI.radiusL),
+                  child: Stack(
                     children: [
-                      Icon(Icons.play_circle_outline, size: 64, color: Colors.white.withOpacity(0.35)),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Видео',
-                        style: AppUI.muted,
+                      Container(
+                        height: videoHeight,
+                        width: double.infinity,
+                        color: surfaceColor,
+                        child: Center(
+                          child: Icon(
+                            Icons.play_circle_outline,
+                            size: 74,
+                            color: Colors.white.withOpacity(0.28),
+                          ),
+                        ),
                       ),
+                      if (linkedProduct.isNotEmpty)
+                        Positioned(
+                          left: 12,
+                          top: 12,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.55),
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(color: Colors.white.withOpacity(0.12)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.shopping_bag_outlined, size: 16, color: Colors.white),
+                                const SizedBox(width: 8),
+                                ConstrainedBox(
+                                  constraints: const BoxConstraints(maxWidth: 210),
+                                  child: Text(
+                                    linkedProduct['name'] ?? 'Товар',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                     ],
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
           
           // Actions
@@ -640,9 +679,9 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 ),
                 Text(
                   '${reel['likes'] ?? 0}',
-                  style: const TextStyle(color: Colors.white),
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 10),
                 IconButton(
                   icon: const Icon(Icons.comment_outlined, color: Colors.white),
                   onPressed: () {},
@@ -653,26 +692,17 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 ),
                 const Spacer(),
                 // Buy button for reels with linked product
-                if (reel['product_id'] != null) ...[
+                if (linkedProduct.isNotEmpty) ...[
                   ElevatedButton.icon(
                     onPressed: () => _openProductFromReel(reel),
                     icon: const Icon(Icons.shopping_cart, size: 18),
                     label: Text('buy_now'.tr),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
+                    style: AppUI.primaryButton().copyWith(
+                      padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 14, vertical: 10)),
                     ),
                   ),
                   const SizedBox(width: 8),
                 ],
-                IconButton(
-                  icon: const Icon(Icons.bookmark_border, color: Colors.white),
-                  onPressed: () {},
-                ),
               ],
             ),
           ),
@@ -680,7 +710,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
           // Caption
           if (reel['caption'] != null && reel['caption'].isNotEmpty)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Text(
                 reel['caption'],
                 style: AppUI.body.copyWith(color: Colors.white.withOpacity(0.9)),
