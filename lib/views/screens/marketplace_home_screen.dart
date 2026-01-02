@@ -328,12 +328,149 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         SliverToBoxAdapter(
           child: _buildStoriesRow(),
         ),
+
+        // Products section (buyer-friendly home)
+        SliverToBoxAdapter(
+          child: _buildProductsSection(),
+        ),
         
         // Reels feed
         SliverToBoxAdapter(
           child: _buildReelsFeed(),
         ),
       ],
+    );
+  }
+
+  Widget _buildProductsSection() {
+    return Obx(() {
+      final products = _controller.products;
+
+      return Padding(
+        padding: const EdgeInsets.only(top: 6, bottom: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text('Товары', style: AppUI.h2),
+                  ),
+                  TextButton(
+                    onPressed: () => Get.to(() => const SmartSearchScreen()),
+                    child: Text(
+                      'Все',
+                      style: const TextStyle(color: primaryColor, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (products.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Container(
+                  width: double.infinity,
+                  padding: AppUI.cardPadding,
+                  decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Каталог пуст', style: AppUI.h2),
+                      const SizedBox(height: 6),
+                      Text('Попробуйте позже — товары появятся здесь', style: AppUI.muted),
+                    ],
+                  ),
+                ),
+              )
+            else
+              SizedBox(
+                height: 244,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: products.length > 10 ? 10 : products.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                  itemBuilder: (context, index) {
+                    final product = products[index];
+                    return _buildHomeProductCard(product);
+                  },
+                ),
+              ),
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _buildHomeProductCard(Map<String, dynamic> product) {
+    final rawPrice = product['price'];
+    final priceText = rawPrice is num ? rawPrice.toStringAsFixed(0) : (rawPrice?.toString() ?? '0');
+
+    return InkWell(
+      onTap: () => Get.to(() => ProductDetailScreen(product: product)),
+      borderRadius: BorderRadius.circular(AppUI.radiusL),
+      child: Container(
+        width: 190,
+        decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(AppUI.radiusL)),
+              child: AspectRatio(
+                aspectRatio: 4 / 3,
+                child: Container(
+                  color: surfaceColor,
+                  child: product['image_url'] != null
+                      ? Image.network(
+                          product['image_url'],
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Center(
+                            child: Icon(Icons.image, color: Colors.white.withOpacity(0.35)),
+                          ),
+                        )
+                      : Center(
+                          child: Icon(Icons.inventory_2, color: Colors.white.withOpacity(0.35)),
+                        ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    (product['name'] ?? 'Товар').toString(),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, height: 1.2),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '$priceText сум',
+                    style: const TextStyle(color: primaryColor, fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () => Get.to(() => ProductDetailScreen(product: product)),
+                      style: AppUI.outlineButton().copyWith(
+                        padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
+                      ),
+                      child: const Text('Подробнее'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -807,17 +944,25 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         SliverAppBar(
           floating: true,
           backgroundColor: backgroundColor,
-          title: Container(
-            height: 40,
-            decoration: AppUI.inputDecoration(),
-            child: TextField(
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: 'Поиск товаров и продавцов',
-                hintStyle: TextStyle(color: Colors.grey[500]),
-                prefixIcon: Icon(Icons.search, color: Colors.grey[500]),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+          title: InkWell(
+            onTap: () => Get.to(() => const SmartSearchScreen()),
+            borderRadius: BorderRadius.circular(AppUI.radiusM),
+            child: Container(
+              height: 40,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: AppUI.inputDecoration(),
+              child: Row(
+                children: [
+                  Icon(Icons.search, color: Colors.white.withOpacity(0.55)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Поиск товаров и продавцов',
+                      style: AppUI.muted,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

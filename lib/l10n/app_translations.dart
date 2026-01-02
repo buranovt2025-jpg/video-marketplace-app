@@ -209,6 +209,7 @@ class AppTranslations extends Translations {
       // Buy button
       'buy_now': 'Купить',
       'add_to_cart': 'В корзину',
+      'share': 'Поделиться',
       
             // Guest mode
             'login_required': 'Требуется вход',
@@ -462,6 +463,7 @@ class AppTranslations extends Translations {
       // Buy button
       'buy_now': 'Sotib olish',
       'add_to_cart': 'Savatga',
+      'share': 'Ulashish',
       
             // Guest mode
             'login_required': 'Kirish talab qilinadi',
@@ -695,6 +697,7 @@ class AppTranslations extends Translations {
       // Buy button
       'buy_now': 'Buy now',
       'add_to_cart': 'Add to cart',
+      'share': 'Share',
       
           // Guest mode
           'login_required': 'Login required',
