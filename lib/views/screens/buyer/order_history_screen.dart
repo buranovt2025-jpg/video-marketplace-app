@@ -37,7 +37,13 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   }
 
   List<Map<String, dynamic>> get _filteredOrders {
-    final orders = _controller.orders;
+    final orders = _controller.orders.where((o) {
+      // Defense-in-depth: ensure buyers see only their orders (API may already filter).
+      if (_controller.userRole == 'buyer') {
+        return o['buyer_id'] == _controller.userId;
+      }
+      return true;
+    }).toList();
     if (_selectedFilter == 'all') {
       return orders;
     }
@@ -284,7 +290,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               children: [
                 const SizedBox(height: 8),
                 Text(
-                  '${order['total']?.toStringAsFixed(0) ?? '0'} сум',
+                  '${order['total_amount']?.toStringAsFixed(0) ?? '0'} сум',
                   style: const TextStyle(
                     color: primaryColor,
                     fontSize: 18,

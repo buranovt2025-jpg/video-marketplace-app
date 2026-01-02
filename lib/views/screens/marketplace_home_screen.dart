@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/controllers/cart_controller.dart';
+import 'package:tiktok_tutorial/controllers/favorites_controller.dart';
 import 'package:tiktok_tutorial/utils/responsive_helper.dart';
 import 'package:tiktok_tutorial/views/screens/seller/create_product_screen.dart';
 import 'package:tiktok_tutorial/views/screens/seller/create_reel_screen.dart';
@@ -11,6 +12,9 @@ import 'package:tiktok_tutorial/views/screens/seller/my_products_screen.dart';
 import 'package:tiktok_tutorial/views/screens/auth/marketplace_login_screen.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/product_detail_screen.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/cart_screen.dart';
+import 'package:tiktok_tutorial/views/screens/buyer/favorites_screen.dart';
+import 'package:tiktok_tutorial/views/screens/buyer/order_history_screen.dart';
+import 'package:tiktok_tutorial/views/screens/buyer/smart_search_screen.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/order_tracking_screen.dart';
 import 'package:tiktok_tutorial/views/screens/chat/chat_screen.dart';
 import 'package:tiktok_tutorial/views/screens/profile/edit_profile_screen.dart';
@@ -39,7 +43,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   bool get _isBuyer => _isGuestMode || _controller.currentUser.value?['role'] == 'buyer';
   
   // Get max valid index based on role (Guest mode = 3 tabs like buyer)
-  int get _maxIndex => _isSeller ? 4 : 3; // Seller: 5 tabs (0-4), Buyer/Guest: 4 tabs (0-3)
+  int get _maxIndex => _isSeller ? 4 : 2; // Seller: 5 tabs (0-4), Buyer/Guest: 3 tabs (0-2)
   
   // Ensure currentIndex is within bounds
   int get _safeCurrentIndex => _currentIndex > _maxIndex ? _maxIndex : _currentIndex;
@@ -136,13 +140,12 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 ],
               );
             } else {
-              // Buyer: no Create tab
+              // Buyer/Guest: simplified bottom nav (Feed / Reels / Profile)
               return IndexedStack(
                 index: _safeCurrentIndex,
                 children: [
                   _buildFeedTab(),
-                  _buildExploreTab(),
-                  _buildOrdersTab(),
+                  _buildReelsTab(),
                   _buildProfileTab(),
                 ],
               );
@@ -188,12 +191,8 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 label: 'feed'.tr,
               ),
               BottomNavigationBarItem(
-                icon: const Icon(Icons.search),
-                label: 'search'.tr,
-              ),
-              BottomNavigationBarItem(
-                icon: const Icon(Icons.shopping_bag),
-                label: 'orders'.tr,
+                icon: const Icon(Icons.play_circle_outline),
+                label: 'reels'.tr,
               ),
               BottomNavigationBarItem(
                 icon: const Icon(Icons.person),
@@ -204,14 +203,13 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     );
   }
   
-  // Guest mode body - shows feed and explore without login
+  // Guest mode body - shows feed/reels/profile without login
   Widget _buildGuestModeBody() {
     return IndexedStack(
       index: _safeCurrentIndex,
       children: [
         _buildFeedTab(),
-        _buildExploreTab(),
-        _buildGuestOrdersTab(),
+        _buildReelsTab(),
         _buildGuestProfileTab(),
       ],
     );
@@ -236,47 +234,14 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
           label: 'feed'.tr,
         ),
         BottomNavigationBarItem(
-          icon: const Icon(Icons.search),
-          label: 'search'.tr,
+          icon: const Icon(Icons.play_circle_outline),
+          label: 'reels'.tr,
         ),
         BottomNavigationBarItem(
-          icon: const Icon(Icons.shopping_bag),
-          label: 'orders'.tr,
-        ),
-        BottomNavigationBarItem(
-          icon: const Icon(Icons.login),
-          label: 'login'.tr,
+          icon: const Icon(Icons.person),
+          label: 'profile'.tr,
         ),
       ],
-    );
-  }
-  
-  // Guest orders tab - prompts login
-  Widget _buildGuestOrdersTab() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.shopping_bag_outlined, size: 80, color: Colors.grey[600]),
-          const SizedBox(height: 24),
-          Text(
-            'Войдите, чтобы видеть заказы',
-            style: TextStyle(color: Colors.grey[400], fontSize: 18),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: () => Get.to(() => const MarketplaceLoginScreen()),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primaryColor,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: Text('login'.tr, style: const TextStyle(fontSize: 16)),
-          ),
-        ],
-      ),
     );
   }
   
@@ -359,6 +324,12 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
             ),
           ),
           actions: [
+            // Search moved out of bottom nav for buyers/guests.
+            if (!_isSeller)
+              IconButton(
+                icon: const Icon(Icons.search, color: Colors.white),
+                onPressed: () => Get.to(() => const SmartSearchScreen()),
+              ),
             IconButton(
               icon: const Icon(Icons.notifications_outlined, color: Colors.white),
               onPressed: () {},
@@ -376,6 +347,30 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         ),
         
         // Reels feed
+        SliverToBoxAdapter(
+          child: _buildReelsFeed(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildReelsTab() {
+    return CustomScrollView(
+      slivers: [
+        SliverAppBar(
+          floating: true,
+          backgroundColor: backgroundColor,
+          title: Text(
+            'reels'.tr,
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.search, color: Colors.white),
+              onPressed: () => Get.to(() => const SmartSearchScreen()),
+            ),
+          ],
+        ),
         SliverToBoxAdapter(
           child: _buildReelsFeed(),
         ),
@@ -1195,16 +1190,103 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                   const SizedBox(height: 32),
                   
                   // Stats row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildStatItem('Товары', _controller.myProducts.length.toString()),
-                      _buildStatItem('Заказы', _controller.orders.length.toString()),
-                      _buildStatItem('Рилсы', _controller.reels.where((r) => r['author_id'] == _controller.userId).length.toString()),
-                    ],
+                  Builder(
+                    builder: (context) {
+                      final favoritesController = Get.find<FavoritesController>();
+                      final cartController = Get.find<CartController>();
+
+                      final buyerOrdersCount = _controller.orders
+                          .where((o) => o['buyer_id'] == _controller.userId)
+                          .length;
+
+                      final sellerOrdersCount = _controller.orders
+                          .where((o) => o['seller_id'] == _controller.userId)
+                          .length;
+
+                      final myReelsCount = _controller.reels
+                          .where((r) => r['author_id'] == _controller.userId)
+                          .length;
+
+                      if (_isBuyer) {
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _buildStatItem('orders'.tr, buyerOrdersCount.toString()),
+                            _buildStatItem('favorites'.tr, favoritesController.count.toString()),
+                            _buildStatItem('cart'.tr, cartController.itemCount.toString()),
+                          ],
+                        );
+                      }
+
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _buildStatItem('Товары', _controller.myProducts.length.toString()),
+                          _buildStatItem('orders'.tr, sellerOrdersCount.toString()),
+                          _buildStatItem('reels'.tr, myReelsCount.toString()),
+                        ],
+                      );
+                    },
                   ),
                   
                   const SizedBox(height: 32),
+
+                  // Buyer: Orders entry point (Orders moved out of bottom nav)
+                  if (_isBuyer) ...[
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () => Get.to(() => const OrderHistoryScreen()),
+                        icon: const Icon(Icons.receipt_long),
+                        label: Text('orders'.tr),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => Get.to(() => const FavoritesScreen()),
+                            icon: const Icon(Icons.favorite_border),
+                            label: Text('favorites'.tr),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              side: BorderSide(color: Colors.grey[700]!),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => Get.to(() => const CartScreen()),
+                            icon: const Icon(Icons.shopping_cart_outlined),
+                            label: Text('cart'.tr),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              side: BorderSide(color: Colors.grey[700]!),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                  ],
                   
                   // My Cabinet button
                   SizedBox(

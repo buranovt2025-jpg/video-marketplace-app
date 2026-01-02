@@ -7,6 +7,7 @@ class AppTranslations extends Translations {
       // Navigation
       'feed': 'Лента',
       'search': 'Поиск',
+      'reels': 'Рилсы',
       'create': 'Создать',
       'orders': 'Заказы',
       'profile': 'Профиль',
@@ -259,6 +260,7 @@ class AppTranslations extends Translations {
       // Navigation
       'feed': 'Lenta',
       'search': 'Qidirish',
+      'reels': 'Reels',
       'create': 'Yaratish',
       'orders': 'Buyurtmalar',
       'profile': 'Profil',
@@ -491,6 +493,7 @@ class AppTranslations extends Translations {
       // Navigation
       'feed': 'Feed',
       'search': 'Search',
+      'reels': 'Reels',
       'create': 'Create',
       'orders': 'Orders',
       'profile': 'Profile',
