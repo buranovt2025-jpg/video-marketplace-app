@@ -172,6 +172,15 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         : Obx(() => BottomNavigationBar(
             currentIndex: _safeCurrentIndex,
             onTap: (index) {
+              // Ensure Reels tab is truly "Reels-only" and has data.
+              if (!_isSeller && index == 1) {
+                if (_controller.reels.isEmpty) {
+                  _controller.fetchReels(perPage: 10);
+                }
+                if (_controller.products.isEmpty) {
+                  _controller.fetchProducts();
+                }
+              }
               setState(() {
                 _currentIndex = index;
               });
@@ -236,6 +245,15 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     return BottomNavigationBar(
       currentIndex: _safeCurrentIndex,
       onTap: (index) {
+        // Ensure Reels tab is truly "Reels-only" and has data.
+        if (index == 1) {
+          if (_controller.reels.isEmpty) {
+            _controller.fetchReels(perPage: 10);
+          }
+          if (_controller.products.isEmpty) {
+            _controller.fetchProducts();
+          }
+        }
         setState(() {
           _currentIndex = index;
         });
@@ -354,11 +372,6 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         // Products section (buyer-friendly home)
         SliverToBoxAdapter(
           child: _buildProductsSection(),
-        ),
-        
-        // Reels feed
-        SliverToBoxAdapter(
-          child: _buildReelsFeed(limit: 3),
         ),
       ],
     );
