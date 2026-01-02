@@ -253,9 +253,9 @@ class MarketplaceController extends GetxController {
   }
   
   // Content methods
-  Future<void> fetchReels() async {
+  Future<void> fetchReels({int page = 1, int perPage = 10}) async {
     try {
-      final data = await ApiService.getReels();
+      final data = await ApiService.getReels(page: page, perPage: perPage);
       reels.value = List<Map<String, dynamic>>.from(data);
     } catch (e) {
       error.value = e.toString();

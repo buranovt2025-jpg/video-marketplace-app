@@ -41,6 +41,7 @@ class MarketplaceHomeScreen extends StatefulWidget {
 class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   final MarketplaceController _controller = Get.find<MarketplaceController>();
   int _currentIndex = 0;
+  bool _didScheduleDeferredLoad = false;
   
   bool get _isGuestMode => widget.isGuestMode;
   bool get _isSeller => !_isGuestMode && _controller.currentUser.value?['role'] == 'seller';
@@ -83,14 +84,24 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _loadCriticalData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_didScheduleDeferredLoad) return;
+      _didScheduleDeferredLoad = true;
+      _loadDeferredData();
+    });
   }
 
-  Future<void> _loadData() async {
+  Future<void> _loadCriticalData() async {
+    // Stories should appear ASAP (top-most content for buyer/guest).
+    await _controller.fetchStories();
+  }
+
+  Future<void> _loadDeferredData() async {
+    // Defer non-critical requests to reduce long tasks before first frame.
     final futures = <Future<void>>[
       _controller.fetchProducts(),
-      _controller.fetchReels(),
-      _controller.fetchStories(),
+      _controller.fetchReels(perPage: 8),
       if (_controller.isLoggedIn) _controller.fetchOrders(),
     ];
     await Future.wait(futures);
@@ -347,7 +358,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         
         // Reels feed
         SliverToBoxAdapter(
-          child: _buildReelsFeed(),
+          child: _buildReelsFeed(limit: 3),
         ),
       ],
     );
@@ -501,9 +512,19 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
             ),
           ],
         ),
-        SliverToBoxAdapter(
-          child: _buildReelsFeed(),
-        ),
+        Obx(() {
+          final reels = _controller.reels;
+          if (reels.isEmpty) {
+            return SliverToBoxAdapter(child: _buildReelsEmptyState());
+          }
+
+          return SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) => _buildReelCard(reels[index]),
+              childCount: reels.length,
+            ),
+          );
+        }),
       ],
     );
   }
@@ -633,49 +654,54 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     );
   }
 
-  Widget _buildReelsFeed() {
+  Widget _buildReelsFeed({int? limit}) {
     return Obx(() {
       final reels = _controller.reels;
       
       if (reels.isEmpty) {
-        return SizedBox(
-          height: 320,
-          child: Center(
-            child: Padding(
-              padding: AppUI.pagePadding,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.video_library, size: 64, color: Colors.white.withOpacity(0.25)),
-                  const SizedBox(height: 16),
-                  Text('Пока нет рилсов', style: AppUI.h2.copyWith(color: Colors.white.withOpacity(0.9))),
-                  const SizedBox(height: 8),
-                  Text('Попробуйте позже — здесь появятся видео от продавцов', style: AppUI.muted, textAlign: TextAlign.center),
-                  if (_controller.isSeller || _controller.isAdmin) ...[
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () => Get.to(() => const CreateReelScreen()),
-                      style: AppUI.primaryButton(),
-                      child: const Text('Создать первый рилс'),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        );
+        return _buildReelsEmptyState();
       }
       
+      final count = limit == null ? reels.length : (reels.length > limit ? limit : reels.length);
       return ListView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        itemCount: reels.length,
+        itemCount: count,
         itemBuilder: (context, index) {
           final reel = reels[index];
           return _buildReelCard(reel);
         },
       );
     });
+  }
+
+  Widget _buildReelsEmptyState() {
+    return SizedBox(
+      height: 320,
+      child: Center(
+        child: Padding(
+          padding: AppUI.pagePadding,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.video_library, size: 64, color: Colors.white.withOpacity(0.25)),
+              const SizedBox(height: 16),
+              Text('Пока нет рилсов', style: AppUI.h2.copyWith(color: Colors.white.withOpacity(0.9))),
+              const SizedBox(height: 8),
+              Text('Попробуйте позже — здесь появятся видео от продавцов', style: AppUI.muted, textAlign: TextAlign.center),
+              if (_controller.isSeller || _controller.isAdmin) ...[
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => Get.to(() => const CreateReelScreen()),
+                  style: AppUI.primaryButton(),
+                  child: const Text('Создать первый рилс'),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildReelCard(Map<String, dynamic> reel) {
