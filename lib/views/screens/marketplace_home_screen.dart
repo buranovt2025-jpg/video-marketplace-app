@@ -1,16 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/controllers/cart_controller.dart';
+import 'package:tiktok_tutorial/controllers/favorites_controller.dart';
 import 'package:tiktok_tutorial/utils/responsive_helper.dart';
+import 'package:tiktok_tutorial/ui/app_ui.dart';
+import 'package:tiktok_tutorial/ui/app_media.dart';
 import 'package:tiktok_tutorial/views/screens/seller/create_product_screen.dart';
 import 'package:tiktok_tutorial/views/screens/seller/create_reel_screen.dart';
 import 'package:tiktok_tutorial/views/screens/seller/create_story_screen.dart';
 import 'package:tiktok_tutorial/views/screens/seller/my_products_screen.dart';
 import 'package:tiktok_tutorial/views/screens/auth/marketplace_login_screen.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/product_detail_screen.dart';
+import 'package:tiktok_tutorial/views/screens/buyer/seller_products_screen.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/cart_screen.dart';
+import 'package:tiktok_tutorial/views/screens/buyer/favorites_screen.dart';
+import 'package:tiktok_tutorial/views/screens/buyer/order_history_screen.dart';
+import 'package:tiktok_tutorial/views/screens/buyer/smart_search_screen.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/order_tracking_screen.dart';
 import 'package:tiktok_tutorial/views/screens/chat/chat_screen.dart';
 import 'package:tiktok_tutorial/views/screens/profile/edit_profile_screen.dart';
@@ -33,13 +41,14 @@ class MarketplaceHomeScreen extends StatefulWidget {
 class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   final MarketplaceController _controller = Get.find<MarketplaceController>();
   int _currentIndex = 0;
+  bool _didScheduleDeferredLoad = false;
   
   bool get _isGuestMode => widget.isGuestMode;
   bool get _isSeller => !_isGuestMode && _controller.currentUser.value?['role'] == 'seller';
   bool get _isBuyer => _isGuestMode || _controller.currentUser.value?['role'] == 'buyer';
   
   // Get max valid index based on role (Guest mode = 3 tabs like buyer)
-  int get _maxIndex => _isSeller ? 4 : 3; // Seller: 5 tabs (0-4), Buyer/Guest: 4 tabs (0-3)
+  int get _maxIndex => _isSeller ? 4 : 2; // Seller: 5 tabs (0-4), Buyer/Guest: 3 tabs (0-2)
   
   // Ensure currentIndex is within bounds
   int get _safeCurrentIndex => _currentIndex > _maxIndex ? _maxIndex : _currentIndex;
@@ -48,23 +57,23 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   void _promptLogin(String action) {
     Get.dialog(
       AlertDialog(
-        backgroundColor: Colors.grey[900],
-        title: Text('login_required'.tr, style: const TextStyle(color: Colors.white)),
+        backgroundColor: cardColor,
+        title: Text('login_required'.tr, style: AppUI.h2),
         content: Text(
           'Войдите, чтобы $action',
-          style: const TextStyle(color: Colors.white70),
+          style: AppUI.muted,
         ),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: Text('cancel'.tr, style: const TextStyle(color: Colors.grey)),
+            child: Text('cancel'.tr, style: AppUI.muted),
           ),
           ElevatedButton(
             onPressed: () {
               Get.back();
               Get.to(() => const MarketplaceLoginScreen());
             },
-            style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
+            style: AppUI.primaryButton(),
             child: Text('login'.tr),
           ),
         ],
@@ -75,16 +84,27 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _loadCriticalData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_didScheduleDeferredLoad) return;
+      _didScheduleDeferredLoad = true;
+      _loadDeferredData();
+    });
   }
 
-  Future<void> _loadData() async {
-    await _controller.fetchProducts();
-    await _controller.fetchReels();
+  Future<void> _loadCriticalData() async {
+    // Stories should appear ASAP (top-most content for buyer/guest).
     await _controller.fetchStories();
-    if (_controller.isLoggedIn) {
-      await _controller.fetchOrders();
-    }
+  }
+
+  Future<void> _loadDeferredData() async {
+    // Defer non-critical requests to reduce long tasks before first frame.
+    final futures = <Future<void>>[
+      _controller.fetchProducts(),
+      _controller.fetchReels(perPage: 8),
+      if (_controller.isLoggedIn) _controller.fetchOrders(),
+    ];
+    await Future.wait(futures);
   }
 
   void _openProductFromReel(Map<String, dynamic> reel) {
@@ -136,13 +156,12 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 ],
               );
             } else {
-              // Buyer: no Create tab
+              // Buyer/Guest: simplified bottom nav (Feed / Reels / Profile)
               return IndexedStack(
                 index: _safeCurrentIndex,
                 children: [
                   _buildFeedTab(),
-                  _buildExploreTab(),
-                  _buildOrdersTab(),
+                  _buildReelsTab(),
                   _buildProfileTab(),
                 ],
               );
@@ -153,6 +172,15 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         : Obx(() => BottomNavigationBar(
             currentIndex: _safeCurrentIndex,
             onTap: (index) {
+              // Ensure Reels tab is truly "Reels-only" and has data.
+              if (!_isSeller && index == 1) {
+                if (_controller.reels.isEmpty) {
+                  _controller.fetchReels(perPage: 10);
+                }
+                if (_controller.products.isEmpty) {
+                  _controller.fetchProducts();
+                }
+              }
               setState(() {
                 _currentIndex = index;
               });
@@ -188,12 +216,8 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 label: 'feed'.tr,
               ),
               BottomNavigationBarItem(
-                icon: const Icon(Icons.search),
-                label: 'search'.tr,
-              ),
-              BottomNavigationBarItem(
-                icon: const Icon(Icons.shopping_bag),
-                label: 'orders'.tr,
+                icon: const Icon(Icons.play_circle_outline),
+                label: 'reels'.tr,
               ),
               BottomNavigationBarItem(
                 icon: const Icon(Icons.person),
@@ -204,14 +228,13 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     );
   }
   
-  // Guest mode body - shows feed and explore without login
+  // Guest mode body - shows feed/reels/profile without login
   Widget _buildGuestModeBody() {
     return IndexedStack(
       index: _safeCurrentIndex,
       children: [
         _buildFeedTab(),
-        _buildExploreTab(),
-        _buildGuestOrdersTab(),
+        _buildReelsTab(),
         _buildGuestProfileTab(),
       ],
     );
@@ -222,6 +245,15 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     return BottomNavigationBar(
       currentIndex: _safeCurrentIndex,
       onTap: (index) {
+        // Ensure Reels tab is truly "Reels-only" and has data.
+        if (index == 1) {
+          if (_controller.reels.isEmpty) {
+            _controller.fetchReels(perPage: 10);
+          }
+          if (_controller.products.isEmpty) {
+            _controller.fetchProducts();
+          }
+        }
         setState(() {
           _currentIndex = index;
         });
@@ -236,47 +268,14 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
           label: 'feed'.tr,
         ),
         BottomNavigationBarItem(
-          icon: const Icon(Icons.search),
-          label: 'search'.tr,
+          icon: const Icon(Icons.play_circle_outline),
+          label: 'reels'.tr,
         ),
         BottomNavigationBarItem(
-          icon: const Icon(Icons.shopping_bag),
-          label: 'orders'.tr,
-        ),
-        BottomNavigationBarItem(
-          icon: const Icon(Icons.login),
-          label: 'login'.tr,
+          icon: const Icon(Icons.person),
+          label: 'profile'.tr,
         ),
       ],
-    );
-  }
-  
-  // Guest orders tab - prompts login
-  Widget _buildGuestOrdersTab() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.shopping_bag_outlined, size: 80, color: Colors.grey[600]),
-          const SizedBox(height: 24),
-          Text(
-            'Войдите, чтобы видеть заказы',
-            style: TextStyle(color: Colors.grey[400], fontSize: 18),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: () => Get.to(() => const MarketplaceLoginScreen()),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primaryColor,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: Text('login'.tr, style: const TextStyle(fontSize: 16)),
-          ),
-        ],
-      ),
     );
   }
   
@@ -284,62 +283,50 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   Widget _buildGuestProfileTab() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircleAvatar(
-              radius: 50,
-              backgroundColor: Colors.grey[800],
-              child: Icon(Icons.person_outline, size: 60, color: Colors.grey[600]),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Добро пожаловать!',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+        padding: AppUI.pagePadding,
+        child: Container(
+          width: double.infinity,
+          padding: AppUI.cardPadding,
+          decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircleAvatar(
+                radius: 44,
+                backgroundColor: Colors.white.withOpacity(0.08),
+                child: Icon(Icons.person_outline, size: 54, color: Colors.white.withOpacity(0.5)),
               ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Войдите или зарегистрируйтесь,\nчтобы делать покупки',
-              style: TextStyle(color: Colors.grey[400], fontSize: 16),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Get.to(() => const MarketplaceLoginScreen()),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryColor,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+              const SizedBox(height: 18),
+              Text('Добро пожаловать!', style: AppUI.h1),
+              const SizedBox(height: 10),
+              Text(
+                'Войдите или зарегистрируйтесь,\nчтобы делать покупки',
+                style: AppUI.muted.copyWith(fontSize: 14),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Get.to(() => const MarketplaceLoginScreen()),
+                  style: AppUI.primaryButton(),
+                  child: Text('login'.tr),
                 ),
-                child: Text('login'.tr, style: const TextStyle(fontSize: 16)),
               ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () => Get.to(() => const MarketplaceLoginScreen()),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: primaryColor,
-                  side: const BorderSide(color: primaryColor),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () => Get.to(() => const MarketplaceLoginScreen()),
+                  style: AppUI.outlineButton().copyWith(
+                    foregroundColor: const WidgetStatePropertyAll(primaryColor),
+                    side: WidgetStatePropertyAll(BorderSide(color: primaryColor.withOpacity(0.6))),
                   ),
+                  child: Text('register'.tr),
                 ),
-                child: Text('register'.tr, style: const TextStyle(fontSize: 16)),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -351,14 +338,20 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         SliverAppBar(
           floating: true,
           backgroundColor: backgroundColor,
-          title: const Text(
-            'Video Marketplace',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          title: Text('GoGoMarket', style: AppUI.h2),
+          bottom: (!_isSeller)
+              ? PreferredSize(
+                  preferredSize: const Size.fromHeight(110),
+                  child: _buildStoriesRow(),
+                )
+              : null,
           actions: [
+            // Search moved out of bottom nav for buyers/guests.
+            if (!_isSeller)
+              IconButton(
+                icon: const Icon(Icons.search, color: Colors.white),
+                onPressed: () => Get.to(() => const SmartSearchScreen()),
+              ),
             IconButton(
               icon: const Icon(Icons.notifications_outlined, color: Colors.white),
               onPressed: () {},
@@ -370,15 +363,215 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
           ],
         ),
         
-        // Stories row
+        // Stories row moved into AppBar for buyer/guest (top-most content).
+        if (_isSeller)
+          SliverToBoxAdapter(
+            child: _buildStoriesRow(),
+          ),
+
+        // Products section (buyer-friendly home)
         SliverToBoxAdapter(
-          child: _buildStoriesRow(),
+          child: _buildProductsSection(),
         ),
-        
-        // Reels feed
+
+        // Reels preview on Feed (full reels are in Reels tab)
         SliverToBoxAdapter(
-          child: _buildReelsFeed(),
+          child: Padding(
+            padding: const EdgeInsets.only(top: 6, bottom: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      Expanded(child: Text('reels'.tr, style: AppUI.h2)),
+                      TextButton(
+                        onPressed: () {
+                          if (!_isSeller) {
+                            setState(() => _currentIndex = 1);
+                            if (_controller.reels.isEmpty) _controller.fetchReels(perPage: 10);
+                            if (_controller.products.isEmpty) _controller.fetchProducts();
+                          }
+                        },
+                        child: const Text(
+                          'Все',
+                          style: TextStyle(color: primaryColor, fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                _buildReelsFeed(limit: 3),
+              ],
+            ),
+          ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildProductsSection() {
+    return Obx(() {
+      final products = _controller.products;
+
+      return Padding(
+        padding: const EdgeInsets.only(top: 6, bottom: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text('Товары', style: AppUI.h2),
+                  ),
+                  TextButton(
+                    onPressed: () => Get.to(() => const SmartSearchScreen()),
+                    child: Text(
+                      'Все',
+                      style: const TextStyle(color: primaryColor, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (products.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Container(
+                  width: double.infinity,
+                  padding: AppUI.cardPadding,
+                  decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Каталог пуст', style: AppUI.h2),
+                      const SizedBox(height: 6),
+                      Text('Попробуйте позже — товары появятся здесь', style: AppUI.muted),
+                    ],
+                  ),
+                ),
+              )
+            else
+              SizedBox(
+                height: 244,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: products.length > 10 ? 10 : products.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                  itemBuilder: (context, index) {
+                    final product = products[index];
+                    return _buildHomeProductCard(product);
+                  },
+                ),
+              ),
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _buildHomeProductCard(Map<String, dynamic> product) {
+    final rawPrice = product['price'];
+    final priceText = rawPrice is num ? rawPrice.toStringAsFixed(0) : (rawPrice?.toString() ?? '0');
+
+    return InkWell(
+      onTap: () => Get.to(() => ProductDetailScreen(product: product)),
+      borderRadius: BorderRadius.circular(AppUI.radiusL),
+      child: Container(
+        width: 190,
+        decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(AppUI.radiusL)),
+              child: AspectRatio(
+                aspectRatio: 4 / 3,
+                child: Container(
+                  color: surfaceColor,
+                  child: product['image_url'] != null
+                      ? AppMedia.image(
+                          product['image_url'],
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: double.infinity,
+                        )
+                      : Center(
+                          child: Icon(Icons.inventory_2, color: Colors.white.withOpacity(0.35)),
+                        ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    (product['name'] ?? 'Товар').toString(),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, height: 1.2),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '$priceText сум',
+                    style: const TextStyle(color: primaryColor, fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () => Get.to(() => ProductDetailScreen(product: product)),
+                      style: AppUI.outlineButton().copyWith(
+                        padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
+                      ),
+                      child: const Text('Подробнее'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReelsTab() {
+    return CustomScrollView(
+      slivers: [
+        SliverAppBar(
+          floating: true,
+          backgroundColor: backgroundColor,
+          title: Text(
+            'reels'.tr,
+            style: AppUI.h2,
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.search, color: Colors.white),
+              onPressed: () => Get.to(() => const SmartSearchScreen()),
+            ),
+          ],
+        ),
+        Obx(() {
+          final reels = _controller.reels;
+          if (reels.isEmpty) {
+            return SliverToBoxAdapter(child: _buildReelsEmptyState());
+          }
+
+          return SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) => _buildReelCard(reels[index]),
+              childCount: reels.length,
+            ),
+          );
+        }),
       ],
     );
   }
@@ -386,13 +579,13 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   Widget _buildStoriesRow() {
     return Container(
       height: 110,
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       child: Obx(() {
         final stories = _controller.stories;
         
         return ListView.builder(
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           itemCount: stories.length + 1,
           itemBuilder: (context, index) {
             if (index == 0) {
@@ -410,10 +603,10 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
 
   Widget _buildAddStoryButton() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6),
       child: Column(
         children: [
-          GestureDetector(
+          InkWell(
             onTap: () {
               if (_controller.isSeller || _controller.isAdmin) {
                 Get.to(() => const CreateStoryScreen());
@@ -425,28 +618,19 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 );
               }
             },
+            borderRadius: BorderRadius.circular(999),
             child: Container(
-              width: 70,
-              height: 70,
+              width: 72,
+              height: 72,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.grey[700]!, width: 2),
+                border: Border.all(color: Colors.white.withOpacity(0.18), width: 2),
               ),
-              child: Icon(
-                Icons.add,
-                color: buttonColor,
-                size: 30,
-              ),
+              child: const Icon(Icons.add, color: primaryColor, size: 30),
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            'Добавить',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 11,
-            ),
-          ),
+          Text('Добавить', style: AppUI.muted.copyWith(fontSize: 11)),
         ],
       ),
     );
@@ -465,19 +649,19 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         );
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 6),
         child: Column(
           children: [
             Container(
-              width: 70,
-              height: 70,
+              width: 72,
+              height: 72,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
                   colors: [
-                    Colors.purple,
-                    Colors.pink,
-                    Colors.orange,
+                    primaryColor,
+                    accentColor,
+                    Colors.white.withOpacity(0.85),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -506,10 +690,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               width: 70,
               child: Text(
                 story['author_name'] ?? 'User',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 11,
-                ),
+                style: AppUI.muted.copyWith(fontSize: 11),
                 textAlign: TextAlign.center,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -520,43 +701,19 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     );
   }
 
-  Widget _buildReelsFeed() {
+  Widget _buildReelsFeed({int? limit}) {
     return Obx(() {
       final reels = _controller.reels;
       
       if (reels.isEmpty) {
-        return Container(
-          height: 300,
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.video_library, size: 64, color: Colors.grey[700]),
-                const SizedBox(height: 16),
-                Text(
-                  'Пока нет рилсов',
-                  style: TextStyle(color: Colors.grey[500], fontSize: 16),
-                ),
-                if (_controller.isSeller || _controller.isAdmin) ...[
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => Get.to(() => const CreateReelScreen()),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: buttonColor,
-                    ),
-                    child: const Text('Создать первый рилс'),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        );
+        return _buildReelsEmptyState();
       }
       
+      final count = limit == null ? reels.length : (reels.length > limit ? limit : reels.length);
       return ListView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        itemCount: reels.length,
+        itemCount: count,
         itemBuilder: (context, index) {
           final reel = reels[index];
           return _buildReelCard(reel);
@@ -565,25 +722,66 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     });
   }
 
+  Widget _buildReelsEmptyState() {
+    return SizedBox(
+      height: 320,
+      child: Center(
+        child: Padding(
+          padding: AppUI.pagePadding,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.video_library, size: 64, color: Colors.white.withOpacity(0.25)),
+              const SizedBox(height: 16),
+              Text('Пока нет рилсов', style: AppUI.h2.copyWith(color: Colors.white.withOpacity(0.9))),
+              const SizedBox(height: 8),
+              Text('Попробуйте позже — здесь появятся видео от продавцов', style: AppUI.muted, textAlign: TextAlign.center),
+              if (_controller.isSeller || _controller.isAdmin) ...[
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => Get.to(() => const CreateReelScreen()),
+                  style: AppUI.primaryButton(),
+                  child: const Text('Создать первый рилс'),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildReelCard(Map<String, dynamic> reel) {
+    final productId = reel['product_id'];
+    final Map<String, dynamic> linkedProduct = productId == null
+        ? const <String, dynamic>{}
+        : _controller.products.firstWhere(
+            (p) => p['id'] == productId,
+            orElse: () => <String, dynamic>{},
+          );
+
+    final thumbUrl = reel['thumbnail_url'] ?? reel['image_url'];
+    final likesCount = reel['likes_count'] ?? reel['likes'] ?? 0;
+    final commentsCount = reel['comments_count'] ?? 0;
+    final caption = (reel['caption'] ?? '').toString();
+    final sellerId = (linkedProduct['seller_id'] ?? reel['author_id'] ?? reel['seller_id'])?.toString();
+    final sellerName = (linkedProduct['seller_name'] ?? reel['author_name'] ?? 'seller'.tr).toString();
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.grey[900],
-        borderRadius: BorderRadius.circular(12),
-      ),
+      decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: AppUI.cardPadding,
             child: Row(
               children: [
                 CircleAvatar(
                   radius: 18,
-                  backgroundColor: Colors.grey[800],
-                  child: const Icon(Icons.person, color: Colors.white, size: 20),
+                  backgroundColor: Colors.white.withOpacity(0.08),
+                  child: const Icon(Icons.person, color: Colors.white, size: 18),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -592,11 +790,10 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                     children: [
                       Text(
                         reel['author_name'] ?? 'User',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
                       ),
+                      const SizedBox(height: 2),
+                      Text('GoGoMarket', style: AppUI.muted.copyWith(fontSize: 11)),
                     ],
                   ),
                 ),
@@ -609,95 +806,265 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
           ),
           
           // Video placeholder - responsive height
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final videoHeight = ResponsiveHelper.responsiveValue(
-                context,
-                mobile: 400.0,
-                tablet: 500.0,
-                desktop: 600.0,
-              );
-              return Container(
-                height: videoHeight,
-                width: double.infinity,
-                color: Colors.grey[800],
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.play_circle_outline, size: 64, color: Colors.grey[600]),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Видео',
-                        style: TextStyle(color: Colors.grey[600]),
-                      ),
-                    ],
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppUI.radiusL),
+              child: Stack(
+                children: [
+                  AspectRatio(
+                    aspectRatio: 9 / 16,
+                    child: Container(
+                      color: surfaceColor,
+                      child: thumbUrl != null
+                          ? AppMedia.image(
+                              thumbUrl,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
+                            )
+                          : Center(
+                              child: Icon(
+                                Icons.play_circle_outline,
+                                size: 74,
+                                color: Colors.white.withOpacity(0.28),
+                              ),
+                            ),
+                    ),
                   ),
-                ),
-              );
-            },
+                  // subtle gradient for overlay readability
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                            colors: [
+                              Colors.black.withOpacity(0.55),
+                              Colors.transparent,
+                            ],
+                            stops: const [0.0, 0.55],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Play icon overlay
+                  Positioned.fill(
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.50),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white.withOpacity(0.10)),
+                        ),
+                        child: const Icon(Icons.play_arrow, color: Colors.white, size: 26),
+                      ),
+                    ),
+                  ),
+                  // Linked product badge
+                  if (linkedProduct.isNotEmpty)
+                    Positioned(
+                      left: 12,
+                      top: 12,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.55),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: Colors.white.withOpacity(0.12)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.shopping_bag_outlined, size: 16, color: Colors.white),
+                            const SizedBox(width: 8),
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 210),
+                              child: Text(
+                                linkedProduct['name'] ?? 'Товар',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  // Quick stats
+                  Positioned(
+                    left: 12,
+                    bottom: 12,
+                    child: Row(
+                      children: [
+                        _buildReelStatChip(icon: Icons.favorite, value: '$likesCount', color: Colors.redAccent),
+                        const SizedBox(width: 8),
+                        _buildReelStatChip(icon: Icons.chat_bubble_outline, value: '$commentsCount'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
           
           // Actions
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
             child: Row(
               children: [
-                IconButton(
-                  icon: const Icon(Icons.favorite_border, color: Colors.white),
-                  onPressed: () => _controller.likeContent(reel['id']),
+                _buildReelAction(
+                  icon: Icons.favorite_border,
+                  label: '$likesCount',
+                  onTap: () => _controller.likeContent(reel['id']),
                 ),
-                Text(
-                  '${reel['likes'] ?? 0}',
-                  style: const TextStyle(color: Colors.white),
+                const SizedBox(width: 10),
+                _buildReelAction(
+                  icon: Icons.comment_outlined,
+                  label: '$commentsCount',
+                  onTap: () {},
                 ),
-                const SizedBox(width: 16),
-                IconButton(
-                  icon: const Icon(Icons.comment_outlined, color: Colors.white),
-                  onPressed: () {},
-                ),
-                IconButton(
-                  icon: const Icon(Icons.share_outlined, color: Colors.white),
-                  onPressed: () {},
+                const SizedBox(width: 10),
+                _buildReelAction(
+                  icon: Icons.share_outlined,
+                  label: 'share'.tr,
+                  onTap: () {},
                 ),
                 const Spacer(),
-                // Buy button for reels with linked product
-                if (reel['product_id'] != null) ...[
+                // Buy / Seller / Share quick actions for reels with linked product
+                if (linkedProduct.isNotEmpty) ...[
                   ElevatedButton.icon(
                     onPressed: () => _openProductFromReel(reel),
                     icon: const Icon(Icons.shopping_cart, size: 18),
                     label: Text('buy_now'.tr),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
+                    style: AppUI.primaryButton().copyWith(
+                      padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 14, vertical: 10)),
                     ),
                   ),
                   const SizedBox(width: 8),
+                  if (sellerId != null && sellerId.isNotEmpty) ...[
+                    OutlinedButton.icon(
+                      onPressed: () => Get.to(
+                        () => SellerProductsScreen(
+                          sellerId: sellerId,
+                          sellerName: sellerName,
+                        ),
+                      ),
+                      icon: const Icon(Icons.store, size: 18),
+                      label: Text('seller'.tr),
+                      style: AppUI.outlineButton().copyWith(
+                        padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
+                        foregroundColor: const WidgetStatePropertyAll(primaryColor),
+                        side: WidgetStatePropertyAll(BorderSide(color: primaryColor.withOpacity(0.6))),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      // Minimal share: copy identifier (works on web/mobile without extra deps).
+                      // TODO: replace with share_plus when backend provides shareable URLs.
+                      final id = (linkedProduct['id'] ?? reel['id'] ?? '').toString();
+                      _copyToClipboard('GoGoMarket: $id');
+                    },
+                    icon: const Icon(Icons.share, size: 18),
+                    label: Text('share'.tr),
+                    style: AppUI.outlineButton().copyWith(
+                      padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
+                    ),
+                  ),
                 ],
-                IconButton(
-                  icon: const Icon(Icons.bookmark_border, color: Colors.white),
-                  onPressed: () {},
-                ),
               ],
             ),
           ),
           
           // Caption
-          if (reel['caption'] != null && reel['caption'].isNotEmpty)
+          if (caption.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Text(
-                reel['caption'],
-                style: const TextStyle(color: Colors.white),
+                caption,
+                style: AppUI.body.copyWith(color: Colors.white.withOpacity(0.9)),
               ),
             ),
         ],
       ),
     );
+  }
+
+  Widget _buildReelAction({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: Colors.white, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReelStatChip({
+    required IconData icon,
+    required String value,
+    Color color = Colors.white,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.45),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withOpacity(0.10)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 6),
+          Text(
+            value,
+            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _copyToClipboard(String text) async {
+    try {
+      // Clipboard is available on web/mobile.
+      // ignore: avoid_web_libraries_in_flutter
+      await Clipboard.setData(ClipboardData(text: text));
+      Get.snackbar(
+        'success'.tr,
+        'Скопировано',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 1),
+      );
+    } catch (_) {
+      // No-op
+    }
   }
 
   Widget _buildExploreTab() {
@@ -706,20 +1073,25 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         SliverAppBar(
           floating: true,
           backgroundColor: backgroundColor,
-          title: Container(
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.grey[900],
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: TextField(
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: 'Поиск товаров и продавцов',
-                hintStyle: TextStyle(color: Colors.grey[500]),
-                prefixIcon: Icon(Icons.search, color: Colors.grey[500]),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+          title: InkWell(
+            onTap: () => Get.to(() => const SmartSearchScreen()),
+            borderRadius: BorderRadius.circular(AppUI.radiusM),
+            child: Container(
+              height: 40,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: AppUI.inputDecoration(),
+              child: Row(
+                children: [
+                  Icon(Icons.search, color: Colors.white.withOpacity(0.55)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Поиск товаров и продавцов',
+                      style: AppUI.muted,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -733,19 +1105,21 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
             
             if (products.isEmpty) {
               return SliverToBoxAdapter(
-                child: Container(
-                  height: 300,
+                child: SizedBox(
+                  height: 320,
                   child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.inventory_2, size: 64, color: Colors.grey[700]),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Пока нет товаров',
-                          style: TextStyle(color: Colors.grey[500], fontSize: 16),
-                        ),
-                      ],
+                    child: Padding(
+                      padding: AppUI.pagePadding,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.inventory_2, size: 64, color: Colors.white.withOpacity(0.22)),
+                          const SizedBox(height: 16),
+                          Text('Пока нет товаров', style: AppUI.h2.copyWith(color: Colors.white.withOpacity(0.9))),
+                          const SizedBox(height: 8),
+                          Text('Зайдите позже — каталог обновляется', style: AppUI.muted, textAlign: TextAlign.center),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -780,48 +1154,37 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     );
   }
 
-    Widget _buildProductGridItem(Map<String, dynamic> product) {
-      return GestureDetector(
-        onTap: () {
-          Get.to(() => ProductDetailScreen(product: product));
-        },
-      child: Container(
-        color: Colors.grey[900],
+  Widget _buildProductGridItem(Map<String, dynamic> product) {
+    final rawPrice = product['price'];
+    final priceText = rawPrice is num ? rawPrice.toStringAsFixed(0) : (rawPrice?.toString() ?? '0');
+
+    return GestureDetector(
+      onTap: () => Get.to(() => ProductDetailScreen(product: product)),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppUI.radiusM),
         child: Stack(
           fit: StackFit.expand,
           children: [
+            Container(color: surfaceColor),
             if (product['image_url'] != null)
-              Image.network(
-                product['image_url'],
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  color: Colors.grey[800],
-                  child: Icon(Icons.image, color: Colors.grey[600]),
-                ),
-              )
+              AppMedia.image(product['image_url'], fit: BoxFit.cover)
             else
-              Container(
-                color: Colors.grey[800],
-                child: Icon(Icons.inventory_2, color: Colors.grey[600]),
+              Center(
+                child: Icon(Icons.inventory_2, color: Colors.white.withOpacity(0.35)),
               ),
-            
-            // Price tag
             Positioned(
-              bottom: 4,
-              left: 4,
+              bottom: 6,
+              left: 6,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.7),
-                  borderRadius: BorderRadius.circular(4),
+                  color: Colors.black.withOpacity(0.55),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: Colors.white.withOpacity(0.10)),
                 ),
                 child: Text(
-                  '${product['price']?.toStringAsFixed(0) ?? '0'} сум',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  '$priceText сум',
+                  style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
                 ),
               ),
             ),
@@ -835,45 +1198,40 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     return Obx(() {
       if (!_controller.isSeller && !_controller.isAdmin) {
         return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.lock, size: 64, color: Colors.grey[700]),
-              const SizedBox(height: 16),
-              Text(
-                'Только для продавцов',
-                style: TextStyle(color: Colors.grey[500], fontSize: 16),
+          child: Padding(
+            padding: AppUI.pagePadding,
+            child: Container(
+              width: double.infinity,
+              padding: AppUI.cardPadding,
+              decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.lock, size: 56, color: Colors.white.withOpacity(0.28)),
+                  const SizedBox(height: 14),
+                  Text('Только для продавцов', style: AppUI.h2),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Зарегистрируйтесь как продавец,\nчтобы создавать контент',
+                    style: AppUI.muted,
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Зарегистрируйтесь как продавец,\nчтобы создавать контент',
-                style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                textAlign: TextAlign.center,
-              ),
-            ],
+            ),
           ),
         );
       }
       
       return Padding(
-        padding: const EdgeInsets.all(24),
+        padding: AppUI.pagePadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SizedBox(height: 40),
-            const Text(
-              'Создать',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            const SizedBox(height: 12),
+            Text('Создать', style: AppUI.h1),
             const SizedBox(height: 8),
-            Text(
-              'Выберите что хотите создать',
-              style: TextStyle(color: Colors.grey[400]),
-            ),
+            Text('Выберите что хотите создать', style: AppUI.muted),
             const SizedBox(height: 32),
             
             _buildCreateOption(
@@ -906,11 +1264,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               onPressed: () => Get.to(() => const MyProductsScreen()),
               icon: const Icon(Icons.list),
               label: const Text('Мои товары'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.white,
-                side: BorderSide(color: Colors.grey[700]!),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
+              style: AppUI.outlineButton(),
             ),
           ],
         ),
@@ -924,25 +1278,22 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     required String description,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(AppUI.radiusL),
       child: Container(
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.grey[900],
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey[800]!),
-        ),
+        decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
         child: Row(
           children: [
             Container(
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: buttonColor!.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12),
+                color: primaryColor.withOpacity(0.16),
+                borderRadius: BorderRadius.circular(AppUI.radiusM),
               ),
-              child: Icon(icon, color: buttonColor, size: 28),
+              child: Icon(icon, color: primaryColor, size: 28),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -951,21 +1302,17 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: AppUI.h2.copyWith(fontSize: 18),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     description,
-                    style: TextStyle(color: Colors.grey[500], fontSize: 14),
+                    style: AppUI.muted.copyWith(fontSize: 14),
                   ),
                 ],
               ),
             ),
-            Icon(Icons.arrow_forward_ios, color: Colors.grey[600], size: 16),
+            Icon(Icons.arrow_forward_ios, color: Colors.white.withOpacity(0.35), size: 16),
           ],
         ),
       ),
@@ -975,13 +1322,10 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   Widget _buildOrdersTab() {
     return CustomScrollView(
       slivers: [
-        const SliverAppBar(
+        SliverAppBar(
           floating: true,
           backgroundColor: backgroundColor,
-          title: Text(
-            'Заказы',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-          ),
+          title: Text('Заказы', style: AppUI.h2),
         ),
         
         Obx(() {
@@ -989,19 +1333,21 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
           
           if (orders.isEmpty) {
             return SliverToBoxAdapter(
-              child: Container(
-                height: 400,
+              child: SizedBox(
+                height: 320,
                 child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.shopping_bag_outlined, size: 64, color: Colors.grey[700]),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Пока нет заказов',
-                        style: TextStyle(color: Colors.grey[500], fontSize: 16),
-                      ),
-                    ],
+                  child: Padding(
+                    padding: AppUI.pagePadding,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.shopping_bag_outlined, size: 64, color: Colors.white.withOpacity(0.22)),
+                        const SizedBox(height: 16),
+                        Text('Пока нет заказов', style: AppUI.h2.copyWith(color: Colors.white.withOpacity(0.9))),
+                        const SizedBox(height: 8),
+                        Text('Когда появятся — они будут здесь', style: AppUI.muted, textAlign: TextAlign.center),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -1047,15 +1393,15 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     
       final status = order['status'] ?? 'created';
     
+      final rawAmount = order['total_amount'];
+      final amountText = rawAmount is num ? rawAmount.toStringAsFixed(0) : (rawAmount?.toString() ?? '0');
+      
       return GestureDetector(
         onTap: () => Get.to(() => OrderTrackingScreen(order: order)),
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.grey[900],
-            borderRadius: BorderRadius.circular(12),
-          ),
+          decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1066,21 +1412,21 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                     'Заказ #${order['id']?.substring(0, 8) ?? ''}',
                     style: const TextStyle(
                       color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: statusColors[status]?.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
                       statusLabels[status] ?? status,
                       style: TextStyle(
                         color: statusColors[status],
                         fontSize: 12,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
@@ -1088,19 +1434,19 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Сумма: ${order['total_amount']?.toStringAsFixed(0) ?? '0'} сум',
-                style: TextStyle(color: Colors.grey[400]),
+                'Сумма: $amountText сум',
+                style: AppUI.muted,
               ),
               if (order['delivery_address'] != null) ...[
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Icon(Icons.location_on, size: 14, color: Colors.grey[500]),
+                    Icon(Icons.location_on, size: 14, color: Colors.white.withOpacity(0.45)),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         order['delivery_address'],
-                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                        style: AppUI.muted.copyWith(fontSize: 12),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -1121,8 +1467,8 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
             floating: true,
             backgroundColor: backgroundColor,
             title: Text(
-              _controller.userName,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              'profile'.tr,
+              style: AppUI.h2,
             ),
             actions: [
               IconButton(
@@ -1141,70 +1487,148 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
           
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: AppUI.pagePadding,
               child: Column(
                 children: [
-                  // Avatar
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundColor: Colors.grey[800],
-                    backgroundImage: _controller.userAvatar.isNotEmpty
-                        ? NetworkImage(_controller.userAvatar)
-                        : null,
-                    child: _controller.userAvatar.isEmpty
-                        ? const Icon(Icons.person, size: 50, color: Colors.white)
-                        : null,
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Name
-                  Text(
-                    _controller.userName,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  
-                  // Role badge
+                  // Header card (avatar + identity)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: buttonColor!.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      _getRoleLabel(_controller.userRole),
-                      style: TextStyle(
-                        color: buttonColor,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    width: double.infinity,
+                    padding: AppUI.cardPadding,
+                    decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 30,
+                          backgroundColor: Colors.white.withOpacity(0.08),
+                          backgroundImage: _controller.userAvatar.isNotEmpty
+                              ? NetworkImage(_controller.userAvatar)
+                              : null,
+                          child: _controller.userAvatar.isEmpty
+                              ? const Icon(Icons.person, size: 26, color: Colors.white)
+                              : null,
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(_controller.userName, style: AppUI.h2),
+                              const SizedBox(height: 6),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: primaryColor.withOpacity(0.18),
+                                      borderRadius: BorderRadius.circular(999),
+                                      border: Border.all(color: primaryColor.withOpacity(0.35)),
+                                    ),
+                                    child: Text(
+                                      _getRoleLabel(_controller.userRole),
+                                      style: const TextStyle(
+                                        color: primaryColor,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                  Text(_controller.userEmail, style: AppUI.muted),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  
-                  // Email
-                  Text(
-                    _controller.userEmail,
-                    style: TextStyle(color: Colors.grey[500]),
-                  ),
-                  
-                  const SizedBox(height: 32),
+
+                  const SizedBox(height: 12),
                   
                   // Stats row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildStatItem('Товары', _controller.myProducts.length.toString()),
-                      _buildStatItem('Заказы', _controller.orders.length.toString()),
-                      _buildStatItem('Рилсы', _controller.reels.where((r) => r['author_id'] == _controller.userId).length.toString()),
-                    ],
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+                    decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
+                    child: Builder(
+                      builder: (context) {
+                        final favoritesController = Get.find<FavoritesController>();
+                        final cartController = Get.find<CartController>();
+
+                        final buyerOrdersCount = _controller.orders
+                            .where((o) => o['buyer_id'] == _controller.userId)
+                            .length;
+
+                        final sellerOrdersCount = _controller.orders
+                            .where((o) => o['seller_id'] == _controller.userId)
+                            .length;
+
+                        final myReelsCount = _controller.reels
+                            .where((r) => r['author_id'] == _controller.userId)
+                            .length;
+
+                        if (_isBuyer) {
+                          return Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              _buildStatItem('orders'.tr, buyerOrdersCount.toString()),
+                              _buildStatItem('favorites'.tr, favoritesController.count.toString()),
+                              _buildStatItem('cart'.tr, cartController.itemCount.toString()),
+                            ],
+                          );
+                        }
+
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _buildStatItem('Товары', _controller.myProducts.length.toString()),
+                            _buildStatItem('orders'.tr, sellerOrdersCount.toString()),
+                            _buildStatItem('reels'.tr, myReelsCount.toString()),
+                          ],
+                        );
+                      },
+                    ),
                   ),
                   
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 16),
+
+                  // Buyer: Orders entry point (Orders moved out of bottom nav)
+                  if (_isBuyer) ...[
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () => Get.to(() => const OrderHistoryScreen()),
+                        icon: const Icon(Icons.receipt_long),
+                        label: Text('orders'.tr),
+                        style: AppUI.primaryButton(),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => Get.to(() => const FavoritesScreen()),
+                            icon: const Icon(Icons.favorite_border),
+                            label: Text('favorites'.tr),
+                            style: AppUI.outlineButton(),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => Get.to(() => const CartScreen()),
+                            icon: const Icon(Icons.shopping_cart_outlined),
+                            label: Text('cart'.tr),
+                            style: AppUI.outlineButton(),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                  ],
                   
                   // My Cabinet button
                   SizedBox(
@@ -1219,14 +1643,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                       },
                       icon: const Icon(Icons.dashboard),
                       label: Text('my_cabinet'.tr),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
+                      style: AppUI.primaryButton(),
                     ),
                   ),
                   
@@ -1241,14 +1658,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                       },
                       icon: const Icon(Icons.language),
                       label: Text('language'.tr),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        side: BorderSide(color: Colors.grey[700]!),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
+                      style: AppUI.outlineButton(),
                     ),
                   ),
                   
@@ -1262,14 +1672,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                         onPressed: () => Get.to(() => const NearbySellersScreen()),
                         icon: const Icon(Icons.location_on),
                         label: Text('nearby_sellers'.tr),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          side: BorderSide(color: Colors.grey[700]!),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
+                        style: AppUI.outlineButton(),
                       ),
                     ),
                   
@@ -1282,14 +1685,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                         onPressed: () => Get.to(() => const SellerVerificationScreen()),
                         icon: const Icon(Icons.verified_user),
                         label: Text('seller_verification'.tr),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          side: BorderSide(color: Colors.grey[700]!),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
+                        style: AppUI.outlineButton(),
                       ),
                     ),
                   ],
@@ -1365,16 +1761,12 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
       children: [
         Text(
           value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 4),
         Text(
           label,
-          style: TextStyle(color: Colors.grey[500]),
+          style: AppUI.muted.copyWith(fontSize: 12),
         ),
       ],
     );

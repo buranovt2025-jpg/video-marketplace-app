@@ -144,22 +144,26 @@ class ApiService {
     required double price,
     String? description,
     String? imageUrl,
+    String? videoUrl,
     String? category,
     int? quantity,
     bool inStock = true,
   }) async {
+    final body = <String, dynamic>{
+      'name': name,
+      'price': price,
+      'quantity': quantity ?? 1,
+      'in_stock': inStock,
+    };
+    if (description != null) body['description'] = description;
+    if (imageUrl != null) body['image_url'] = imageUrl;
+    if (videoUrl != null) body['video_url'] = videoUrl;
+    if (category != null) body['category'] = category;
+
     final response = await http.post(
       Uri.parse('$baseUrl/api/products'),
       headers: _headers,
-      body: jsonEncode({
-        'name': name,
-        'price': price,
-        'description': description,
-        'image_url': imageUrl,
-        'category': category,
-        'quantity': quantity ?? 1,
-        'in_stock': inStock,
-      }),
+      body: jsonEncode(body),
     );
     
     if (response.statusCode == 200) {

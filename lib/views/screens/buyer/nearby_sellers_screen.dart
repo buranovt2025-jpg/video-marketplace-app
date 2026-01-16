@@ -4,6 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/services/location_service.dart';
+import 'package:tiktok_tutorial/ui/app_ui.dart';
 
 class NearbySellersScreen extends StatefulWidget {
   const NearbySellersScreen({Key? key}) : super(key: key);
@@ -115,7 +116,7 @@ class _NearbySellersScreenState extends State<NearbySellersScreen> {
         ),
         title: Text(
           'nearby_sellers'.tr,
-          style: const TextStyle(color: Colors.white),
+          style: AppUI.h2,
         ),
         actions: [
           IconButton(
@@ -127,33 +128,37 @@ class _NearbySellersScreenState extends State<NearbySellersScreen> {
       body: Column(
         children: [
           // Distance filter
-          Container(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Icon(Icons.location_on, color: primaryColor),
-                const SizedBox(width: 8),
-                Text(
-                  'Радиус: ${_maxDistance.toInt()} км',
-                  style: const TextStyle(color: Colors.white),
-                ),
-                Expanded(
-                  child: Slider(
-                    value: _maxDistance,
-                    min: 1,
-                    max: 50,
-                    divisions: 49,
-                    activeColor: primaryColor,
-                    inactiveColor: Colors.grey[700],
-                    onChanged: (value) {
-                      setState(() {
-                        _maxDistance = value;
-                      });
-                      _loadNearbySellers();
-                    },
+          Padding(
+            padding: AppUI.pagePadding,
+            child: Container(
+              padding: AppUI.cardPadding,
+              decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
+              child: Row(
+                children: [
+                  const Icon(Icons.location_on, color: primaryColor),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Радиус: ${_maxDistance.toInt()} км',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
                   ),
-                ),
-              ],
+                  Expanded(
+                    child: Slider(
+                      value: _maxDistance,
+                      min: 1,
+                      max: 50,
+                      divisions: 49,
+                      activeColor: primaryColor,
+                      inactiveColor: Colors.white.withOpacity(0.18),
+                      onChanged: (value) {
+                        setState(() {
+                          _maxDistance = value;
+                        });
+                        _loadNearbySellers();
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           
@@ -168,16 +173,13 @@ class _NearbySellersScreenState extends State<NearbySellersScreen> {
 
   Widget _buildContent() {
     if (_isLoading) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(color: primaryColor),
-            SizedBox(height: 16),
-            Text(
-              'Поиск продавцов рядом...',
-              style: TextStyle(color: Colors.white),
-            ),
+            const CircularProgressIndicator(color: primaryColor),
+            const SizedBox(height: 16),
+            Text('Поиск продавцов рядом...', style: AppUI.muted),
           ],
         ),
       );
@@ -188,17 +190,17 @@ class _NearbySellersScreenState extends State<NearbySellersScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.location_off, size: 80, color: Colors.grey[600]),
+            Icon(Icons.location_off, size: 80, color: Colors.white.withOpacity(0.25)),
             const SizedBox(height: 16),
             Text(
               _error!,
-              style: TextStyle(color: Colors.grey[400], fontSize: 16),
+              style: AppUI.muted.copyWith(fontSize: 14),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: _loadLocation,
-              style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
+              style: AppUI.primaryButton(),
               child: const Text('Повторить'),
             ),
           ],
@@ -211,16 +213,16 @@ class _NearbySellersScreenState extends State<NearbySellersScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.store_mall_directory, size: 80, color: Colors.grey[600]),
+            Icon(Icons.store_mall_directory, size: 80, color: Colors.white.withOpacity(0.25)),
             const SizedBox(height: 16),
             Text(
               'Нет продавцов в радиусе ${_maxDistance.toInt()} км',
-              style: TextStyle(color: Colors.grey[400], fontSize: 16),
+              style: AppUI.h2.copyWith(color: Colors.white.withOpacity(0.9)),
             ),
             const SizedBox(height: 8),
             Text(
               'Попробуйте увеличить радиус поиска',
-              style: TextStyle(color: Colors.grey[600], fontSize: 14),
+              style: AppUI.muted,
             ),
           ],
         ),
@@ -228,7 +230,7 @@ class _NearbySellersScreenState extends State<NearbySellersScreen> {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: AppUI.pagePadding,
       itemCount: _nearbySellers.length,
       itemBuilder: (context, index) {
         final seller = _nearbySellers[index];
@@ -243,18 +245,15 @@ class _NearbySellersScreenState extends State<NearbySellersScreen> {
     
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.grey[900],
-        borderRadius: BorderRadius.circular(12),
-      ),
+      decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
       child: ListTile(
         contentPadding: const EdgeInsets.all(16),
         leading: Stack(
           children: [
             CircleAvatar(
               radius: 28,
-              backgroundColor: Colors.grey[800],
-              child: Icon(Icons.store, color: Colors.grey[600], size: 28),
+              backgroundColor: Colors.white.withOpacity(0.08),
+              child: Icon(Icons.store, color: Colors.white.withOpacity(0.55), size: 28),
             ),
             if (isVerified)
               Positioned(
@@ -263,7 +262,7 @@ class _NearbySellersScreenState extends State<NearbySellersScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(2),
                   decoration: const BoxDecoration(
-                    color: Colors.blue,
+                    color: primaryColor,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.check, color: Colors.white, size: 12),
@@ -278,7 +277,7 @@ class _NearbySellersScreenState extends State<NearbySellersScreen> {
                 seller['name'],
                 style: const TextStyle(
                   color: Colors.white,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ),
@@ -286,12 +285,12 @@ class _NearbySellersScreenState extends State<NearbySellersScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
+                  color: primaryColor.withOpacity(0.16),
+                  borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
                   'verified_seller'.tr,
-                  style: const TextStyle(color: Colors.blue, fontSize: 10),
+                  style: const TextStyle(color: primaryColor, fontSize: 10, fontWeight: FontWeight.w700),
                 ),
               ),
           ],
@@ -302,25 +301,25 @@ class _NearbySellersScreenState extends State<NearbySellersScreen> {
             const SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.location_on, size: 16, color: primaryColor),
+                const Icon(Icons.location_on, size: 16, color: primaryColor),
                 const SizedBox(width: 4),
                 Text(
                   _formatDistance(distance),
-                  style: TextStyle(color: primaryColor),
+                  style: const TextStyle(color: primaryColor, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(width: 16),
-                Icon(Icons.star, size: 16, color: Colors.amber),
+                const Icon(Icons.star, size: 16, color: Colors.amber),
                 const SizedBox(width: 4),
                 Text(
                   '${seller['rating']?.toStringAsFixed(1)}',
                   style: const TextStyle(color: Colors.amber),
                 ),
                 const SizedBox(width: 16),
-                Icon(Icons.inventory_2, size: 16, color: Colors.grey[500]),
+                Icon(Icons.inventory_2, size: 16, color: Colors.white.withOpacity(0.45)),
                 const SizedBox(width: 4),
                 Text(
                   '${seller['products_count']} товаров',
-                  style: TextStyle(color: Colors.grey[500]),
+                  style: AppUI.muted.copyWith(fontSize: 12),
                 ),
               ],
             ),

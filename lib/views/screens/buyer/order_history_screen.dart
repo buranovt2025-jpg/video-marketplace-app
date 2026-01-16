@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/ui/app_ui.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/order_tracking_screen.dart';
 
 class OrderHistoryScreen extends StatefulWidget {
@@ -15,17 +16,20 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   final MarketplaceController _controller = Get.find<MarketplaceController>();
   String _selectedFilter = 'all';
 
-  final List<String> _filters = ['all', 'pending', 'accepted', 'in_delivery', 'delivered', 'cancelled'];
+  // Align with backend statuses used across the app (created/accepted/ready/picked_up/in_transit/delivered/cancelled).
+  final List<String> _filters = ['all', 'created', 'accepted', 'ready', 'in_transit', 'delivered', 'cancelled'];
 
   String _getFilterLabel(String filter) {
     switch (filter) {
       case 'all':
         return 'all_orders'.tr;
-      case 'pending':
+      case 'created':
         return 'new_orders'.tr;
       case 'accepted':
         return 'active_orders'.tr;
-      case 'in_delivery':
+      case 'ready':
+        return 'pickup'.tr;
+      case 'in_transit':
         return 'deliver'.tr;
       case 'delivered':
         return 'completed_orders'.tr;
@@ -37,7 +41,13 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   }
 
   List<Map<String, dynamic>> get _filteredOrders {
-    final orders = _controller.orders;
+    final orders = _controller.orders.where((o) {
+      // Defense-in-depth: ensure buyers see only their orders (API may already filter).
+      if (_controller.userRole == 'buyer') {
+        return o['buyer_id'] == _controller.userId;
+      }
+      return true;
+    }).toList();
     if (_selectedFilter == 'all') {
       return orders;
     }
@@ -164,7 +174,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
         ),
         title: Text(
           'order_history'.tr,
-          style: const TextStyle(color: Colors.white),
+          style: AppUI.h2,
         ),
       ),
       body: Column(
@@ -172,7 +182,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
           // Filter chips
           Container(
             height: 50,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               itemCount: _filters.length,
@@ -189,7 +199,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                         _selectedFilter = filter;
                       });
                     },
-                    backgroundColor: Colors.grey[800],
+                    backgroundColor: surfaceColor,
                     selectedColor: primaryColor,
                     labelStyle: TextStyle(
                       color: isSelected ? Colors.white : Colors.grey[400],
@@ -216,7 +226,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                       const SizedBox(height: 16),
                       Text(
                         'no_results'.tr,
-                        style: TextStyle(color: Colors.grey[400], fontSize: 18),
+                        style: AppUI.h2.copyWith(color: Colors.white.withOpacity(0.9)),
                       ),
                     ],
                   ),
@@ -224,7 +234,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               }
               
               return ListView.builder(
-                padding: const EdgeInsets.all(16),
+                padding: AppUI.pagePadding,
                 itemCount: orders.length,
                 itemBuilder: (context, index) {
                   final order = orders[index];
@@ -244,10 +254,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
     
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.grey[900],
-        borderRadius: BorderRadius.circular(12),
-      ),
+      decoration: AppUI.cardDecoration(radius: AppUI.radiusL),
       child: Column(
         children: [
           ListTile(
@@ -259,7 +266,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                   'Заказ #${order['id']?.substring(0, 8) ?? ''}',
                   style: const TextStyle(
                     color: Colors.white,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 Container(
@@ -273,7 +280,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                     style: TextStyle(
                       color: _getStatusColor(status),
                       fontSize: 12,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
@@ -284,17 +291,17 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               children: [
                 const SizedBox(height: 8),
                 Text(
-                  '${order['total']?.toStringAsFixed(0) ?? '0'} сум',
+                  '${order['total_amount']?.toStringAsFixed(0) ?? '0'} сум',
                   style: const TextStyle(
                     color: primaryColor,
                     fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   order['delivery_address'] ?? 'Адрес не указан',
-                  style: TextStyle(color: Colors.grey[400]),
+                  style: AppUI.muted,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -313,7 +320,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                     onPressed: () => Get.to(() => OrderTrackingScreen(order: order)),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.white,
-                      side: BorderSide(color: Colors.grey[700]!),
+                      side: BorderSide(color: Colors.white.withOpacity(0.16)),
                     ),
                     child: Text('Подробнее'),
                   ),

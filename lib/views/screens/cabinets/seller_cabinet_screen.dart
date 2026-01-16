@@ -6,6 +6,7 @@ import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/views/screens/seller/my_products_screen.dart';
 import 'package:tiktok_tutorial/views/screens/common/qr_code_screen.dart';
 import 'package:tiktok_tutorial/views/screens/seller/seller_analytics_screen.dart';
+import 'package:tiktok_tutorial/ui/app_media.dart';
 
 class SellerCabinetScreen extends StatefulWidget {
   const SellerCabinetScreen({Key? key}) : super(key: key);
@@ -585,14 +586,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
                   child: product['image_url'] != null
                       ? ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            product['image_url'],
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Icon(
-                              Icons.inventory_2,
-                              color: Colors.grey[600],
-                            ),
-                          ),
+                          child: AppMedia.image(product['image_url'], fit: BoxFit.cover, width: 50, height: 50),
                         )
                       : Icon(Icons.inventory_2, color: Colors.grey[600]),
                 ),
@@ -696,14 +690,7 @@ class _SellerCabinetScreenState extends State<SellerCabinetScreen> with SingleTi
               child: product['image_url'] != null
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        product['image_url'],
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Icon(
-                          Icons.inventory_2,
-                          color: Colors.grey[600],
-                        ),
-                      ),
+                      child: AppMedia.image(product['image_url'], fit: BoxFit.cover, width: 60, height: 60),
                     )
                   : Icon(Icons.inventory_2, color: Colors.grey[600]),
             ),

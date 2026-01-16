@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
+import 'package:tiktok_tutorial/ui/app_ui.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({Key? key}) : super(key: key);
@@ -91,7 +92,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         ),
         title: Text(
           'notifications'.tr,
-          style: const TextStyle(color: Colors.white),
+          style: AppUI.h2,
         ),
         actions: [
           if (_notifications.any((n) => n['read'] == false))
@@ -99,7 +100,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               onPressed: _markAllAsRead,
               child: Text(
                 'mark_all_read'.tr,
-                style: const TextStyle(color: primaryColor),
+                style: const TextStyle(color: primaryColor, fontWeight: FontWeight.w700),
               ),
             ),
         ],
@@ -109,16 +110,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.notifications_off, size: 80, color: Colors.grey[600]),
+                  Icon(Icons.notifications_off, size: 80, color: Colors.white.withOpacity(0.22)),
                   const SizedBox(height: 16),
                   Text(
                     'no_notifications'.tr,
-                    style: TextStyle(color: Colors.grey[400], fontSize: 18),
+                    style: AppUI.h2.copyWith(color: Colors.white.withOpacity(0.9)),
                   ),
                 ],
               ),
             )
           : ListView.builder(
+              padding: AppUI.pagePadding,
               itemCount: _notifications.length,
               itemBuilder: (context, index) {
                 final notification = _notifications[index];
@@ -132,11 +134,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final isRead = notification['read'] as bool;
     
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      decoration: BoxDecoration(
-        color: isRead ? Colors.grey[900] : Colors.grey[850],
-        borderRadius: BorderRadius.circular(12),
-        border: isRead ? null : Border.all(color: primaryColor.withOpacity(0.3)),
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: AppUI.cardDecoration(radius: AppUI.radiusL).copyWith(
+        color: isRead ? cardColor : const Color(0xFF202020),
+        border: Border.all(color: isRead ? Colors.white.withOpacity(0.06) : primaryColor.withOpacity(0.25)),
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.all(12),
@@ -159,7 +160,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 notification['title'],
                 style: TextStyle(
                   color: Colors.white,
-                  fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
+                  fontWeight: isRead ? FontWeight.w600 : FontWeight.w800,
                 ),
               ),
             ),
@@ -180,12 +181,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             const SizedBox(height: 4),
             Text(
               notification['message'],
-              style: TextStyle(color: Colors.grey[400]),
+              style: AppUI.muted,
             ),
             const SizedBox(height: 4),
             Text(
               notification['time'],
-              style: TextStyle(color: Colors.grey[600], fontSize: 12),
+              style: AppUI.muted.copyWith(fontSize: 12),
             ),
           ],
         ),

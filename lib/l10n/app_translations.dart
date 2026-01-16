@@ -7,6 +7,7 @@ class AppTranslations extends Translations {
       // Navigation
       'feed': 'Лента',
       'search': 'Поиск',
+      'reels': 'Рилсы',
       'create': 'Создать',
       'orders': 'Заказы',
       'profile': 'Профиль',
@@ -208,6 +209,7 @@ class AppTranslations extends Translations {
       // Buy button
       'buy_now': 'Купить',
       'add_to_cart': 'В корзину',
+      'share': 'Поделиться',
       
             // Guest mode
             'login_required': 'Требуется вход',
@@ -259,6 +261,7 @@ class AppTranslations extends Translations {
       // Navigation
       'feed': 'Lenta',
       'search': 'Qidirish',
+      'reels': 'Reels',
       'create': 'Yaratish',
       'orders': 'Buyurtmalar',
       'profile': 'Profil',
@@ -460,6 +463,7 @@ class AppTranslations extends Translations {
       // Buy button
       'buy_now': 'Sotib olish',
       'add_to_cart': 'Savatga',
+      'share': 'Ulashish',
       
             // Guest mode
             'login_required': 'Kirish talab qilinadi',
@@ -491,6 +495,7 @@ class AppTranslations extends Translations {
       // Navigation
       'feed': 'Feed',
       'search': 'Search',
+      'reels': 'Reels',
       'create': 'Create',
       'orders': 'Orders',
       'profile': 'Profile',
@@ -692,6 +697,7 @@ class AppTranslations extends Translations {
       // Buy button
       'buy_now': 'Buy now',
       'add_to_cart': 'Add to cart',
+      'share': 'Share',
       
           // Guest mode
           'login_required': 'Login required',
