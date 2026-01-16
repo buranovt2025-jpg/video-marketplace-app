@@ -431,7 +431,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${_formatPrice(product['price'])} сум',
+                      "${_formatPrice(product['price'])} ${'currency_sum'.tr}",
                       style: TextStyle(
                         color: primaryColor,
                         fontWeight: FontWeight.bold,

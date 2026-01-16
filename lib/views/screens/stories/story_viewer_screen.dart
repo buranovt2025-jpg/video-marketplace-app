@@ -2,15 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/views/screens/buyer/product_detail_screen.dart';
+import 'package:video_player/video_player.dart';
 
 class StoryViewerScreen extends StatefulWidget {
   final List<Map<String, dynamic>> stories;
   final int initialIndex;
+  final ValueChanged<int>? onIndexChanged;
 
   const StoryViewerScreen({
     Key? key,
     required this.stories,
     this.initialIndex = 0,
+    this.onIndexChanged,
   }) : super(key: key);
 
   @override
@@ -19,10 +23,13 @@ class StoryViewerScreen extends StatefulWidget {
 
 class _StoryViewerScreenState extends State<StoryViewerScreen>
     with SingleTickerProviderStateMixin {
+  final MarketplaceController _controller = Get.find<MarketplaceController>();
   late PageController _pageController;
   late AnimationController _progressController;
   int _currentIndex = 0;
   bool _isPaused = false;
+  VideoPlayerController? _videoController;
+  Future<void>? _videoInit;
 
   @override
   void initState() {
@@ -34,13 +41,15 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
       duration: const Duration(seconds: 5),
     );
     _progressController.addStatusListener(_onProgressComplete);
-    _startProgress();
+    _prepareCurrentStory();
+    widget.onIndexChanged?.call(_currentIndex);
   }
 
   @override
   void dispose() {
     _pageController.dispose();
     _progressController.dispose();
+    _disposeVideoController();
     super.dispose();
   }
 
@@ -55,16 +64,93 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
     _progressController.forward();
   }
 
+  void _disposeVideoController() {
+    final ctrl = _videoController;
+    _videoController = null;
+    _videoInit = null;
+    ctrl?.dispose();
+  }
+
+  Duration _normalizeStoryDuration(Duration d) {
+    // Keep IG-like feel: too short feels like a flash, too long feels stuck.
+    const min = Duration(seconds: 2);
+    const max = Duration(seconds: 15);
+    if (d <= Duration.zero) return const Duration(seconds: 5);
+    if (d < min) return min;
+    if (d > max) return max;
+    return d;
+  }
+
+  Future<void> _prepareCurrentStory() async {
+    _progressController.stop();
+    _disposeVideoController();
+
+    final story = widget.stories[_currentIndex];
+    final videoUrl = story['video_url']?.toString();
+    final hasVideo = videoUrl != null && videoUrl.isNotEmpty;
+
+    if (!hasVideo) {
+      _progressController.duration = const Duration(seconds: 5);
+      if (!_isPaused) _startProgress();
+      return;
+    }
+
+    final controller = VideoPlayerController.network(videoUrl);
+    _videoController = controller;
+    _videoInit = controller.initialize();
+
+    try {
+      await _videoInit;
+      if (!mounted) return;
+
+      await controller.setLooping(false);
+      await controller.setVolume(1);
+      final d = _normalizeStoryDuration(controller.value.duration);
+      _progressController.duration = d;
+
+      if (!_isPaused) {
+        await controller.play();
+        _startProgress();
+      }
+      setState(() {});
+    } catch (_) {
+      // If video fails, keep UX moving.
+      _progressController.duration = const Duration(seconds: 5);
+      if (!_isPaused) _startProgress();
+      setState(() {});
+    }
+  }
+
+  void _openProductFromStory(Map<String, dynamic> story) {
+    final productId = story['product_id']?.toString();
+    if (productId == null || productId.isEmpty) return;
+
+    final product = _controller.products.firstWhere(
+      (p) => p['id']?.toString() == productId,
+      orElse: () => <String, dynamic>{},
+    );
+
+    if (product.isNotEmpty) {
+      Get.to(() => ProductDetailScreen(product: product));
+    } else {
+      Get.snackbar(
+        'error'.tr,
+        'product_not_found'.tr,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
   void _nextStory() {
     if (_currentIndex < widget.stories.length - 1) {
-      setState(() {
-        _currentIndex++;
-      });
+      setState(() => _currentIndex++);
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
-      _startProgress();
+      widget.onIndexChanged?.call(_currentIndex);
     } else {
       Get.back();
     }
@@ -72,14 +158,12 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
 
   void _previousStory() {
     if (_currentIndex > 0) {
-      setState(() {
-        _currentIndex--;
-      });
+      setState(() => _currentIndex--);
       _pageController.previousPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
-      _startProgress();
+      widget.onIndexChanged?.call(_currentIndex);
     }
   }
 
@@ -99,12 +183,14 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
       _isPaused = true;
     });
     _progressController.stop();
+    _videoController?.pause();
   }
 
   void _onLongPressEnd(LongPressEndDetails details) {
     setState(() {
       _isPaused = false;
     });
+    _videoController?.play();
     _progressController.forward();
   }
 
@@ -121,7 +207,12 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
             // Story content
             PageView.builder(
               controller: _pageController,
-              physics: const NeverScrollableScrollPhysics(),
+              physics: const PageScrollPhysics(),
+              onPageChanged: (index) {
+                setState(() => _currentIndex = index);
+                _prepareCurrentStory();
+                widget.onIndexChanged?.call(_currentIndex);
+              },
               itemCount: widget.stories.length,
               itemBuilder: (context, index) {
                 final story = widget.stories[index];
@@ -256,14 +347,14 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
   }
 
   Widget _buildStoryContent(Map<String, dynamic> story) {
-    final imageUrl = story['image_url'];
-    final videoUrl = story['video_url'];
+    final imageUrl = story['image_url']?.toString();
+    final videoUrl = story['video_url']?.toString();
 
     return Container(
       color: Colors.black,
-      child: Center(
-        child: imageUrl != null
-            ? Image.network(
+      child: (imageUrl != null && imageUrl.isNotEmpty)
+          ? Center(
+              child: Image.network(
                 imageUrl,
                 fit: BoxFit.contain,
                 loadingBuilder: (context, child, loadingProgress) {
@@ -285,51 +376,83 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                       Icon(Icons.broken_image, size: 64, color: Colors.grey[600]),
                       const SizedBox(height: 16),
                       Text(
-                        'Не удалось загрузить изображение',
+                        'image_load_failed'.tr,
                         style: TextStyle(color: Colors.grey[500]),
                       ),
                     ],
                   );
                 },
-              )
-            : videoUrl != null
-                ? Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.play_circle_outline, size: 80, color: Colors.grey[600]),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Видео история',
-                        style: TextStyle(color: Colors.grey[500]),
-                      ),
-                    ],
-                  )
-                : Column(
+              ),
+            )
+          : (videoUrl != null && videoUrl.isNotEmpty)
+              ? _buildVideoStory()
+              : Center(
+                  child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.image, size: 64, color: Colors.grey[600]),
                       const SizedBox(height: 16),
                       Text(
-                        'Нет контента',
+                        'no_content'.tr,
                         style: TextStyle(color: Colors.grey[500]),
                       ),
                     ],
                   ),
-      ),
+                ),
+    );
+  }
+
+  Widget _buildVideoStory() {
+    final init = _videoInit;
+    final controller = _videoController;
+
+    if (init == null || controller == null) {
+      return const Center(
+        child: CircularProgressIndicator(color: Colors.white),
+      );
+    }
+
+    return FutureBuilder<void>(
+      future: init,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done || !controller.value.isInitialized) {
+          return const Center(
+            child: CircularProgressIndicator(color: Colors.white),
+          );
+        }
+
+        return Center(
+          child: FittedBox(
+            fit: BoxFit.cover,
+            child: SizedBox(
+              width: controller.value.size.width,
+              height: controller.value.size.height,
+              child: VideoPlayer(controller),
+            ),
+          ),
+        );
+      },
     );
   }
 
   Widget _buildProductLink(Map<String, dynamic> story) {
+    final productId = story['product_id']?.toString();
+    final product = productId == null
+        ? null
+        : _controller.products.firstWhere(
+            (p) => p['id']?.toString() == productId,
+            orElse: () => <String, dynamic>{},
+          );
+
+    final hasProduct = product != null && product.isNotEmpty;
+    final productName = hasProduct ? (product['name'] ?? 'product'.tr).toString() : 'open_product'.tr;
+    final productImage = hasProduct ? product['image_url']?.toString() : null;
+    final price = hasProduct ? product['price'] : null;
+    final priceText = (price is num) ? "${price.toStringAsFixed(0)} ${'currency_sum'.tr}" : null;
+
     return GestureDetector(
       onTap: () {
-        // Navigate to product detail
-        Get.snackbar(
-          'Товар',
-          'Переход к товару: ${story['product_id']}',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.white,
-          colorText: Colors.black,
-        );
+        _openProductFromStory(story);
       },
       child: Container(
         padding: const EdgeInsets.all(12),
@@ -346,7 +469,16 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                 color: Colors.grey[200],
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.shopping_bag, color: Colors.grey),
+              child: (productImage != null && productImage.isNotEmpty)
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        productImage,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const Icon(Icons.shopping_bag, color: Colors.grey),
+                      ),
+                    )
+                  : const Icon(Icons.shopping_bag, color: Colors.grey),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -354,19 +486,23 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    'Посмотреть товар',
-                    style: TextStyle(
+                  Text(
+                    productName,
+                    style: const TextStyle(
                       color: Colors.black,
                       fontWeight: FontWeight.bold,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    'Нажмите чтобы открыть',
+                    priceText ?? 'tap_to_open'.tr,
                     style: TextStyle(
                       color: Colors.grey[600],
                       fontSize: 12,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
@@ -379,7 +515,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
   }
 
   String _getTimeAgo(String? dateString) {
-    if (dateString == null) return 'Недавно';
+    if (dateString == null) return 'time_recent'.tr;
     
     try {
       final date = DateTime.parse(dateString);
@@ -387,16 +523,16 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
       final difference = now.difference(date);
 
       if (difference.inMinutes < 1) {
-        return 'Только что';
+        return 'time_just_now'.tr;
       } else if (difference.inMinutes < 60) {
-        return '${difference.inMinutes} мин назад';
+        return 'time_minutes_ago'.trParams({'n': '${difference.inMinutes}'});
       } else if (difference.inHours < 24) {
-        return '${difference.inHours} ч назад';
+        return 'time_hours_ago'.trParams({'n': '${difference.inHours}'});
       } else {
-        return '${difference.inDays} дн назад';
+        return 'time_days_ago'.trParams({'n': '${difference.inDays}'});
       }
     } catch (e) {
-      return 'Недавно';
+      return 'time_recent'.tr;
     }
   }
 }

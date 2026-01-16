@@ -119,3 +119,25 @@
 - Исправлен просмотр профиля (проверки авторизации)
 - Добавлены snackbar уведомления об ошибках
 - Создан детальный отчёт FIXES_REPORT.md
+
+---
+
+## Сессия 31 декабря 2025
+
+### Контекст/handoff
+
+**Цель:** сделать рилсы/истории визуально как TikTok/Instagram (полноэкранные рилсы, видео‑сторисы), и допилить превью рилсов в `MarketplaceHomeScreen`.
+
+**Ветка:** `cursor/what-has-been-done-5e03`
+
+**Что уже сделано (по handoff):**
+- `lib/views/screens/reels/reels_viewer_screen.dart` — полноэкранный TikTok‑like viewer (PageView вертикально, видео + overlay).
+- `lib/views/widgets/video_player_iten.dart` — BoxFit.cover, loop, tap pause/play.
+- `lib/views/screens/stories/story_viewer_screen.dart` — видео‑сторисы реально проигрываются + включён свайп между сторис.
+- `lib/views/screens/marketplace_home_screen.dart` — превью рилсов показывает `thumbnail_url` и есть кнопка “Смотреть” (открывает `ReelsViewerScreen`).
+
+**Что было в работе / не доделано (по handoff):**
+- Доработка `_buildReelCard` в `lib/views/screens/marketplace_home_screen.dart`:
+  - tap по карточке/превью → открывать `ReelsViewerScreen`,
+  - добавить “инста‑оверлеи” (ник/подпись/градиент) на превью.
+- “Большой patch” на замену `_buildReelCard` не применился (контекст не совпал) — нужно править точечно по текущему коду.

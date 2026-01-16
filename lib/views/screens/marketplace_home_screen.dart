@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:flutter/services.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/controllers/cart_controller.dart';
@@ -15,6 +16,8 @@ import 'package:tiktok_tutorial/views/screens/buyer/order_tracking_screen.dart';
 import 'package:tiktok_tutorial/views/screens/chat/chat_screen.dart';
 import 'package:tiktok_tutorial/views/screens/profile/edit_profile_screen.dart';
 import 'package:tiktok_tutorial/views/screens/stories/story_viewer_screen.dart';
+import 'package:tiktok_tutorial/views/screens/reels/reels_viewer_screen.dart';
+import 'package:tiktok_tutorial/views/screens/common/report_content_screen.dart';
 import 'package:tiktok_tutorial/views/screens/cabinets/seller_cabinet_screen.dart';
 import 'package:tiktok_tutorial/views/screens/cabinets/buyer_cabinet_screen.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/nearby_sellers_screen.dart';
@@ -33,6 +36,12 @@ class MarketplaceHomeScreen extends StatefulWidget {
 class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   final MarketplaceController _controller = Get.find<MarketplaceController>();
   int _currentIndex = 0;
+  final Set<String> _likedReelIds = <String>{};
+  final Map<String, int> _reelLikeOverrides = <String, int>{};
+  final Set<String> _viewedStoryIds = <String>{};
+  final Set<String> _savedReelIds = <String>{};
+  String? _feedBigHeartReelId;
+  bool _feedBigHeartVisible = false;
   
   bool get _isGuestMode => widget.isGuestMode;
   bool get _isSeller => !_isGuestMode && _controller.currentUser.value?['role'] == 'seller';
@@ -51,7 +60,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         backgroundColor: Colors.grey[900],
         title: Text('login_required'.tr, style: const TextStyle(color: Colors.white)),
         content: Text(
-          'Войдите, чтобы $action',
+          'login_to_action'.trParams({'action': action}),
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
@@ -102,12 +111,228 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
     } else {
       Get.snackbar(
         'error'.tr,
-        'Товар не найден',
+        'product_not_found'.tr,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
     }
+  }
+
+  int _likesFromReel(Map<String, dynamic> reel) {
+    final raw = reel['likes'] ?? reel['likes_count'] ?? 0;
+    if (raw is int) return raw;
+    if (raw is num) return raw.toInt();
+    return int.tryParse(raw.toString()) ?? 0;
+  }
+
+  void _toggleReelLike(Map<String, dynamic> reel) {
+    final contentId = reel['id']?.toString();
+    if (contentId == null || contentId.isEmpty) return;
+
+    final baseLikes = _reelLikeOverrides[contentId] ?? _likesFromReel(reel);
+    final isLiked = _likedReelIds.contains(contentId);
+    final nextLiked = !isLiked;
+    final nextLikes = (baseLikes + (nextLiked ? 1 : -1)).clamp(0, 1 << 30);
+
+    setState(() {
+      if (nextLiked) {
+        _likedReelIds.add(contentId);
+      } else {
+        _likedReelIds.remove(contentId);
+      }
+      _reelLikeOverrides[contentId] = nextLikes;
+    });
+
+    _controller.likeContent(contentId);
+  }
+
+  String _shareTextForReel(Map<String, dynamic> reel) {
+    final id = reel['id']?.toString();
+    final videoUrl = (reel['video_url'] ?? reel['media_url'])?.toString();
+    if (videoUrl != null && videoUrl.isNotEmpty) return videoUrl;
+    if (id != null && id.isNotEmpty) return 'reel:$id';
+    return 'reel';
+  }
+
+  Future<void> _copyReelLink(Map<String, dynamic> reel) async {
+    final text = _shareTextForReel(reel);
+    await Clipboard.setData(ClipboardData(text: text));
+    Get.snackbar(
+      'success'.tr,
+      'link_copied'.tr,
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.black87,
+      colorText: Colors.white,
+    );
+  }
+
+  void _openReelCommentsStub() {
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
+        decoration: BoxDecoration(
+          color: Colors.grey[900],
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 42,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[700],
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                'comments'.tr,
+                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'comments_coming_soon'.tr,
+                style: TextStyle(color: Colors.grey[400]),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => Get.back(),
+                  icon: const Icon(Icons.check),
+                  label: Text('ok'.tr),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      isScrollControlled: true,
+    );
+  }
+
+  void _openReelMoreSheet(Map<String, dynamic> reel) {
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
+        decoration: BoxDecoration(
+          color: Colors.grey[900],
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 42,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[700],
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              const SizedBox(height: 14),
+              ListTile(
+                leading: const Icon(Icons.link, color: Colors.white),
+                title: Text('copy_link'.tr, style: const TextStyle(color: Colors.white)),
+                onTap: () async {
+                  Get.back();
+                  await _copyReelLink(reel);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.report_outlined, color: Colors.redAccent),
+                title: Text('report_content'.tr, style: const TextStyle(color: Colors.white)),
+                onTap: () {
+                  final id = reel['id']?.toString();
+                  if (id == null || id.isEmpty) return;
+                  Get.back();
+                  Get.to(() => ReportContentScreen(contentId: id, contentType: 'reel'));
+                },
+              ),
+              const SizedBox(height: 6),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () => Get.back(),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: BorderSide(color: Colors.grey[700]!),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: Text('cancel'.tr),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      isScrollControlled: true,
+    );
+  }
+
+  void _toggleReelSaved(Map<String, dynamic> reel) {
+    final id = reel['id']?.toString();
+    if (id == null || id.isEmpty) return;
+    setState(() {
+      if (_savedReelIds.contains(id)) {
+        _savedReelIds.remove(id);
+      } else {
+        _savedReelIds.add(id);
+      }
+    });
+    Get.snackbar(
+      'saved'.tr,
+      _savedReelIds.contains(id) ? 'added_to_saved'.tr : 'removed_from_saved'.tr,
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.black87,
+      colorText: Colors.white,
+    );
+  }
+
+  void _flashFeedBigHeart(String reelId) {
+    setState(() {
+      _feedBigHeartReelId = reelId;
+      _feedBigHeartVisible = true;
+    });
+    Future.delayed(const Duration(milliseconds: 650), () {
+      if (!mounted) return;
+      setState(() {
+        _feedBigHeartVisible = false;
+        // keep last id to avoid layout jumps; just hide opacity
+      });
+    });
+  }
+
+  void _likeReelFromDoubleTap(Map<String, dynamic> reel) {
+    final contentId = reel['id']?.toString();
+    if (contentId == null || contentId.isEmpty) return;
+
+    final isLiked = _likedReelIds.contains(contentId);
+    if (!isLiked) {
+      final baseLikes = _reelLikeOverrides[contentId] ?? _likesFromReel(reel);
+      final nextLikes = (baseLikes + 1).clamp(0, 1 << 30);
+      setState(() {
+        _likedReelIds.add(contentId);
+        _reelLikeOverrides[contentId] = nextLikes;
+      });
+      _controller.likeContent(contentId);
+    }
+
+    _flashFeedBigHeart(contentId);
   }
 
   @override
@@ -260,7 +485,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
           Icon(Icons.shopping_bag_outlined, size: 80, color: Colors.grey[600]),
           const SizedBox(height: 24),
           Text(
-            'Войдите, чтобы видеть заказы',
+            'login_to_view_orders'.tr,
             style: TextStyle(color: Colors.grey[400], fontSize: 18),
           ),
           const SizedBox(height: 24),
@@ -295,7 +520,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'Добро пожаловать!',
+              'welcome'.tr,
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 24,
@@ -304,7 +529,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Войдите или зарегистрируйтесь,\nчтобы делать покупки',
+              'login_or_register_to_shop'.tr,
               style: TextStyle(color: Colors.grey[400], fontSize: 16),
               textAlign: TextAlign.center,
             ),
@@ -351,12 +576,9 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         SliverAppBar(
           floating: true,
           backgroundColor: backgroundColor,
-          title: const Text(
-            'Video Marketplace',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
+          title: Text(
+            'video_marketplace'.tr,
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
           actions: [
             IconButton(
@@ -419,8 +641,8 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 Get.to(() => const CreateStoryScreen());
               } else {
                 Get.snackbar(
-                  'Недоступно',
-                  'Только продавцы могут создавать истории',
+                  'unavailable'.tr,
+                  'only_sellers_can_create_stories'.tr,
                   snackPosition: SnackPosition.BOTTOM,
                 );
               }
@@ -440,27 +662,33 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            'Добавить',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 11,
-            ),
-          ),
+          Text('add'.tr, style: const TextStyle(color: Colors.white, fontSize: 11)),
         ],
       ),
     );
   }
 
   Widget _buildStoryCircle(Map<String, dynamic> story) {
+    final storyId = story['id']?.toString();
+    final isViewed = storyId != null && _viewedStoryIds.contains(storyId);
+    final authorAvatar = story['author_avatar']?.toString();
+    final hasVideo = (story['video_url']?.toString().isNotEmpty ?? false);
+
     return GestureDetector(
       onTap: () {
         final stories = _controller.stories;
         final index = stories.indexWhere((s) => s['id'] == story['id']);
+        final storiesList = List<Map<String, dynamic>>.from(stories);
         Get.to(
           () => StoryViewerScreen(
-            stories: List<Map<String, dynamic>>.from(stories),
+            stories: storiesList,
             initialIndex: index >= 0 ? index : 0,
+            onIndexChanged: (i) {
+              if (i < 0 || i >= storiesList.length) return;
+              final id = storiesList[i]['id']?.toString();
+              if (id == null || id.isEmpty) return;
+              setState(() => _viewedStoryIds.add(id));
+            },
           ),
         );
       },
@@ -473,15 +701,18 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               height: 70,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.purple,
-                    Colors.pink,
-                    Colors.orange,
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                gradient: isViewed
+                    ? null
+                    : const LinearGradient(
+                        colors: [
+                          Colors.purple,
+                          Colors.pink,
+                          Colors.orange,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                border: isViewed ? Border.all(color: Colors.grey[700]!, width: 2) : null,
               ),
               padding: const EdgeInsets.all(3),
               child: Container(
@@ -490,14 +721,32 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                   color: backgroundColor,
                 ),
                 padding: const EdgeInsets.all(2),
-                child: CircleAvatar(
-                  backgroundImage: story['image_url'] != null
-                      ? NetworkImage(story['image_url'])
-                      : null,
-                  backgroundColor: Colors.grey[800],
-                  child: story['image_url'] == null
-                      ? const Icon(Icons.person, color: Colors.white)
-                      : null,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    CircleAvatar(
+                      backgroundImage: (authorAvatar != null && authorAvatar.isNotEmpty)
+                          ? NetworkImage(authorAvatar)
+                          : null,
+                      backgroundColor: Colors.grey[800],
+                      child: (authorAvatar == null || authorAvatar.isEmpty)
+                          ? const Icon(Icons.person, color: Colors.white)
+                          : null,
+                    ),
+                    if (hasVideo)
+                      Positioned(
+                        right: 2,
+                        bottom: 2,
+                        child: Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.65),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.play_arrow, color: Colors.white, size: 14),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ),
@@ -534,7 +783,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 Icon(Icons.video_library, size: 64, color: Colors.grey[700]),
                 const SizedBox(height: 16),
                 Text(
-                  'Пока нет рилсов',
+                  'no_reels_yet'.tr,
                   style: TextStyle(color: Colors.grey[500], fontSize: 16),
                 ),
                 if (_controller.isSeller || _controller.isAdmin) ...[
@@ -544,7 +793,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: buttonColor,
                     ),
-                    child: const Text('Создать первый рилс'),
+                    child: Text('create_first_reel'.tr),
                   ),
                 ],
               ],
@@ -559,142 +808,282 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
         itemCount: reels.length,
         itemBuilder: (context, index) {
           final reel = reels[index];
-          return _buildReelCard(reel);
+          return _buildReelCard(reel, index: index);
         },
       );
     });
   }
 
-  Widget _buildReelCard(Map<String, dynamic> reel) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.grey[900],
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: Colors.grey[800],
-                  child: const Icon(Icons.person, color: Colors.white, size: 20),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        reel['author_name'] ?? 'User',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
+  Widget _buildReelCard(Map<String, dynamic> reel, {required int index}) {
+    return GestureDetector(
+      onTap: () async {
+        final reels = List<Map<String, dynamic>>.from(_controller.reels);
+        await Get.to(() => ReelsViewerScreen(reels: reels, initialIndex: index));
+      },
+      onDoubleTap: () => _likeReelFromDoubleTap(reel),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        decoration: BoxDecoration(
+          color: Colors.grey[900],
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 18,
+                    backgroundColor: Colors.grey[800],
+                    child: const Icon(Icons.person, color: Colors.white, size: 20),
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.more_vert, color: Colors.white),
-                  onPressed: () {},
-                ),
-              ],
-            ),
-          ),
-          
-          // Video placeholder - responsive height
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final videoHeight = ResponsiveHelper.responsiveValue(
-                context,
-                mobile: 400.0,
-                tablet: 500.0,
-                desktop: 600.0,
-              );
-              return Container(
-                height: videoHeight,
-                width: double.infinity,
-                color: Colors.grey[800],
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.play_circle_outline, size: 64, color: Colors.grey[600]),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Видео',
-                        style: TextStyle(color: Colors.grey[600]),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      reel['author_name'] ?? 'User',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
                       ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-          
-          // Actions
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.favorite_border, color: Colors.white),
-                  onPressed: () => _controller.likeContent(reel['id']),
-                ),
-                Text(
-                  '${reel['likes'] ?? 0}',
-                  style: const TextStyle(color: Colors.white),
-                ),
-                const SizedBox(width: 16),
-                IconButton(
-                  icon: const Icon(Icons.comment_outlined, color: Colors.white),
-                  onPressed: () {},
-                ),
-                IconButton(
-                  icon: const Icon(Icons.share_outlined, color: Colors.white),
-                  onPressed: () {},
-                ),
-                const Spacer(),
-                // Buy button for reels with linked product
-                if (reel['product_id'] != null) ...[
-                  ElevatedButton.icon(
-                    onPressed: () => _openProductFromReel(reel),
-                    icon: const Icon(Icons.shopping_cart, size: 18),
-                    label: Text('buy_now'.tr),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: const Icon(Icons.more_vert, color: Colors.white),
+                    onPressed: () => _openReelMoreSheet(reel),
+                  ),
                 ],
-                IconButton(
-                  icon: const Icon(Icons.bookmark_border, color: Colors.white),
-                  onPressed: () {},
-                ),
-              ],
-            ),
-          ),
-          
-          // Caption
-          if (reel['caption'] != null && reel['caption'].isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Text(
-                reel['caption'],
-                style: const TextStyle(color: Colors.white),
               ),
             ),
+
+            // Preview (tap to open fullscreen viewer)
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final videoHeight = ResponsiveHelper.responsiveValue(
+                  context,
+                  mobile: 420.0,
+                  tablet: 520.0,
+                  desktop: 620.0,
+                );
+                final thumbUrl = reel['thumbnail_url']?.toString();
+                final hasProduct = reel['product_id'] != null;
+                final contentId = reel['id']?.toString();
+                final likes = contentId == null
+                    ? _likesFromReel(reel)
+                    : (_reelLikeOverrides[contentId] ?? _likesFromReel(reel));
+                final caption = (reel['caption'] ?? '').toString().trim();
+                return Container(
+                  height: videoHeight,
+                  width: double.infinity,
+                  color: Colors.black,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      if (thumbUrl != null && thumbUrl.isNotEmpty)
+                        ClipRRect(
+                          borderRadius: BorderRadius.zero,
+                          child: Image.network(
+                            thumbUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(color: Colors.grey[900]),
+                          ),
+                        )
+                      else
+                        Container(color: Colors.grey[900]),
+
+                      // Bottom gradient for readability (IG-like)
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.transparent,
+                                  Colors.black.withOpacity(0.15),
+                                  Colors.black.withOpacity(0.55),
+                                ],
+                                stops: const [0.55, 0.75, 1.0],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // Big heart on double tap (IG-like)
+                      Center(
+                        child: IgnorePointer(
+                          child: AnimatedOpacity(
+                            opacity: (_feedBigHeartVisible && _feedBigHeartReelId == contentId) ? 1 : 0,
+                            duration: const Duration(milliseconds: 140),
+                            child: AnimatedScale(
+                              scale: (_feedBigHeartVisible && _feedBigHeartReelId == contentId) ? 1.0 : 0.8,
+                              duration: const Duration(milliseconds: 140),
+                              child: const Icon(
+                                Icons.favorite,
+                                color: Colors.white70,
+                                size: 110,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      Center(
+                        child: Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.45),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.play_arrow, color: Colors.white, size: 34),
+                        ),
+                      ),
+
+                      // Top-left badges
+                      Positioned(
+                        left: 12,
+                        top: 12,
+                        child: Row(
+                          children: [
+                            if (hasProduct)
+                              _Badge(
+                                icon: Icons.shopping_bag_outlined,
+                                text: 'product'.tr,
+                              ),
+                            if (hasProduct) const SizedBox(width: 8),
+                            _Badge(
+                              icon: Icons.favorite,
+                              text: '$likes',
+                              iconColor: Colors.red[300],
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Bottom caption hint
+                      if (caption.isNotEmpty)
+                        Positioned(
+                          left: 12,
+                          right: 12,
+                          bottom: 12,
+                          child: Text(
+                            caption,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              },
+            ),
+
+            // Actions
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  Builder(
+                    builder: (context) {
+                      final contentId = reel['id']?.toString();
+                      final isLiked = contentId != null && _likedReelIds.contains(contentId);
+                      final likes = contentId == null
+                          ? _likesFromReel(reel)
+                          : (_reelLikeOverrides[contentId] ?? _likesFromReel(reel));
+
+                      return Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: Icon(
+                              isLiked ? Icons.favorite : Icons.favorite_border,
+                              color: isLiked ? Colors.red[300] : Colors.white,
+                            ),
+                            onPressed: () => _toggleReelLike(reel),
+                          ),
+                          Text(
+                            '$likes',
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 16),
+                  IconButton(
+                    icon: const Icon(Icons.comment_outlined, color: Colors.white),
+                    onPressed: _openReelCommentsStub,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.share_outlined, color: Colors.white),
+                    onPressed: () => _copyReelLink(reel),
+                  ),
+                  const Spacer(),
+                  // Buy button for reels with linked product
+                  if (reel['product_id'] != null) ...[
+                    ElevatedButton.icon(
+                      onPressed: () => _openProductFromReel(reel),
+                      icon: const Icon(Icons.shopping_cart, size: 18),
+                      label: Text('buy_now'.tr),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  Builder(
+                    builder: (context) {
+                      final id = reel['id']?.toString();
+                      final isSaved = id != null && _savedReelIds.contains(id);
+                      return IconButton(
+                        icon: Icon(isSaved ? Icons.bookmark : Icons.bookmark_border, color: Colors.white),
+                        onPressed: () => _toggleReelSaved(reel),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+
+            // Caption is shown in preview overlay (to keep card clean)
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _Badge({required IconData icon, required String text, Color? iconColor}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.55),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: iconColor ?? Colors.white),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+          ),
         ],
       ),
     );
@@ -715,7 +1104,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
             child: TextField(
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
-                hintText: 'Поиск товаров и продавцов',
+                hintText: 'search_products_and_sellers'.tr,
                 hintStyle: TextStyle(color: Colors.grey[500]),
                 prefixIcon: Icon(Icons.search, color: Colors.grey[500]),
                 border: InputBorder.none,
@@ -742,7 +1131,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                         Icon(Icons.inventory_2, size: 64, color: Colors.grey[700]),
                         const SizedBox(height: 16),
                         Text(
-                          'Пока нет товаров',
+                          'no_products_yet'.tr,
                           style: TextStyle(color: Colors.grey[500], fontSize: 16),
                         ),
                       ],
@@ -816,7 +1205,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  '${product['price']?.toStringAsFixed(0) ?? '0'} сум',
+                  "${product['price']?.toStringAsFixed(0) ?? '0'} ${'currency_sum'.tr}",
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 10,
@@ -975,13 +1364,10 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
   Widget _buildOrdersTab() {
     return CustomScrollView(
       slivers: [
-        const SliverAppBar(
+        SliverAppBar(
           floating: true,
           backgroundColor: backgroundColor,
-          title: Text(
-            'Заказы',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-          ),
+          title: Text('orders'.tr, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         ),
         
         Obx(() {
@@ -998,7 +1384,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                       Icon(Icons.shopping_bag_outlined, size: 64, color: Colors.grey[700]),
                       const SizedBox(height: 16),
                       Text(
-                        'Пока нет заказов',
+                        'no_orders_yet'.tr,
                         style: TextStyle(color: Colors.grey[500], fontSize: 16),
                       ),
                     ],
@@ -1035,14 +1421,14 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
       };
     
       final statusLabels = {
-        'created': 'Создан',
-        'accepted': 'Принят',
-        'ready': 'Готов',
-        'picked_up': 'Забран',
-        'in_transit': 'В пути',
-        'delivered': 'Доставлен',
-        'completed': 'Завершён',
-        'cancelled': 'Отменён',
+        'created': 'status_created'.tr,
+        'accepted': 'status_accepted'.tr,
+        'ready': 'status_ready'.tr,
+        'picked_up': 'status_picked_up'.tr,
+        'in_transit': 'status_in_transit'.tr,
+        'delivered': 'status_delivered'.tr,
+        'completed': 'status_completed'.tr,
+        'cancelled': 'status_cancelled'.tr,
       };
     
       final status = order['status'] ?? 'created';
@@ -1063,7 +1449,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Заказ #${order['id']?.substring(0, 8) ?? ''}',
+                    'order_number'.trParams({'id': (order['id']?.toString() ?? '').substring(0, 8)}),
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -1088,7 +1474,7 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Сумма: ${order['total_amount']?.toStringAsFixed(0) ?? '0'} сум',
+                "${'order_total'.tr}: ${order['total_amount']?.toStringAsFixed(0) ?? '0'} ${'currency_sum'.tr}",
                 style: TextStyle(color: Colors.grey[400]),
               ),
               if (order['delivery_address'] != null) ...[
@@ -1198,9 +1584,9 @@ class _MarketplaceHomeScreenState extends State<MarketplaceHomeScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      _buildStatItem('Товары', _controller.myProducts.length.toString()),
-                      _buildStatItem('Заказы', _controller.orders.length.toString()),
-                      _buildStatItem('Рилсы', _controller.reels.where((r) => r['author_id'] == _controller.userId).length.toString()),
+                      _buildStatItem('products'.tr, _controller.myProducts.length.toString()),
+                      _buildStatItem('orders'.tr, _controller.orders.length.toString()),
+                      _buildStatItem('reels'.tr, _controller.reels.where((r) => r['author_id'] == _controller.userId).length.toString()),
                     ],
                   ),
                   

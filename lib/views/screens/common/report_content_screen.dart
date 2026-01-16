@@ -38,7 +38,7 @@ class _ReportContentScreenState extends State<ReportContentScreen> {
     if (_selectedReason == null) {
       Get.snackbar(
         'error'.tr,
-        'Выберите причину жалобы',
+        'select_report_reason'.tr,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -101,7 +101,7 @@ class _ReportContentScreenState extends State<ReportContentScreen> {
             
             // Details text field
             Text(
-              'Дополнительная информация',
+              'additional_info'.tr,
               style: TextStyle(color: Colors.grey[400]),
             ),
             const SizedBox(height: 8),
@@ -110,7 +110,7 @@ class _ReportContentScreenState extends State<ReportContentScreen> {
               style: const TextStyle(color: Colors.white),
               maxLines: 4,
               decoration: InputDecoration(
-                hintText: 'Опишите проблему подробнее (необязательно)...',
+                hintText: 'report_details_hint'.tr,
                 hintStyle: TextStyle(color: Colors.grey[600]),
                 filled: true,
                 fillColor: Colors.grey[900],
@@ -146,7 +146,7 @@ class _ReportContentScreenState extends State<ReportContentScreen> {
                         ),
                       )
                     : Text(
-                        'Отправить жалобу',
+                        'send_report'.tr,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
