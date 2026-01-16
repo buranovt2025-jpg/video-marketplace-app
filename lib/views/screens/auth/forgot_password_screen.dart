@@ -26,9 +26,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     if (email.isEmpty) {
       Get.snackbar(
         'error'.tr,
-        'Введите email',
+        'enter_email'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
       return;
@@ -37,9 +37,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     if (!GetUtils.isEmail(email)) {
       Get.snackbar(
         'error'.tr,
-        'Введите корректный email',
+        'enter_valid_email'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
       return;
@@ -92,7 +92,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         ),
         const SizedBox(height: 12),
         Text(
-          'Введите email, на который зарегистрирован аккаунт. Мы отправим ссылку для сброса пароля.',
+          'forgot_password_help'.tr,
           style: TextStyle(color: Colors.grey[400], fontSize: 16),
         ),
         const SizedBox(height: 40),
@@ -142,8 +142,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       color: Colors.white,
                     ),
                   )
-                : const Text(
-                    'Отправить ссылку',
+                : Text(
+                    'send_link'.tr,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -184,7 +184,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         ),
         const SizedBox(height: 16),
         Text(
-          'Проверьте почту ${_emailController.text} и перейдите по ссылке для сброса пароля.',
+          'check_email_reset'.trParams({'email': _emailController.text}),
           style: TextStyle(color: Colors.grey[400], fontSize: 16),
           textAlign: TextAlign.center,
         ),
@@ -211,10 +211,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               _emailSent = false;
             });
           },
-          child: const Text(
-            'Отправить ещё раз',
-            style: TextStyle(color: primaryColor),
-          ),
+          child: Text('send_again'.tr, style: const TextStyle(color: primaryColor)),
         ),
       ],
     );

@@ -31,9 +31,9 @@ class _RateOrderScreenState extends State<RateOrderScreen> {
     if (_rating == 0) {
       Get.snackbar(
         'error'.tr,
-        'Выберите оценку',
+        'select_rating'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+      backgroundColor: primaryColor,
         colorText: Colors.white,
       );
       return;
@@ -61,6 +61,8 @@ class _RateOrderScreenState extends State<RateOrderScreen> {
     final targetName = widget.rateType == 'seller'
         ? widget.order['seller_name'] ?? 'seller'.tr
         : widget.order['courier_name'] ?? 'courier'.tr;
+    final orderIdStr = (widget.order['id'] ?? '').toString();
+    final orderIdShort = orderIdStr.length > 8 ? orderIdStr.substring(0, 8) : orderIdStr;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -101,7 +103,7 @@ class _RateOrderScreenState extends State<RateOrderScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Заказ #${widget.order['id']?.substring(0, 8) ?? ''}',
+              'order_number_short'.trParams({'id': orderIdShort}),
               style: TextStyle(color: Colors.grey[500]),
             ),
             const SizedBox(height: 32),
@@ -146,7 +148,7 @@ class _RateOrderScreenState extends State<RateOrderScreen> {
               decoration: InputDecoration(
                 labelText: 'write_review'.tr,
                 labelStyle: TextStyle(color: Colors.grey[400]),
-                hintText: 'Расскажите о вашем опыте...',
+                hintText: 'review_hint'.tr,
                 hintStyle: TextStyle(color: Colors.grey[600]),
                 alignLabelWithHint: true,
                 filled: true,
@@ -199,15 +201,15 @@ class _RateOrderScreenState extends State<RateOrderScreen> {
   String _getRatingText() {
     switch (_rating) {
       case 1:
-        return 'Очень плохо';
+        return 'rating_very_bad'.tr;
       case 2:
-        return 'Плохо';
+        return 'rating_bad'.tr;
       case 3:
-        return 'Нормально';
+        return 'rating_ok'.tr;
       case 4:
-        return 'Хорошо';
+        return 'rating_good'.tr;
       case 5:
-        return 'Отлично!';
+        return 'rating_excellent'.tr;
       default:
         return '';
     }

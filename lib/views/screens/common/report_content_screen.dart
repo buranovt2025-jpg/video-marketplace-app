@@ -38,9 +38,9 @@ class _ReportContentScreenState extends State<ReportContentScreen> {
     if (_selectedReason == null) {
       Get.snackbar(
         'error'.tr,
-        'Выберите причину жалобы',
+        'select_report_reason'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
       return;
@@ -101,7 +101,7 @@ class _ReportContentScreenState extends State<ReportContentScreen> {
             
             // Details text field
             Text(
-              'Дополнительная информация',
+              'additional_info'.tr,
               style: TextStyle(color: Colors.grey[400]),
             ),
             const SizedBox(height: 8),
@@ -110,7 +110,7 @@ class _ReportContentScreenState extends State<ReportContentScreen> {
               style: const TextStyle(color: Colors.white),
               maxLines: 4,
               decoration: InputDecoration(
-                hintText: 'Опишите проблему подробнее (необязательно)...',
+                hintText: 'describe_problem_optional'.tr,
                 hintStyle: TextStyle(color: Colors.grey[600]),
                 filled: true,
                 fillColor: Colors.grey[900],
@@ -129,8 +129,8 @@ class _ReportContentScreenState extends State<ReportContentScreen> {
               child: ElevatedButton(
                 onPressed: _isSubmitting ? null : _submitReport,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
+                  backgroundColor: primaryColor,
+                  foregroundColor: Colors.black,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -146,7 +146,7 @@ class _ReportContentScreenState extends State<ReportContentScreen> {
                         ),
                       )
                     : Text(
-                        'Отправить жалобу',
+                        'send_report'.tr,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -176,7 +176,7 @@ class _ReportContentScreenState extends State<ReportContentScreen> {
           color: Colors.grey[900],
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? Colors.red : Colors.transparent,
+            color: isSelected ? primaryColor : Colors.transparent,
             width: 2,
           ),
         ),
@@ -188,10 +188,10 @@ class _ReportContentScreenState extends State<ReportContentScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected ? Colors.red : Colors.grey[600]!,
+                  color: isSelected ? primaryColor : Colors.grey[600]!,
                   width: 2,
                 ),
-                color: isSelected ? Colors.red : Colors.transparent,
+                color: isSelected ? primaryColor : Colors.transparent,
               ),
               child: isSelected
                   ? const Icon(Icons.check, size: 16, color: Colors.white)

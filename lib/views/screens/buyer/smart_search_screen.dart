@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/services/api_service.dart';
+import 'package:tiktok_tutorial/utils/formatters.dart';
+import 'package:tiktok_tutorial/utils/money.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/product_detail_screen.dart';
+import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
 
 class SmartSearchScreen extends StatefulWidget {
   const SmartSearchScreen({Key? key}) : super(key: key);
@@ -13,12 +17,17 @@ class SmartSearchScreen extends StatefulWidget {
 
 class _SmartSearchScreenState extends State<SmartSearchScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _minPriceController = TextEditingController();
+  final TextEditingController _maxPriceController = TextEditingController();
   final MarketplaceController _controller = Get.find<MarketplaceController>();
   final FocusNode _focusNode = FocusNode();
   
   String _selectedCategory = 'all';
+  String? _selectedSellerId;
+  String? _selectedSellerName;
+  List<Map<String, dynamic>> _sellers = [];
   List<Map<String, dynamic>> _searchResults = [];
-  List<String> _suggestions = [];
+  List<_SearchSuggestion> _suggestions = [];
   bool _isSearching = false;
   bool _showSuggestions = false;
 
@@ -40,6 +49,9 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
   @override
   void initState() {
     super.initState();
+    // Warm up sellers list for seller-name suggestions. If it fails, we still
+    // have local suggestions and manual filter picker.
+    _ensureSellersLoaded();
     _focusNode.addListener(() {
       setState(() {
         _showSuggestions = _focusNode.hasFocus && _suggestions.isNotEmpty;
@@ -50,11 +62,42 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _minPriceController.dispose();
+    _maxPriceController.dispose();
     _focusNode.dispose();
     super.dispose();
   }
 
-  void _onSearchChanged(String query) {
+  num? _parsePrice(String value) {
+    final n = tryNum(value);
+    if (n == null) return null;
+    if (n.isNaN) return null;
+    if (n.isInfinite) return null;
+    if (n < 0) return 0;
+    return n;
+  }
+
+  num? get _minPrice => _parsePrice(_minPriceController.text);
+  num? get _maxPrice => _parsePrice(_maxPriceController.text);
+  bool get _hasActiveFilters =>
+      (_selectedSellerId != null && _selectedSellerId!.isNotEmpty) ||
+      _minPrice != null ||
+      _maxPrice != null;
+
+  List<Map<String, dynamic>> _applyPriceFilter(List<Map<String, dynamic>> items) {
+    final minP = _minPrice;
+    final maxP = _maxPrice;
+    if (minP == null && maxP == null) return items;
+
+    return items.where((p) {
+      final price = asDouble(p['price']);
+      if (minP != null && price < minP) return false;
+      if (maxP != null && price > maxP) return false;
+      return true;
+    }).toList();
+  }
+
+  Future<void> _onSearchChanged(String query) async {
     if (query.isEmpty) {
       setState(() {
         _suggestions = [];
@@ -65,7 +108,8 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
 
     // Generate suggestions from products
     final products = _controller.products;
-    final Set<String> suggestionSet = {};
+    final List<_SearchSuggestion> next = [];
+    final Set<String> dedupe = {};
     
     for (var product in products) {
       final name = product['name']?.toString().toLowerCase() ?? '';
@@ -75,18 +119,46 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
       final queryLower = query.toLowerCase();
       
       if (name.contains(queryLower)) {
-        suggestionSet.add(product['name']);
+        final label = product['name']?.toString() ?? '';
+        if (label.isNotEmpty && dedupe.add('p:$label')) {
+          next.add(_SearchSuggestion.text(label));
+        }
       }
       if (category.contains(queryLower)) {
-        suggestionSet.add(_getCategoryLabel(product['category']));
+        final label = _getCategoryLabel(product['category']);
+        if (label.isNotEmpty && dedupe.add('c:$label')) {
+          next.add(_SearchSuggestion.category(label));
+        }
       }
       if (sellerName.contains(queryLower)) {
-        suggestionSet.add(product['seller_name']);
+        final label = product['seller_name']?.toString() ?? '';
+        if (label.isNotEmpty && dedupe.add('sn:$label')) {
+          next.add(_SearchSuggestion.text(label));
+        }
+      }
+    }
+
+    // Add seller suggestions (server list) so user can search sellers by name.
+    await _ensureSellersLoaded();
+    if (_sellers.isNotEmpty) {
+      final q = query.toLowerCase();
+      for (final s in _sellers) {
+        final id = s['id']?.toString();
+        if (id == null || id.isEmpty) continue;
+        final name = s['name']?.toString() ?? '';
+        final email = s['email']?.toString() ?? '';
+        final nameL = name.toLowerCase();
+        final emailL = email.toLowerCase();
+        if (nameL.contains(q) || emailL.contains(q)) {
+          final key = 'seller:$id';
+          if (!dedupe.add(key)) continue;
+          next.add(_SearchSuggestion.seller(id: id, name: name, email: email.isEmpty ? null : email));
+        }
       }
     }
 
     setState(() {
-      _suggestions = suggestionSet.take(5).toList();
+      _suggestions = next.take(6).toList();
       _showSuggestions = _focusNode.hasFocus && _suggestions.isNotEmpty;
     });
   }
@@ -100,46 +172,350 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
     return cat['label']!.tr;
   }
 
-  void _performSearch() {
-    final query = _searchController.text.trim().toLowerCase();
+  Future<void> _performSearch() async {
+    final rawQuery = _searchController.text.trim();
+    final query = rawQuery.toLowerCase();
+
     setState(() {
       _isSearching = true;
       _showSuggestions = false;
     });
 
-    final products = _controller.products;
-    final results = products.where((product) {
-      // Category filter
-      if (_selectedCategory != 'all' && product['category'] != _selectedCategory) {
-        return false;
-      }
+    final category = _selectedCategory == 'all' ? null : _selectedCategory;
+    final search = query.isEmpty ? null : query;
+    final sellerId = _selectedSellerId;
 
-      // Search query filter
-      if (query.isNotEmpty) {
+    try {
+      // Prefer server-side search so results don't depend on initial feed size.
+      final data = await ApiService.getProducts(
+        sellerId: sellerId,
+        category: category,
+        search: search,
+      );
+      setState(() {
+        _searchResults = _applyPriceFilter(List<Map<String, dynamic>>.from(data));
+      });
+    } catch (_) {
+      // Fallback to local filter if API search fails (offline/self-signed/etc).
+      final products = _controller.products;
+      final results = products.where((product) {
+        if (category != null && product['category'] != category) return false;
+        if (sellerId != null && sellerId.isNotEmpty) {
+          if (product['seller_id']?.toString() != sellerId) return false;
+        }
+        if (query.isEmpty) return true;
+
         final name = product['name']?.toString().toLowerCase() ?? '';
         final description = product['description']?.toString().toLowerCase() ?? '';
-        final category = product['category']?.toString().toLowerCase() ?? '';
+        final cat = product['category']?.toString().toLowerCase() ?? '';
         final sellerName = product['seller_name']?.toString().toLowerCase() ?? '';
-        
         return name.contains(query) ||
-               description.contains(query) ||
-               category.contains(query) ||
-               sellerName.contains(query);
-      }
+            description.contains(query) ||
+            cat.contains(query) ||
+            sellerName.contains(query);
+      }).toList();
 
-      return true;
-    }).toList();
-
-    setState(() {
-      _searchResults = results;
-      _isSearching = false;
-    });
+      setState(() {
+        _searchResults = _applyPriceFilter(results);
+      });
+    } finally {
+      setState(() {
+        _isSearching = false;
+      });
+    }
   }
 
-  void _selectSuggestion(String suggestion) {
-    _searchController.text = suggestion;
-    _focusNode.unfocus();
-    _performSearch();
+  Future<void> _ensureSellersLoaded() async {
+    if (_sellers.isNotEmpty) return;
+    try {
+      final data = await ApiService.getSellers();
+      setState(() {
+        _sellers = List<Map<String, dynamic>>.from(data);
+      });
+    } catch (_) {
+      // Ignore; we will show an error when trying to open picker.
+    }
+  }
+
+  Future<void> _pickSeller() async {
+    await _ensureSellersLoaded();
+
+    if (_sellers.isEmpty) {
+      Get.snackbar(
+        'error'.tr,
+        'failed_load_sellers'.tr,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    final selected = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      backgroundColor: Colors.grey[900],
+      isScrollControlled: true,
+      builder: (context) {
+        final q = TextEditingController();
+        List<Map<String, dynamic>> filtered = List<Map<String, dynamic>>.from(_sellers);
+
+        void applyFilter(String text) {
+          final s = text.trim().toLowerCase();
+          filtered = _sellers.where((e) {
+            final name = e['name']?.toString().toLowerCase() ?? '';
+            final email = e['email']?.toString().toLowerCase() ?? '';
+            return s.isEmpty || name.contains(s) || email.contains(s);
+          }).toList();
+        }
+
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: SafeArea(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 12),
+                    Container(
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[700],
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: TextField(
+                        controller: q,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          hintText: 'seller_search'.tr,
+                          hintStyle: TextStyle(color: Colors.grey[500]),
+                          prefixIcon: Icon(Icons.store, color: Colors.grey[400]),
+                          filled: true,
+                          fillColor: Colors.grey[850],
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        onChanged: (v) {
+                          setModalState(() {
+                            applyFilter(v);
+                          });
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Flexible(
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: filtered.length + 1,
+                        separatorBuilder: (_, __) => Divider(color: Colors.grey[800], height: 1),
+                        itemBuilder: (context, index) {
+                          if (index == 0) {
+                            return ListTile(
+                              leading: const Icon(Icons.clear, color: Colors.white),
+                              title: Text('all_sellers'.tr, style: const TextStyle(color: Colors.white)),
+                              onTap: () => Navigator.of(context).pop(<String, dynamic>{}),
+                            );
+                          }
+                          final seller = filtered[index - 1];
+                          return ListTile(
+                            leading: const Icon(Icons.store, color: Colors.white),
+                            title: Text(
+                              seller['name']?.toString() ?? 'Seller',
+                              style: const TextStyle(color: Colors.white),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            subtitle: seller['email'] != null
+                                ? Text(
+                                    seller['email'].toString(),
+                                    style: TextStyle(color: Colors.grey[500]),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  )
+                                : null,
+                            onTap: () => Navigator.of(context).pop(seller),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (!mounted) return;
+    if (selected == null) return;
+
+    final id = selected['id']?.toString();
+    if (id == null || id.isEmpty) {
+      // cleared
+      setState(() {
+        _selectedSellerId = null;
+        _selectedSellerName = null;
+      });
+      await _performSearch();
+      return;
+    }
+
+    setState(() {
+      _selectedSellerId = id;
+      _selectedSellerName = selected['name']?.toString();
+    });
+    await _performSearch();
+  }
+
+  Future<void> _openFilters() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.grey[900],
+      isScrollControlled: true,
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 8),
+                  Text(
+                    'filters'.tr,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.store, color: Colors.white),
+                    title: Text('seller'.tr, style: const TextStyle(color: Colors.white)),
+                    subtitle: Text(
+                      (_selectedSellerId == null || _selectedSellerId!.isEmpty)
+                          ? 'all_sellers'.tr
+                          : (_selectedSellerName ?? _selectedSellerId!),
+                      style: TextStyle(color: Colors.grey[400]),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    trailing: const Icon(Icons.chevron_right, color: Colors.white),
+                    onTap: () async {
+                      // Close filters sheet, open seller picker, then reopen filters.
+                      Navigator.of(context).pop();
+                      await _pickSeller();
+                      if (!mounted) return;
+                      await _openFilters();
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _minPriceController,
+                          keyboardType: TextInputType.number,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            hintText: 'min_short'.tr,
+                            hintStyle: TextStyle(color: Colors.grey[500]),
+                            filled: true,
+                            fillColor: Colors.grey[850],
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextField(
+                          controller: _maxPriceController,
+                          keyboardType: TextInputType.number,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            hintText: 'max_short'.tr,
+                            hintStyle: TextStyle(color: Colors.grey[500]),
+                            filled: true,
+                            fillColor: Colors.grey[850],
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            _minPriceController.clear();
+                            _maxPriceController.clear();
+                            setState(() {
+                              _selectedSellerId = null;
+                              _selectedSellerName = null;
+                            });
+                            Navigator.of(context).pop();
+                          },
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: Colors.grey[700]!),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          child: Text('reset_all'.tr),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryColor,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          child: Text('apply'.tr),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    if (!mounted) return;
+    await _performSearch();
+  }
+
+  Future<void> _selectSuggestion(_SearchSuggestion suggestion) async {
+    await suggestion.apply(this);
   }
 
   void _selectCategory(String category) {
@@ -178,6 +554,31 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Get.back(),
         ),
+        actions: [
+          IconButton(
+            tooltip: 'filters'.tr,
+            onPressed: _openFilters,
+            icon: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(Icons.tune, color: _hasActiveFilters ? primaryColor : Colors.white),
+                if (_hasActiveFilters)
+                  Positioned(
+                    right: -1,
+                    top: -1,
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -217,6 +618,88 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   ),
                 ),
+
+                if (_selectedSellerId != null && _selectedSellerId!.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        Chip(
+                          backgroundColor: Colors.grey[850],
+                          label: Text(
+                            'seller_filter_chip'.trParams({
+                              'name': _selectedSellerName ?? _selectedSellerId!,
+                            }),
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                          deleteIcon: const Icon(Icons.close, color: Colors.white, size: 18),
+                          onDeleted: () async {
+                            setState(() {
+                              _selectedSellerId = null;
+                              _selectedSellerName = null;
+                            });
+                            await _performSearch();
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (_minPrice != null || _maxPrice != null) ...[
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        Chip(
+                          backgroundColor: Colors.grey[850],
+                          label: Text(
+                            'price_filter_chip'.trParams({
+                              'min': formatMoney(_minPrice ?? 0),
+                              'max': _maxPrice != null ? formatMoney(_maxPrice!) : '∞',
+                            }),
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                          deleteIcon: const Icon(Icons.close, color: Colors.white, size: 18),
+                          onDeleted: () async {
+                            _minPriceController.clear();
+                            _maxPriceController.clear();
+                            setState(() {});
+                            await _performSearch();
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                if (_hasActiveFilters) ...[
+                  const SizedBox(height: 6),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: () async {
+                        _minPriceController.clear();
+                        _maxPriceController.clear();
+                        setState(() {
+                          _selectedSellerId = null;
+                          _selectedSellerName = null;
+                        });
+                        await _performSearch();
+                      },
+                      icon: Icon(Icons.restart_alt, color: Colors.grey[400], size: 18),
+                      label: Text(
+                        'reset_filters'.tr,
+                        style: TextStyle(color: Colors.grey[400]),
+                      ),
+                    ),
+                  ),
+                ],
                 
                 // Suggestions dropdown
                 if (_showSuggestions)
@@ -236,11 +719,16 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                     child: Column(
                       children: _suggestions.map((suggestion) {
                         return ListTile(
-                          leading: Icon(Icons.search, color: Colors.grey[500], size: 20),
-                          title: Text(
-                            suggestion,
-                            style: const TextStyle(color: Colors.white),
-                          ),
+                          leading: Icon(suggestion.icon, color: Colors.grey[500], size: 20),
+                          title: Text(suggestion.title, style: const TextStyle(color: Colors.white)),
+                          subtitle: suggestion.subtitle == null
+                              ? null
+                              : Text(
+                                  suggestion.subtitle!,
+                                  style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                           dense: true,
                           onTap: () => _selectSuggestion(suggestion),
                         );
@@ -335,7 +823,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
   }
 
   Widget _buildProductCard(Map<String, dynamic> product) {
-    final quantity = product['quantity'] ?? 0;
+    final quantity = asInt(product['quantity']);
     final inStock = quantity > 0;
     
     return GestureDetector(
@@ -355,20 +843,14 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                 children: [
                   ClipRRect(
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                    child: product['image_url'] != null
-                        ? Image.network(
-                            product['image_url'],
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
-                              color: Colors.grey[800],
-                              child: Icon(Icons.image, color: Colors.grey[600], size: 40),
-                            ),
-                          )
-                        : Container(
-                            color: Colors.grey[800],
-                            child: Icon(Icons.image, color: Colors.grey[600], size: 40),
-                          ),
+                    child: AppNetworkImage(
+                      url: product['image_url']?.toString(),
+                      fit: BoxFit.cover,
+                      errorWidget: Container(
+                        color: Colors.grey[800],
+                        child: Icon(Icons.image, color: Colors.grey[600], size: 40),
+                      ),
+                    ),
                   ),
                   if (!inStock)
                     Positioned.fill(
@@ -381,7 +863,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: Colors.red,
+                              color: primaryColor,
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
@@ -431,7 +913,7 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${_formatPrice(product['price'])} сум',
+                      _formatPrice(product['price']),
                       style: TextStyle(
                         color: primaryColor,
                         fontWeight: FontWeight.bold,
@@ -464,11 +946,75 @@ class _SmartSearchScreenState extends State<SmartSearchScreen> {
   }
 
   String _formatPrice(dynamic price) {
-    if (price == null) return '0';
-    final numPrice = price is num ? price : double.tryParse(price.toString()) ?? 0;
-    return numPrice.toStringAsFixed(0).replaceAllMapped(
+    final n = asDouble(price);
+    final s = n.toStringAsFixed(0).replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
       (Match m) => '${m[1]} ',
     );
+    return '$s ${'currency_sum'.tr}';
   }
+}
+
+/// A typed suggestion item for the search dropdown.
+class _SearchSuggestion {
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final Future<void> Function(_SmartSearchScreenState state) _apply;
+
+  const _SearchSuggestion._({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required Future<void> Function(_SmartSearchScreenState state) apply,
+  }) : _apply = apply;
+
+  static _SearchSuggestion text(String text) {
+    return _SearchSuggestion._(
+      icon: Icons.search,
+      title: text,
+      subtitle: null,
+      apply: (state) async {
+        state._searchController.text = text;
+        state._focusNode.unfocus();
+        await state._performSearch();
+      },
+    );
+  }
+
+  static _SearchSuggestion category(String label) {
+    return _SearchSuggestion._(
+      icon: Icons.category,
+      title: label,
+      subtitle: null,
+      apply: (state) async {
+        state._searchController.text = label;
+        state._focusNode.unfocus();
+        await state._performSearch();
+      },
+    );
+  }
+
+  static _SearchSuggestion seller({required String id, required String name, String? email}) {
+    final title = name.isNotEmpty ? name : 'Seller $id';
+    return _SearchSuggestion._(
+      icon: Icons.store,
+      title: title,
+      subtitle: email,
+      apply: (state) async {
+        state.setState(() {
+          state._selectedSellerId = id;
+          state._selectedSellerName = name.isNotEmpty ? name : null;
+          state._suggestions = [];
+          state._showSuggestions = false;
+        });
+        // Clear query to show all seller products; user can type further after.
+        state._searchController.clear();
+        state._focusNode.unfocus();
+        await state._performSearch();
+      },
+    );
+  }
+
+  Future<void> apply(_SmartSearchScreenState state) => _apply(state);
 }

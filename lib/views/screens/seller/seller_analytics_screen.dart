@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/utils/formatters.dart';
+import 'package:tiktok_tutorial/utils/money.dart';
 
 class SellerAnalyticsScreen extends StatefulWidget {
   const SellerAnalyticsScreen({Key? key}) : super(key: key);
@@ -96,7 +98,7 @@ class _SellerAnalyticsScreenState extends State<SellerAnalyticsScreen> {
       final items = order['items'] as List<dynamic>? ?? [];
       for (final item in items) {
         final productId = item['product_id'] ?? '';
-        final productName = item['product_name'] ?? 'Товар';
+        final productName = item['product_name'] ?? 'product'.tr;
         final quantity = item['quantity'] ?? 1;
         final price = item['price'] ?? 0;
         
@@ -220,10 +222,10 @@ class _SellerAnalyticsScreenState extends State<SellerAnalyticsScreen> {
       ),
       child: Row(
         children: [
-          _buildPeriodChip('week', 'Неделя'),
-          _buildPeriodChip('month', 'Месяц'),
-          _buildPeriodChip('year', 'Год'),
-          _buildPeriodChip('all', 'Всё время'),
+          _buildPeriodChip('week', 'week'.tr),
+          _buildPeriodChip('month', 'month'.tr),
+          _buildPeriodChip('year', 'year'.tr),
+          _buildPeriodChip('all', 'all_time'.tr),
         ],
       ),
     );
@@ -259,7 +261,7 @@ class _SellerAnalyticsScreenState extends State<SellerAnalyticsScreen> {
       children: [
         Expanded(
           child: _buildStatCard(
-            'Выручка',
+            'revenue'.tr,
             _formatPrice(_totalRevenue),
             Icons.attach_money,
             primaryColor,
@@ -268,7 +270,7 @@ class _SellerAnalyticsScreenState extends State<SellerAnalyticsScreen> {
         const SizedBox(width: 12),
         Expanded(
           child: _buildStatCard(
-            'Получено',
+            'received'.tr,
             _formatPrice(_completedRevenue),
             Icons.check_circle,
             Colors.green,
@@ -329,8 +331,8 @@ class _SellerAnalyticsScreenState extends State<SellerAnalyticsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Заказы',
+          Text(
+            'orders'.tr,
             style: TextStyle(
               color: Colors.white,
               fontSize: 16,
@@ -341,17 +343,17 @@ class _SellerAnalyticsScreenState extends State<SellerAnalyticsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildOrderStat('Всего', total.toString(), Colors.white),
-              _buildOrderStat('Выполнено', completed.toString(), Colors.green),
-              _buildOrderStat('В ожидании', pending.toString(), Colors.orange),
-              _buildOrderStat('Отменено', cancelled.toString(), Colors.red),
+              _buildOrderStat('total_orders'.tr, total.toString(), Colors.white),
+              _buildOrderStat('completed'.tr, completed.toString(), Colors.green),
+              _buildOrderStat('pending'.tr, pending.toString(), Colors.orange),
+              _buildOrderStat('cancelled'.tr, cancelled.toString(), Colors.grey),
             ],
           ),
           const SizedBox(height: 16),
           // Conversion rate
           if (total > 0) ...[
             Text(
-              'Конверсия: ${((completed / total) * 100).toStringAsFixed(1)}%',
+              '${'conversion'.tr}: ${((completed / total) * 100).toStringAsFixed(1)}%',
               style: TextStyle(color: Colors.grey[500], fontSize: 12),
             ),
             const SizedBox(height: 8),
@@ -408,9 +410,9 @@ class _SellerAnalyticsScreenState extends State<SellerAnalyticsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Продажи по дням',
-            style: TextStyle(
+          Text(
+            'daily_sales'.tr,
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -478,8 +480,8 @@ class _SellerAnalyticsScreenState extends State<SellerAnalyticsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Топ товары',
+          Text(
+            'top_products'.tr,
             style: TextStyle(
               color: Colors.white,
               fontSize: 16,
@@ -490,7 +492,7 @@ class _SellerAnalyticsScreenState extends State<SellerAnalyticsScreen> {
           if (products.isEmpty)
             Center(
               child: Text(
-                'Нет данных о продажах',
+                'no_sales_data'.tr,
                 style: TextStyle(color: Colors.grey[500]),
               ),
             )
@@ -534,14 +536,14 @@ class _SellerAnalyticsScreenState extends State<SellerAnalyticsScreen> {
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
-                            '${product['quantity']} шт.',
+                            '${product['quantity']} ${'pcs_short'.tr}',
                             style: TextStyle(color: Colors.grey[500], fontSize: 12),
                           ),
                         ],
                       ),
                     ),
                     Text(
-                      _formatPrice(product['revenue'].toDouble()),
+                      _formatPrice(asDouble(product['revenue'])),
                       style: const TextStyle(
                         color: primaryColor,
                         fontWeight: FontWeight.bold,
@@ -572,8 +574,8 @@ class _SellerAnalyticsScreenState extends State<SellerAnalyticsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Вовлечённость',
+          Text(
+            'engagement'.tr,
             style: TextStyle(
               color: Colors.white,
               fontSize: 16,
@@ -584,10 +586,10 @@ class _SellerAnalyticsScreenState extends State<SellerAnalyticsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildEngagementStat(Icons.play_circle, 'Просмотры', _formatNumber(totalViews)),
-              _buildEngagementStat(Icons.favorite, 'Лайки', _formatNumber(totalLikes)),
-              _buildEngagementStat(Icons.video_library, 'Рилсы', reels.length.toString()),
-              _buildEngagementStat(Icons.inventory_2, 'Товары', _controller.myProducts.length.toString()),
+              _buildEngagementStat(Icons.play_circle, 'views'.tr, _formatNumber(totalViews)),
+              _buildEngagementStat(Icons.favorite, 'likes'.tr, _formatNumber(totalLikes)),
+              _buildEngagementStat(Icons.video_library, 'reels'.tr, reels.length.toString()),
+              _buildEngagementStat(Icons.inventory_2, 'products'.tr, _controller.myProducts.length.toString()),
             ],
           ),
         ],
@@ -618,12 +620,7 @@ class _SellerAnalyticsScreenState extends State<SellerAnalyticsScreen> {
   }
 
   String _formatPrice(double price) {
-    if (price >= 1000000) {
-      return '${(price / 1000000).toStringAsFixed(1)}M сум';
-    } else if (price >= 1000) {
-      return '${(price / 1000).toStringAsFixed(0)}K сум';
-    }
-    return '${price.toStringAsFixed(0)} сум';
+    return formatShortMoneyWithCurrency(price);
   }
 
   String _formatShortPrice(double price) {

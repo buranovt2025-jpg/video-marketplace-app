@@ -6,7 +6,10 @@ import 'package:tiktok_tutorial/services/location_service.dart';
 import 'package:tiktok_tutorial/services/notification_service.dart';
 import 'package:tiktok_tutorial/views/screens/chat/chat_screen.dart';
 import 'package:tiktok_tutorial/views/screens/common/qr_code_screen.dart';
-import 'package:tiktok_tutorial/views/screens/common/qr_scanner_screen.dart';
+import 'package:tiktok_tutorial/views/screens/common/qr_scanner_export.dart';
+import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
+import 'package:tiktok_tutorial/utils/formatters.dart';
+import 'package:tiktok_tutorial/utils/money.dart';
 
 class CourierOrderDetailScreen extends StatefulWidget {
   final Map<String, dynamic> order;
@@ -37,8 +40,8 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
     if (currentPosition == null) return;
     
     // Calculate distance to seller
-    final sellerLat = _order['seller_latitude']?.toDouble();
-    final sellerLng = _order['seller_longitude']?.toDouble();
+    final sellerLat = tryNum(_order['seller_latitude'])?.toDouble();
+    final sellerLng = tryNum(_order['seller_longitude'])?.toDouble();
     if (sellerLat != null && sellerLng != null) {
       final distance = _locationService.calculateDistance(
         currentPosition.latitude,
@@ -52,8 +55,8 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
     }
     
     // Calculate distance to buyer
-    final buyerLat = _order['delivery_latitude']?.toDouble();
-    final buyerLng = _order['delivery_longitude']?.toDouble();
+    final buyerLat = tryNum(_order['delivery_latitude'])?.toDouble();
+    final buyerLng = tryNum(_order['delivery_longitude'])?.toDouble();
     if (buyerLat != null && buyerLng != null) {
       final distance = _locationService.calculateDistance(
         currentPosition.latitude,
@@ -70,10 +73,10 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
   Future<void> _openNavigation(double? lat, double? lng, String address) async {
     if (lat == null || lng == null) {
       Get.snackbar(
-        'Ошибка',
-        'Координаты не указаны',
+        'error'.tr,
+        'coordinates_missing'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
       return;
@@ -99,18 +102,18 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
       String message = '';
       switch (newStatus) {
         case 'picked_up':
-          message = 'Заказ забран. Теперь доставьте его покупателю.';
+          message = 'picked_up_message'.tr;
           break;
         case 'in_transit':
-          message = 'Статус обновлён. Вы в пути к покупателю.';
+          message = 'in_transit_message'.tr;
           break;
         case 'delivered':
-          message = 'Заказ доставлен! Не забудьте получить оплату.';
+          message = 'delivered_message'.tr;
           break;
       }
       
       Get.snackbar(
-        'Статус обновлён',
+        'status_updated'.tr,
         message,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.green,
@@ -118,10 +121,10 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
       );
     } else {
       Get.snackbar(
-        'Ошибка',
-        'Не удалось обновить статус',
+        'error'.tr,
+        'status_update_failed'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
     }
@@ -144,7 +147,9 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
           onPressed: () => Get.back(),
         ),
         title: Text(
-          'Заказ #${_order['id']?.substring(0, 8) ?? ''}',
+          'order_number_short'.trParams({
+            'id': (_order['id']?.toString() ?? '').substring(0, 8),
+          }),
           style: const TextStyle(color: Colors.white),
         ),
         actions: [
@@ -173,14 +178,14 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
 
             // Pickup location (Seller)
             _buildLocationCard(
-              title: 'Забрать у продавца',
+              title: 'pickup_from_seller_title'.tr,
               icon: Icons.store,
               iconColor: Colors.orange,
-              address: _order['seller_address'] ?? 'Адрес не указан',
-              name: _order['seller_name'] ?? 'Продавец',
+              address: _order['seller_address'] ?? 'address_not_specified'.tr,
+              name: _order['seller_name'] ?? 'seller'.tr,
               phone: _order['seller_phone'],
-              latitude: _order['seller_latitude']?.toDouble(),
-              longitude: _order['seller_longitude']?.toDouble(),
+              latitude: tryNum(_order['seller_latitude'])?.toDouble(),
+              longitude: tryNum(_order['seller_longitude'])?.toDouble(),
               userId: _order['seller_id'],
               showNavigation: status == 'picked_up' || status == 'ready',
               distance: _distanceToSeller,
@@ -189,14 +194,14 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
 
             // Delivery location (Buyer)
             _buildLocationCard(
-              title: 'Доставить покупателю',
+              title: 'deliver_to_buyer_title'.tr,
               icon: Icons.location_on,
-              iconColor: Colors.blue,
-              address: _order['delivery_address'] ?? 'Адрес не указан',
-              name: _order['buyer_name'] ?? 'Покупатель',
+              iconColor: accentColor,
+              address: _order['delivery_address'] ?? 'address_not_specified'.tr,
+              name: _order['buyer_name'] ?? 'buyer'.tr,
               phone: _order['buyer_phone'],
-              latitude: _order['delivery_latitude']?.toDouble(),
-              longitude: _order['delivery_longitude']?.toDouble(),
+              latitude: tryNum(_order['delivery_latitude'])?.toDouble(),
+              longitude: tryNum(_order['delivery_longitude'])?.toDouble(),
               userId: _order['buyer_id'],
               showNavigation: status == 'in_transit',
               distance: _distanceToBuyer,
@@ -228,32 +233,32 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
 
   Widget _buildStatusCard(String status) {
     final statusColors = {
-      'created': Colors.blue,
-      'accepted': Colors.orange,
-      'ready': Colors.purple,
-      'picked_up': Colors.indigo,
-      'in_transit': Colors.cyan,
+      'created': Colors.grey,
+      'accepted': accentColor,
+      'ready': primaryColor,
+      'picked_up': primaryColor,
+      'in_transit': accentColor,
       'delivered': Colors.green,
       'completed': Colors.green,
-      'cancelled': Colors.red,
+      'cancelled': Colors.grey,
     };
 
     final statusLabels = {
-      'created': 'Создан',
-      'accepted': 'Принят продавцом',
-      'ready': 'Готов к выдаче',
-      'picked_up': 'Забран курьером',
-      'in_transit': 'В пути',
-      'delivered': 'Доставлен',
-      'completed': 'Завершён',
-      'cancelled': 'Отменён',
+      'created': 'status_created'.tr,
+      'accepted': 'status_accepted_by_seller'.tr,
+      'ready': 'status_ready'.tr,
+      'picked_up': 'status_picked_up_by_courier'.tr,
+      'in_transit': 'status_in_transit'.tr,
+      'delivered': 'status_delivered'.tr,
+      'completed': 'status_completed'.tr,
+      'cancelled': 'status_cancelled'.tr,
     };
 
     final statusInstructions = {
-      'ready': 'Заберите заказ у продавца',
-      'picked_up': 'Нажмите "В пути" и доставьте заказ',
-      'in_transit': 'Доставьте заказ покупателю',
-      'delivered': 'Заказ доставлен. Получите оплату.',
+      'ready': 'status_ready_pickup_hint'.tr,
+      'picked_up': 'status_picked_up_hint'.tr,
+      'in_transit': 'status_in_transit_hint'.tr,
+      'delivered': 'status_delivered_hint'.tr,
     };
 
     return Container(
@@ -281,7 +286,7 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Статус заказа',
+                      'order_status'.tr,
                       style: TextStyle(color: Colors.grey[400], fontSize: 12),
                     ),
                     Text(
@@ -394,7 +399,7 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    'СЕЙЧАС',
+                    'now_badge'.tr,
                     style: TextStyle(
                       color: iconColor,
                       fontSize: 10,
@@ -444,7 +449,7 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
                   onPressed: () => _openNavigation(latitude, longitude, address),
                   icon: Icon(Icons.navigation, color: iconColor, size: 18),
                   label: Text(
-                    'Навигация',
+                    'navigation'.tr,
                     style: TextStyle(color: iconColor),
                   ),
                   style: OutlinedButton.styleFrom(
@@ -459,12 +464,12 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () => Get.to(() => ChatScreen(
-                      userId: userId,
+                      userId: userId.toString(),
                       userName: name,
                     )),
                     icon: Icon(Icons.chat_bubble_outline, color: Colors.grey[400], size: 18),
                     label: Text(
-                      'Чат',
+                      'chat'.tr,
                       style: TextStyle(color: Colors.grey[400]),
                     ),
                     style: OutlinedButton.styleFrom(
@@ -495,7 +500,7 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
               Icon(Icons.inventory_2_outlined, color: Colors.grey[400], size: 20),
               const SizedBox(width: 8),
               Text(
-                'Товары (${items.length})',
+                'items_title'.trParams({'count': items.length.toString()}),
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -520,14 +525,10 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
                   child: item['image_url'] != null
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          item['image_url'],
+                        child: AppNetworkImage(
+                          url: item['image_url']?.toString(),
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Icon(
-                            Icons.inventory_2,
-                            color: Colors.grey[600],
-                            size: 20,
-                          ),
+                          errorWidget: Icon(Icons.inventory_2, color: Colors.grey[600], size: 20),
                         ),
                       )
                     : Icon(Icons.inventory_2, color: Colors.grey[600], size: 20),
@@ -538,11 +539,11 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item['name'] ?? 'Товар',
+                        item['name'] ?? 'product'.tr,
                         style: const TextStyle(color: Colors.white, fontSize: 14),
                       ),
                       Text(
-                        '${item['quantity'] ?? 1} шт. x ${item['price']?.toStringAsFixed(0) ?? '0'} сум',
+                        '${item['quantity'] ?? 1} ${'pcs'.tr} x ${formatMoneyWithCurrency(item['price'])}',
                         style: TextStyle(color: Colors.grey[500], fontSize: 12),
                       ),
                     ],
@@ -573,11 +574,11 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'К оплате наличными',
+                  'cash_to_collect'.tr,
                   style: TextStyle(color: Colors.grey[400], fontSize: 12),
                 ),
                 Text(
-                  '${totalAmount.toStringAsFixed(0)} сум',
+                  formatMoneyWithCurrency(totalAmount),
                   style: TextStyle(
                     color: Colors.green[400],
                     fontSize: 22,
@@ -607,9 +608,9 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
             children: [
               Icon(Icons.note_outlined, color: Colors.grey[400], size: 20),
               const SizedBox(width: 8),
-              const Text(
-                'Примечание',
-                style: TextStyle(
+              Text(
+                'note'.tr,
+                style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
@@ -649,7 +650,7 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
                 : const Icon(Icons.qr_code_scanner),
               label: Text('scan_qr'.tr + ' - ' + 'confirm_pickup'.tr),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.purple,
+                backgroundColor: primaryColor,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
@@ -672,9 +673,9 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                   )
                 : const Icon(Icons.directions_bike),
-              label: const Text('В пути к покупателю'),
+              label: Text('in_transit_to_buyer'.tr),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.cyan,
+                backgroundColor: accentColor,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
@@ -717,7 +718,7 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
                   )
                 : const Icon(Icons.check_circle, color: Colors.green),
               label: Text(
-                'Подтвердить без QR',
+                'confirm_without_qr'.tr,
                 style: TextStyle(color: Colors.green[400]),
               ),
               style: OutlinedButton.styleFrom(
@@ -742,7 +743,7 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
         _updateStatus('picked_up');
         Get.snackbar(
           'item_received'.tr,
-          'Товар получен от продавца',
+          'item_received_from_seller'.tr,
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.green,
           colorText: Colors.white,
@@ -756,7 +757,7 @@ class _CourierOrderDetailScreenState extends State<CourierOrderDetailScreen> {
       orderId: _order['id'] ?? '',
       type: 'delivery',
       title: 'show_qr'.tr,
-      subtitle: 'Покупатель должен отсканировать этот QR-код',
+      subtitle: 'buyer_should_scan_qr'.tr,
     ));
   }
 }

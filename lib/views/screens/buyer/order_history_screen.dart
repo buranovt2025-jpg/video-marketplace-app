@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/order_tracking_screen.dart';
+import 'package:tiktok_tutorial/utils/money.dart';
 
 class OrderHistoryScreen extends StatefulWidget {
   const OrderHistoryScreen({Key? key}) : super(key: key);
@@ -16,6 +17,18 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   String _selectedFilter = 'all';
 
   final List<String> _filters = ['all', 'pending', 'accepted', 'in_delivery', 'delivered', 'cancelled'];
+
+  @override
+  void initState() {
+    super.initState();
+    // Note: this screen does not guarantee that orders are already loaded.
+    // Fetch after the first frame to avoid an empty/grey screen.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (_controller.isLoggedIn) {
+        await _controller.fetchOrders();
+      }
+    });
+  }
 
   String _getFilterLabel(String filter) {
     switch (filter) {
@@ -51,7 +64,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
         'error'.tr,
         'cannot_cancel'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
       return;
@@ -76,7 +89,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               style: const TextStyle(color: Colors.white),
               maxLines: 3,
               decoration: InputDecoration(
-                hintText: 'Укажите причину отмены...',
+                hintText: 'cancel_reason_hint'.tr,
                 hintStyle: TextStyle(color: Colors.grey[600]),
                 filled: true,
                 fillColor: Colors.grey[800],
@@ -98,7 +111,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               Get.back();
               _cancelOrder(order, reasonController.text);
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: primaryColor, foregroundColor: Colors.black),
             child: Text('confirm'.tr),
           ),
         ],
@@ -120,15 +133,15 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   Color _getStatusColor(String status) {
     switch (status) {
       case 'pending':
-        return Colors.orange;
+        return accentColor;
       case 'accepted':
-        return Colors.blue;
+        return primaryColor;
       case 'in_delivery':
-        return Colors.purple;
+        return accentColor;
       case 'delivered':
         return Colors.green;
       case 'cancelled':
-        return Colors.red;
+        return primaryColor;
       default:
         return Colors.grey;
     }
@@ -218,18 +231,35 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                         'no_results'.tr,
                         style: TextStyle(color: Colors.grey[400], fontSize: 18),
                       ),
+                      const SizedBox(height: 16),
+                      OutlinedButton.icon(
+                        onPressed: _controller.isLoggedIn ? _controller.fetchOrders : null,
+                        icon: const Icon(Icons.refresh),
+                        label: Text('refresh'.tr),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: BorderSide(color: Colors.grey[700]!),
+                        ),
+                      ),
                     ],
                   ),
                 );
               }
               
-              return ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: orders.length,
-                itemBuilder: (context, index) {
-                  final order = orders[index];
-                  return _buildOrderCard(order);
+              return RefreshIndicator(
+                onRefresh: () async {
+                  if (_controller.isLoggedIn) {
+                    await _controller.fetchOrders();
+                  }
                 },
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: orders.length,
+                  itemBuilder: (context, index) {
+                    final order = orders[index];
+                    return _buildOrderCard(order);
+                  },
+                ),
               );
             }),
           ),
@@ -241,6 +271,9 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   Widget _buildOrderCard(Map<String, dynamic> order) {
     final status = order['status'] ?? 'pending';
     final canCancel = status == 'pending' || status == 'accepted';
+    final orderIdStr = (order['id'] ?? '').toString();
+    final orderIdShort = orderIdStr.length > 8 ? orderIdStr.substring(0, 8) : orderIdStr;
+    final totalNum = (order['total'] is num) ? (order['total'] as num) : (order['total_amount'] is num) ? (order['total_amount'] as num) : 0;
     
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -256,7 +289,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Заказ #${order['id']?.substring(0, 8) ?? ''}',
+                  'order_number_short'.trParams({'id': orderIdShort}),
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -284,7 +317,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               children: [
                 const SizedBox(height: 8),
                 Text(
-                  '${order['total']?.toStringAsFixed(0) ?? '0'} сум',
+                  formatMoneyWithCurrency(totalNum),
                   style: const TextStyle(
                     color: primaryColor,
                     fontSize: 18,
@@ -293,7 +326,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  order['delivery_address'] ?? 'Адрес не указан',
+                  order['delivery_address'] ?? 'address_not_specified'.tr,
                   style: TextStyle(color: Colors.grey[400]),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -315,7 +348,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                       foregroundColor: Colors.white,
                       side: BorderSide(color: Colors.grey[700]!),
                     ),
-                    child: Text('Подробнее'),
+                    child: Text('details'.tr),
                   ),
                 ),
                 if (canCancel) ...[
@@ -324,8 +357,8 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                     child: OutlinedButton(
                       onPressed: () => _showCancelDialog(order),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
-                        side: const BorderSide(color: Colors.red),
+                        foregroundColor: primaryColor,
+                        side: const BorderSide(color: primaryColor),
                       ),
                       child: Text('cancel_order'.tr),
                     ),

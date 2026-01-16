@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/services/api_service.dart';
+import 'package:tiktok_tutorial/utils/feature_flags.dart';
+import 'package:tiktok_tutorial/utils/formatters.dart';
+import 'package:tiktok_tutorial/utils/media_url.dart';
+import 'package:tiktok_tutorial/utils/money.dart';
 
 class CreateReelScreen extends StatefulWidget {
   const CreateReelScreen({Key? key}) : super(key: key);
@@ -14,8 +20,13 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
   final TextEditingController _captionController = TextEditingController();
   final TextEditingController _videoUrlController = TextEditingController();
   final MarketplaceController _controller = Get.find<MarketplaceController>();
+  final ImagePicker _picker = ImagePicker();
   
   String? _selectedProductId;
+  bool _useUpload = false;
+  XFile? _pickedVideo;
+  bool _isUploading = false;
+  static const int _maxUploadBytes = 50 * 1024 * 1024; // 50 MB
 
   @override
   void initState() {
@@ -31,19 +42,115 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
   }
 
   Future<void> _createReel() async {
-    if (_videoUrlController.text.isEmpty) {
-      Get.snackbar(
-        'Ошибка',
-        'Добавьте ссылку на видео',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-      return;
+    if (_isUploading) return;
+    String? finalVideoUrl;
+
+    if (kEnableMediaUpload && _useUpload) {
+      if (_pickedVideo == null) {
+        Get.snackbar(
+          'error'.tr,
+          'media_missing'.tr,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.black87,
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      // Backend may not support uploads yet — keep it safe and explicit.
+      // When backend is ready (see docs/MEDIA_UPLOAD.md), this block can be enabled.
+      try {
+        if (mounted) setState(() => _isUploading = true);
+        final sizeBytes = await _pickedVideo!.length();
+        if (sizeBytes > _maxUploadBytes) {
+          Get.snackbar(
+            'error'.tr,
+            'file_too_large'.trParams({'max': '50 MB'}),
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.black87,
+            colorText: Colors.white,
+          );
+          return;
+        }
+        final bytes = await _pickedVideo!.readAsBytes();
+        // Best-effort content-type; backend can also derive it.
+        final session = await ApiService.createUploadSession(
+          kind: 'reel_video',
+          filename: _pickedVideo!.name,
+          contentType: 'video/mp4',
+          sizeBytes: sizeBytes,
+        );
+        final uploadUrl = session['upload_url']?.toString();
+        final fileUrl = session['file_url']?.toString();
+        if (uploadUrl == null || uploadUrl.isEmpty || fileUrl == null || fileUrl.isEmpty) {
+          throw Exception('Invalid upload session');
+        }
+        final hdr = <String, String>{};
+        if (session['headers'] is Map) {
+          for (final entry in (session['headers'] as Map).entries) {
+            hdr[entry.key.toString()] = entry.value.toString();
+          }
+        }
+        hdr.putIfAbsent('Content-Type', () => 'video/mp4');
+        await ApiService.uploadToPresignedUrl(
+          uploadUrl: Uri.parse(uploadUrl),
+          bytes: bytes,
+          headers: hdr.isEmpty ? null : hdr,
+        );
+        finalVideoUrl = fileUrl;
+      } catch (e) {
+        if (e is ApiException && (e.statusCode == 404 || e.statusCode == 405 || e.statusCode == 501)) {
+          Get.snackbar(
+            'error'.tr,
+            'upload_not_supported'.tr,
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.black87,
+            colorText: Colors.white,
+            duration: const Duration(seconds: 4),
+          );
+          if (mounted) setState(() => _useUpload = false);
+        } else {
+        Get.snackbar(
+          'error'.tr,
+          'upload_failed'.tr,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.black87,
+          colorText: Colors.white,
+        );
+        }
+        return;
+      } finally {
+        if (mounted) setState(() => _isUploading = false);
+      }
+    } else {
+      if (_videoUrlController.text.isEmpty) {
+        Get.snackbar(
+          'error'.tr,
+          'video_url_required'.tr,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.black87,
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      final url = _videoUrlController.text.trim();
+      if (!looksLikeVideoUrl(url)) {
+        Get.snackbar(
+          'error'.tr,
+          'video_url_invalid'.tr,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.black87,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 5),
+        );
+        return;
+      }
+      finalVideoUrl = url;
     }
 
     final reel = await _controller.createReel(
-      videoUrl: _videoUrlController.text.trim(),
+      videoUrl: finalVideoUrl,
       caption: _captionController.text.isNotEmpty 
           ? _captionController.text.trim() 
           : null,
@@ -53,20 +160,20 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
     if (reel != null) {
       Get.back();
       Get.snackbar(
-        'Успешно',
-        'Рилс опубликован',
+        'success'.tr,
+        'reel_published'.tr,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
     } else {
       Get.snackbar(
-        'Ошибка',
+        'error'.tr,
         _controller.error.value.isNotEmpty 
             ? _controller.error.value 
-            : 'Не удалось создать рилс',
+            : 'create_reel_failed'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
     }
@@ -83,31 +190,34 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
           icon: const Icon(Icons.close, color: Colors.white),
           onPressed: () => Get.back(),
         ),
-        title: const Text(
-          'Новый рилс',
-          style: TextStyle(color: Colors.white),
+        title: Text(
+          'new_reel'.tr,
+          style: const TextStyle(color: Colors.white),
         ),
         actions: [
-          Obx(() => TextButton(
-            onPressed: _controller.isLoading.value ? null : _createReel,
-            child: _controller.isLoading.value
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
+          Obx(() {
+            final busy = _controller.isLoading.value || _isUploading;
+            return TextButton(
+              onPressed: busy ? null : _createReel,
+              child: busy
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text(
+                      'publish'.tr,
+                      style: TextStyle(
+                        color: buttonColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
-                  )
-                : Text(
-                    'Опубликовать',
-                    style: TextStyle(
-                      color: buttonColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-          )),
+            );
+          }),
         ],
       ),
       body: SingleChildScrollView(
@@ -115,10 +225,76 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (kEnableMediaUpload) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _useUpload = false),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: !_useUpload ? buttonColor!.withOpacity(0.2) : Colors.grey[900],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: !_useUpload ? buttonColor! : Colors.grey[800]!),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.link, color: !_useUpload ? buttonColor : Colors.grey[500]),
+                            const SizedBox(width: 8),
+                            Text(
+                              'use_link'.tr,
+                              style: TextStyle(
+                                color: !_useUpload ? Colors.white : Colors.grey[500],
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _useUpload = true),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: _useUpload ? buttonColor!.withOpacity(0.2) : Colors.grey[900],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: _useUpload ? buttonColor! : Colors.grey[800]!),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.cloud_upload, color: _useUpload ? buttonColor : Colors.grey[500]),
+                            const SizedBox(width: 8),
+                            Text(
+                              'upload_media'.tr,
+                              style: TextStyle(
+                                color: _useUpload ? Colors.white : Colors.grey[500],
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
+
             // Video preview area
             GestureDetector(
               onTap: () {
-                // TODO: Implement video picker
+                if (kEnableMediaUpload && _useUpload) {
+                  // ignore: discarded_futures
+                  _pickVideo();
+                }
               },
               child: Container(
                 height: 400,
@@ -133,7 +309,7 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
                     Icon(Icons.video_call, size: 64, color: Colors.grey[600]),
                     const SizedBox(height: 16),
                     Text(
-                      'Добавить видео',
+                      (kEnableMediaUpload && _useUpload) ? 'choose_file'.tr : 'add_video'.tr,
                       style: TextStyle(
                         color: Colors.grey[500],
                         fontSize: 16,
@@ -141,40 +317,75 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Рекомендуемый формат: 9:16',
+                      'recommended_format_9_16'.tr,
                       style: TextStyle(
                         color: Colors.grey[600],
                         fontSize: 12,
                       ),
                     ),
+                    if (kEnableMediaUpload && _useUpload && _pickedVideo != null) ...[
+                      const SizedBox(height: 12),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          '${'selected_file'.tr}: ${_pickedVideo!.name}',
+                          style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 16),
             
-            // Video URL field (temporary until file upload is implemented)
-            TextField(
-              controller: _videoUrlController,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                labelText: 'URL видео *',
-                labelStyle: TextStyle(color: Colors.grey[400]),
-                hintText: 'https://example.com/video.mp4',
-                hintStyle: TextStyle(color: Colors.grey[600]),
-                prefixIcon: Icon(Icons.link, color: Colors.grey[400]),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey[700]!),
+            // Video URL field (default) / Upload info (feature-flagged)
+            if (!(kEnableMediaUpload && _useUpload))
+              TextField(
+                controller: _videoUrlController,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: 'video_url_required'.tr,
+                  labelStyle: TextStyle(color: Colors.grey[400]),
+                  hintText: 'video_url_hint_mp4'.tr,
+                  hintStyle: TextStyle(color: Colors.grey[600]),
+                  prefixIcon: Icon(Icons.link, color: Colors.grey[400]),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey[700]!),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: buttonColor!),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[900],
                 ),
-                focusedBorder: OutlineInputBorder(
+              )
+            else
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.grey[900],
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: buttonColor!),
+                  border: Border.all(color: Colors.grey[800]!),
                 ),
-                filled: true,
-                fillColor: Colors.grey[900],
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.grey[500]),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'upload_uses_backend'.tr,
+                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
             const SizedBox(height: 24),
             
             // Caption field
@@ -184,9 +395,9 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
               maxLines: 3,
               maxLength: 500,
               decoration: InputDecoration(
-                labelText: 'Описание',
+                labelText: 'description'.tr,
                 labelStyle: TextStyle(color: Colors.grey[400]),
-                hintText: 'Расскажите о вашем товаре...',
+                hintText: 'tell_about_product_hint'.tr,
                 hintStyle: TextStyle(color: Colors.grey[600]),
                 alignLabelWithHint: true,
                 counterStyle: TextStyle(color: Colors.grey[500]),
@@ -206,7 +417,7 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
             
             // Link to product
             Text(
-              'Привязать к товару',
+              'link_to_product'.tr,
               style: TextStyle(
                 color: Colors.grey[300],
                 fontWeight: FontWeight.bold,
@@ -231,7 +442,7 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'У вас пока нет товаров. Создайте товар, чтобы привязать его к рилсу.',
+                          'no_products_link_reel'.tr,
                           style: TextStyle(color: Colors.grey[500], fontSize: 13),
                         ),
                       ),
@@ -254,7 +465,7 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
                     dropdownColor: Colors.grey[900],
                     icon: Icon(Icons.arrow_drop_down, color: Colors.grey[400]),
                     hint: Text(
-                      'Выберите товар (опционально)',
+                      'choose_product_optional'.tr,
                       style: TextStyle(color: Colors.grey[500]),
                     ),
                     style: const TextStyle(color: Colors.white),
@@ -262,7 +473,7 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
                       DropdownMenuItem<String?>(
                         value: null,
                         child: Text(
-                          'Без товара',
+                          'no_product'.tr,
                           style: TextStyle(color: Colors.grey[500]),
                         ),
                       ),
@@ -275,7 +486,7 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
-                                  '${product['name']} - ${product['price']?.toStringAsFixed(0)} сум',
+                                  '${product['name']} - ${formatMoneyWithCurrency(product['price'])}',
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
@@ -300,21 +511,21 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.purple.withOpacity(0.1),
+                color: accentColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.purple.withOpacity(0.3)),
+                border: Border.all(color: accentColor.withOpacity(0.3)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.tips_and_updates, color: Colors.purple[300]),
+                      const Icon(Icons.tips_and_updates, color: accentColor),
                       const SizedBox(width: 8),
                       Text(
-                        'Советы для рилсов',
+                        'reels_tips_title'.tr,
                         style: TextStyle(
-                          color: Colors.purple[300],
+                          color: accentColor,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -322,11 +533,8 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '• Снимайте вертикальное видео (9:16)\n'
-                    '• Первые 3 секунды - самые важные\n'
-                    '• Покажите товар в действии\n'
-                    '• Добавьте цену в описание',
-                    style: TextStyle(color: Colors.purple[300], fontSize: 13),
+                    'reels_tips_body'.tr,
+                    style: const TextStyle(color: accentColor, fontSize: 13),
                   ),
                 ],
               ),
@@ -334,6 +542,49 @@ class _CreateReelScreenState extends State<CreateReelScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _pickVideo() async {
+    try {
+      final source = await _pickSource();
+      if (source == null) return;
+      final x = await _picker.pickVideo(source: source);
+      if (!mounted) return;
+      setState(() => _pickedVideo = x);
+    } catch (_) {
+      Get.snackbar(
+        'error'.tr,
+        'upload_failed'.tr,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+
+  Future<ImageSource?> _pickSource() async {
+    return await Get.bottomSheet<ImageSource?>(
+      SafeArea(
+        child: Container(
+          color: Colors.grey[900],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_library, color: Colors.white),
+                title: Text('gallery'.tr, style: const TextStyle(color: Colors.white)),
+                onTap: () => Get.back(result: ImageSource.gallery),
+              ),
+              ListTile(
+                leading: const Icon(Icons.videocam, color: Colors.white),
+                title: Text('camera'.tr, style: const TextStyle(color: Colors.white)),
+                onTap: () => Get.back(result: ImageSource.camera),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+      isScrollControlled: true,
     );
   }
 }

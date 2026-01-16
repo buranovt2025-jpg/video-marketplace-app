@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
+import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
+import 'package:tiktok_tutorial/utils/formatters.dart';
+import 'package:tiktok_tutorial/utils/money.dart';
 import 'package:tiktok_tutorial/views/screens/seller/create_product_screen.dart';
 
 class MyProductsScreen extends StatefulWidget {
@@ -31,10 +34,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Get.back(),
         ),
-        title: const Text(
-          'Мои товары',
-          style: TextStyle(color: Colors.white),
-        ),
+        title: Text('my_products'.tr, style: const TextStyle(color: Colors.white)),
         actions: [
           IconButton(
             icon: Icon(Icons.add, color: buttonColor),
@@ -59,7 +59,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                 Icon(Icons.inventory_2, size: 80, color: Colors.grey[700]),
                 const SizedBox(height: 24),
                 Text(
-                  'У вас пока нет товаров',
+                  'no_products'.tr,
                   style: TextStyle(
                     color: Colors.grey[500],
                     fontSize: 18,
@@ -67,7 +67,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Добавьте первый товар, чтобы начать продавать',
+                  'add_first_product'.tr,
                   style: TextStyle(
                     color: Colors.grey[600],
                     fontSize: 14,
@@ -78,7 +78,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                 ElevatedButton.icon(
                   onPressed: () => Get.to(() => const CreateProductScreen()),
                   icon: const Icon(Icons.add),
-                  label: const Text('Добавить товар'),
+                  label: Text('add_product'.tr),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: buttonColor,
                     padding: const EdgeInsets.symmetric(
@@ -127,10 +127,10 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
               width: double.infinity,
               color: Colors.grey[800],
               child: product['image_url'] != null
-                  ? Image.network(
-                      product['image_url'],
+                  ? AppNetworkImage(
+                      url: product['image_url']?.toString(),
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _buildImagePlaceholder(),
+                      errorWidget: _buildImagePlaceholder(),
                     )
                   : _buildImagePlaceholder(),
             ),
@@ -147,7 +147,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                   children: [
                     Expanded(
                       child: Text(
-                        product['name'] ?? 'Без названия',
+                        product['name'] ?? 'untitled'.tr,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 18,
@@ -164,13 +164,13 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                       decoration: BoxDecoration(
                         color: inStock
                             ? Colors.green.withOpacity(0.2)
-                            : Colors.red.withOpacity(0.2),
+                            : primaryColor.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        inStock ? 'В наличии' : 'Нет в наличии',
+                        (inStock ? 'in_stock' : 'out_of_stock').tr,
                         style: TextStyle(
-                          color: inStock ? Colors.green : Colors.red,
+                          color: inStock ? Colors.green : primaryColor,
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
@@ -182,7 +182,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
 
                 // Price
                 Text(
-                  '${product['price']?.toStringAsFixed(0) ?? '0'} сум',
+                  formatMoneyWithCurrency(product['price']),
                   style: TextStyle(
                     color: buttonColor,
                     fontSize: 20,
@@ -234,7 +234,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                           inStock ? Icons.remove_circle_outline : Icons.add_circle_outline,
                           size: 18,
                         ),
-                        label: Text(inStock ? 'Убрать из наличия' : 'Вернуть в наличие'),
+                        label: Text(inStock ? 'remove_from_stock'.tr : 'return_to_stock'.tr),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.grey[400],
                           side: BorderSide(color: Colors.grey[700]!),
@@ -246,7 +246,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                     IconButton(
                       onPressed: () => _showDeleteDialog(product),
                       icon: const Icon(Icons.delete_outline),
-                      color: Colors.red[400],
+                      color: primaryColor,
                     ),
                   ],
                 ),
@@ -269,20 +269,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
   }
 
   String _getCategoryLabel(String category) {
-    final categories = {
-      'fruits': 'Фрукты',
-      'vegetables': 'Овощи',
-      'meat': 'Мясо',
-      'dairy': 'Молочные продукты',
-      'bakery': 'Выпечка',
-      'drinks': 'Напитки',
-      'spices': 'Специи',
-      'clothes': 'Одежда',
-      'electronics': 'Электроника',
-      'household': 'Товары для дома',
-      'other': 'Другое',
-    };
-    return categories[category] ?? category;
+    return category.tr;
   }
 
   Future<void> _toggleStock(Map<String, dynamic> product) async {
@@ -297,19 +284,17 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
     Get.dialog(
       AlertDialog(
         backgroundColor: Colors.grey[900],
-        title: const Text(
-          'Удалить товар?',
-          style: TextStyle(color: Colors.white),
-        ),
+        title: Text('delete_product'.tr, style: const TextStyle(color: Colors.white)),
         content: Text(
-          'Вы уверены, что хотите удалить "${product['name']}"?',
+          'delete_product_confirm_named'
+              .trParams({'name': (product['name'] ?? '').toString()}),
           style: TextStyle(color: Colors.grey[400]),
         ),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
             child: Text(
-              'Отмена',
+              'cancel'.tr,
               style: TextStyle(color: Colors.grey[400]),
             ),
           ),
@@ -318,17 +303,14 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
               Get.back();
               await _controller.deleteProduct(product['id']);
               Get.snackbar(
-                'Удалено',
-                'Товар "${product['name']}" удалён',
+                'deleted'.tr,
+                'product_deleted_named'.trParams({'name': (product['name'] ?? '').toString()}),
                 snackPosition: SnackPosition.BOTTOM,
                 backgroundColor: Colors.green,
                 colorText: Colors.white,
               );
             },
-            child: const Text(
-              'Удалить',
-              style: TextStyle(color: Colors.red),
-            ),
+            child: Text('delete'.tr, style: const TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
           ),
         ],
       ),

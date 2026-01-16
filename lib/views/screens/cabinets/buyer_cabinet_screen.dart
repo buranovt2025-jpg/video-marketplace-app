@@ -6,6 +6,9 @@ import 'package:tiktok_tutorial/controllers/favorites_controller.dart';
 import 'package:tiktok_tutorial/controllers/cart_controller.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/order_tracking_screen.dart';
 import 'package:tiktok_tutorial/views/screens/common/location_picker_screen.dart';
+import 'package:tiktok_tutorial/views/widgets/app_network_image.dart';
+import 'package:tiktok_tutorial/utils/formatters.dart';
+import 'package:tiktok_tutorial/utils/money.dart';
 
 class BuyerCabinetScreen extends StatefulWidget {
   const BuyerCabinetScreen({Key? key}) : super(key: key);
@@ -47,8 +50,8 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
     if (_addresses.isEmpty) {
       _addresses.add({
         'id': '1',
-        'name': 'Дом',
-        'address': user?['address'] ?? 'Не указан',
+        'name': 'home_address'.tr,
+        'address': user?['address'] ?? 'address_not_specified'.tr,
         'isDefault': true,
       });
     }
@@ -99,12 +102,12 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
               Icon(Icons.shopping_bag_outlined, size: 64, color: Colors.grey[700]),
               const SizedBox(height: 16),
               Text(
-                'Нет заказов',
+                'no_orders'.tr,
                 style: TextStyle(color: Colors.grey[500], fontSize: 16),
               ),
               const SizedBox(height: 8),
               Text(
-                'Ваши заказы появятся здесь',
+                'your_orders_will_appear_here'.tr,
                 style: TextStyle(color: Colors.grey[600], fontSize: 14),
               ),
             ],
@@ -136,32 +139,32 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
     switch (status) {
       case 'pending':
         statusColor = Colors.orange;
-        statusText = 'Ожидает подтверждения';
+        statusText = 'pending_confirmation'.tr;
         statusIcon = Icons.pending;
         break;
       case 'accepted':
-        statusColor = Colors.blue;
-        statusText = 'Принят продавцом';
+        statusColor = primaryColor;
+        statusText = 'status_accepted_by_seller'.tr;
         statusIcon = Icons.check_circle;
         break;
       case 'ready':
-        statusColor = Colors.purple;
-        statusText = 'Готов к выдаче';
+        statusColor = accentColor;
+        statusText = 'ready_for_pickup'.tr;
         statusIcon = Icons.inventory;
         break;
       case 'in_delivery':
         statusColor = primaryColor;
-        statusText = 'В пути';
+        statusText = 'status_in_transit'.tr;
         statusIcon = Icons.local_shipping;
         break;
       case 'delivered':
         statusColor = Colors.green;
-        statusText = 'Доставлен';
+        statusText = 'status_delivered'.tr;
         statusIcon = Icons.done_all;
         break;
       case 'rejected':
-        statusColor = Colors.red;
-        statusText = 'Отклонён';
+        statusColor = Colors.black87;
+        statusText = 'rejected'.tr;
         statusIcon = Icons.cancel;
         break;
       default:
@@ -185,7 +188,9 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Заказ #${order['id']?.toString().substring(0, 8) ?? ''}',
+                    'order_number_short'.trParams({
+                      'id': (order['id']?.toString() ?? '').substring(0, 8),
+                    }),
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -208,7 +213,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
               ),
               const SizedBox(height: 8),
               Text(
-                'Сумма: ${order['total_amount']?.toStringAsFixed(0) ?? '0'} сум',
+                '${'amount'.tr}: ${formatMoneyWithCurrency(order['total_amount'])}',
                 style: const TextStyle(color: Colors.white70),
               ),
               const SizedBox(height: 12),
@@ -240,10 +245,10 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildProblemOption('Заказ не приходит', Icons.schedule),
-            _buildProblemOption('Неправильный товар', Icons.inventory_2),
-            _buildProblemOption('Повреждённый товар', Icons.broken_image),
-            _buildProblemOption('Другая проблема', Icons.help_outline),
+            _buildProblemOption('problem_order_not_arriving'.tr, Icons.schedule),
+            _buildProblemOption('problem_wrong_item'.tr, Icons.inventory_2),
+            _buildProblemOption('problem_damaged_item'.tr, Icons.broken_image),
+            _buildProblemOption('problem_other'.tr, Icons.help_outline),
           ],
         ),
         actions: [
@@ -263,8 +268,8 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
       onTap: () {
         Get.back();
         Get.snackbar(
-          'Жалоба отправлена',
-          'Администратор рассмотрит вашу жалобу',
+          'complaint_sent'.tr,
+          'admin_will_review_complaint'.tr,
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.green,
           colorText: Colors.white,
@@ -332,14 +337,10 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
                   child: product['image_url'] != null
                       ? ClipRRect(
                           borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                          child: Image.network(
-                            product['image_url'],
+                          child: AppNetworkImage(
+                            url: product['image_url']?.toString(),
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Icon(
-                              Icons.inventory_2,
-                              color: Colors.grey[600],
-                              size: 48,
-                            ),
+                            errorWidget: Icon(Icons.inventory_2, color: Colors.grey[600], size: 48),
                           ),
                         )
                       : Icon(Icons.inventory_2, color: Colors.grey[600], size: 48),
@@ -357,7 +358,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
                         color: Colors.black.withOpacity(0.5),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.favorite, color: Colors.red, size: 20),
+                      child: const Icon(Icons.favorite, color: primaryColor, size: 20),
                     ),
                   ),
                 ),
@@ -394,7 +395,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  product['name'] ?? 'Товар',
+                  product['name'] ?? 'product'.tr,
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w500,
@@ -404,7 +405,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${product['price']?.toStringAsFixed(0) ?? '0'} сум',
+                  formatMoneyWithCurrency(product['price']),
                   style: TextStyle(
                     color: primaryColor,
                     fontWeight: FontWeight.bold,
@@ -439,7 +440,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
               child: ElevatedButton.icon(
                 onPressed: _addNewAddress,
                 icon: const Icon(Icons.add),
-                label: const Text('Добавить адрес'),
+                label: Text('add_address'.tr),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryColor,
                   foregroundColor: Colors.white,
@@ -471,8 +472,8 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
-                address['name'] == 'Дом' ? Icons.home : 
-                address['name'] == 'Работа' ? Icons.work : Icons.location_on,
+                address['name'] == 'home_address'.tr ? Icons.home : 
+                address['name'] == 'work_address'.tr ? Icons.work : Icons.location_on,
                 color: isDefault ? primaryColor : Colors.grey[500],
               ),
             ),
@@ -484,7 +485,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
                   Row(
                     children: [
                       Text(
-                        address['name'] ?? 'Адрес',
+                        address['name'] ?? 'address'.tr,
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -499,7 +500,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            'Основной',
+                            'primary'.tr,
                             style: TextStyle(color: primaryColor, fontSize: 10),
                           ),
                         ),
@@ -530,18 +531,18 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
               },
               itemBuilder: (context) => [
                 if (!isDefault)
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'default',
-                    child: Text('Сделать основным', style: TextStyle(color: Colors.white)),
+                    child: Text('make_primary'.tr, style: TextStyle(color: Colors.white)),
                   ),
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'edit',
-                  child: Text('Редактировать', style: TextStyle(color: Colors.white)),
+                  child: Text('edit'.tr, style: TextStyle(color: Colors.white)),
                 ),
                 if (_addresses.length > 1)
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'delete',
-                    child: Text('Удалить', style: TextStyle(color: Colors.red)),
+                    child: Text('delete'.tr, style: TextStyle(color: primaryColor)),
                   ),
               ],
             ),
@@ -556,7 +557,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
       _addresses[i]['isDefault'] = i == index;
     }
     _addresses.refresh();
-    Get.snackbar('success'.tr, 'Адрес установлен как основной', snackPosition: SnackPosition.BOTTOM);
+    Get.snackbar('success'.tr, 'address_set_primary'.tr, snackPosition: SnackPosition.BOTTOM);
   }
 
   void _editAddress(int index) {
@@ -567,7 +568,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
     Get.dialog(
       AlertDialog(
         backgroundColor: cardColor,
-        title: const Text('Редактировать адрес', style: TextStyle(color: Colors.white)),
+        title: Text('edit_address'.tr, style: const TextStyle(color: Colors.white)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -575,7 +576,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
               controller: nameController,
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
-                labelText: 'Название',
+                labelText: 'address_name'.tr,
                 labelStyle: TextStyle(color: Colors.grey[500]),
                 enabledBorder: OutlineInputBorder(
                   borderSide: BorderSide(color: Colors.grey[700]!),
@@ -591,7 +592,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
               style: const TextStyle(color: Colors.white),
               maxLines: 2,
               decoration: InputDecoration(
-                labelText: 'Адрес',
+                labelText: 'address'.tr,
                 labelStyle: TextStyle(color: Colors.grey[500]),
                 enabledBorder: OutlineInputBorder(
                   borderSide: BorderSide(color: Colors.grey[700]!),
@@ -614,7 +615,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
               _addresses[index]['address'] = addressController.text;
               _addresses.refresh();
               Get.back();
-              Get.snackbar('success'.tr, 'Адрес обновлён', snackPosition: SnackPosition.BOTTOM);
+              Get.snackbar('success'.tr, 'address_updated'.tr, snackPosition: SnackPosition.BOTTOM);
             },
             style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
             child: Text('save'.tr),
@@ -628,11 +629,8 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
     Get.dialog(
       AlertDialog(
         backgroundColor: cardColor,
-        title: const Text('Удалить адрес?', style: TextStyle(color: Colors.white)),
-        content: const Text(
-          'Вы уверены, что хотите удалить этот адрес?',
-          style: TextStyle(color: Colors.white70),
-        ),
+        title: Text('delete_address'.tr, style: const TextStyle(color: Colors.white)),
+        content: Text('delete_address_confirm'.tr, style: const TextStyle(color: Colors.white70)),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
@@ -642,9 +640,9 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
             onPressed: () {
               _addresses.removeAt(index);
               Get.back();
-              Get.snackbar('success'.tr, 'Адрес удалён', snackPosition: SnackPosition.BOTTOM);
+              Get.snackbar('success'.tr, 'address_deleted'.tr, snackPosition: SnackPosition.BOTTOM);
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
             child: Text('delete'.tr),
           ),
         ],
@@ -659,7 +657,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
     Get.dialog(
       AlertDialog(
         backgroundColor: cardColor,
-        title: const Text('Новый адрес', style: TextStyle(color: Colors.white)),
+        title: Text('new_address'.tr, style: const TextStyle(color: Colors.white)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -667,7 +665,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
               controller: nameController,
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
-                labelText: 'Название (Дом, Работа...)',
+                labelText: 'address_name_hint'.tr,
                 labelStyle: TextStyle(color: Colors.grey[500]),
                 enabledBorder: OutlineInputBorder(
                   borderSide: BorderSide(color: Colors.grey[700]!),
@@ -683,7 +681,7 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
               style: const TextStyle(color: Colors.white),
               maxLines: 2,
               decoration: InputDecoration(
-                labelText: 'Адрес',
+                labelText: 'address'.tr,
                 labelStyle: TextStyle(color: Colors.grey[500]),
                 enabledBorder: OutlineInputBorder(
                   borderSide: BorderSide(color: Colors.grey[700]!),
@@ -710,11 +708,11 @@ class _BuyerCabinetScreenState extends State<BuyerCabinetScreen> with SingleTick
                   'isDefault': false,
                 });
                 Get.back();
-                Get.snackbar('success'.tr, 'Адрес добавлен', snackPosition: SnackPosition.BOTTOM);
+                Get.snackbar('success'.tr, 'address_added'.tr, snackPosition: SnackPosition.BOTTOM);
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
-            child: const Text('Добавить'),
+            child: Text('add'.tr),
           ),
         ],
       ),

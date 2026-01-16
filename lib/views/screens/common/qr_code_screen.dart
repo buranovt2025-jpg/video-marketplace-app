@@ -107,11 +107,11 @@ class QRCodeScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
                   color: type == 'pickup' 
-                      ? Colors.blue.withOpacity(0.2) 
+                      ? primaryColor.withOpacity(0.2) 
                       : Colors.green.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: type == 'pickup' ? Colors.blue : Colors.green,
+                    color: type == 'pickup' ? primaryColor : Colors.green,
                   ),
                 ),
                 child: Row(
@@ -119,14 +119,14 @@ class QRCodeScreen extends StatelessWidget {
                   children: [
                     Icon(
                       type == 'pickup' ? Icons.inventory_2 : Icons.local_shipping,
-                      color: type == 'pickup' ? Colors.blue : Colors.green,
+                      color: type == 'pickup' ? primaryColor : Colors.green,
                       size: 20,
                     ),
                     const SizedBox(width: 8),
                     Text(
                       type == 'pickup' ? 'pickup_qr'.tr : 'delivery_qr'.tr,
                       style: TextStyle(
-                        color: type == 'pickup' ? Colors.blue : Colors.green,
+                        color: type == 'pickup' ? primaryColor : Colors.green,
                         fontWeight: FontWeight.bold,
                       ),
                     ),

@@ -1,0 +1,117 @@
+name: Deploy Flutter Web (SSH)
+
+on:
+  push:
+    branches:
+      # Change this to the branch you want to auto-deploy.
+      - cursor/what-has-been-done-5e03
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-web-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build_web:
+    name: Build Flutter Web (preflight)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          # Keep in sync with the server's Flutter toolchain when possible.
+          flutter-version: "3.38.5"
+          channel: stable
+          cache: true
+
+      - name: Flutter version
+        run: flutter --version
+
+      - name: "Guard - no const + .tr"
+        run: python3 scripts/check_no_const_tr.py
+
+      - name: Build web (release)
+        env:
+          # Self-signed HTTPS in prod breaks SW registration; keep it off.
+          PWA_STRATEGY: none
+          # Optional feature flags, space-separated KEY=VALUE pairs.
+          # Configure in GitHub repo variables: Settings → Secrets and variables → Actions → Variables
+          # Example: ENABLE_MEDIA_UPLOAD=true ENABLE_PRODUCT_REVIEWS=true
+          DART_DEFINES: ${{ vars.DART_DEFINES }}
+        run: bash scripts/build_web.sh
+
+      - name: Upload pubspec.lock (from CI)
+        uses: actions/upload-artifact@v4
+        with:
+          name: pubspec-lock
+          path: pubspec.lock
+          if-no-files-found: error
+
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: build_web
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare SSH key and known_hosts
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_SSH_KEY_B64: ${{ secrets.DEPLOY_SSH_KEY_B64 }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          # Prefer base64 secret to avoid newline/format issues.
+          if [ -n "${DEPLOY_SSH_KEY_B64}" ]; then
+            echo "${DEPLOY_SSH_KEY_B64}" | base64 -d > ~/.ssh/deploy_key
+          else
+            # Fallback: raw key (must include correct newlines).
+            printf "%s" "${DEPLOY_SSH_KEY}" > ~/.ssh/deploy_key
+          fi
+
+          # Normalize potential Windows line endings.
+          tr -d "\r" < ~/.ssh/deploy_key > ~/.ssh/deploy_key.tmp
+          mv ~/.ssh/deploy_key.tmp ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+          ssh-keyscan -H "${DEPLOY_HOST}" >> ~/.ssh/known_hosts
+
+      - name: Deploy on server
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PROJECT_DIR: ${{ secrets.DEPLOY_PROJECT_DIR }}
+          DEPLOY_WEB_ROOT: ${{ secrets.DEPLOY_WEB_ROOT }}
+          DEPLOY_FLUTTER_BIN: ${{ secrets.DEPLOY_FLUTTER_BIN }}
+          DEPLOY_BRANCH: ${{ github.ref_name }}
+          DEPLOY_DART_DEFINES: ${{ vars.DART_DEFINES }}
+        run: |
+          set -euo pipefail
+          echo "Deploying branch: ${DEPLOY_BRANCH}"
+          echo "Server: ${DEPLOY_USER}@${DEPLOY_HOST}"
+          ssh -i ~/.ssh/deploy_key "${DEPLOY_USER}@${DEPLOY_HOST}" "bash -lc '
+            set -euo pipefail
+            PROJECT_DIR=\"${DEPLOY_PROJECT_DIR:-/root/projects/video-marketplace-app}\"
+            WEB_ROOT=\"${DEPLOY_WEB_ROOT:-/var/www/gogomarket}\"
+            FLUTTER_BIN=\"${DEPLOY_FLUTTER_BIN:-/opt/flutter/bin/flutter}\"
+            DART_DEFINES=\"${DEPLOY_DART_DEFINES:-}\"
+            cd \"\${PROJECT_DIR}\"
+            git fetch origin
+            # Ensure a clean working tree on the server (CI-managed deploy checkout).
+            git reset --hard
+            git clean -fd
+            # Force the branch to match the remote exactly (avoid pull conflicts).
+            git checkout -B \"${DEPLOY_BRANCH}\" \"origin/${DEPLOY_BRANCH}\"
+            git reset --hard \"origin/${DEPLOY_BRANCH}\"
+            git clean -fd
+            PROJECT_DIR=\"\${PROJECT_DIR}\" WEB_ROOT=\"\${WEB_ROOT}\" FLUTTER_BIN=\"\${FLUTTER_BIN}\" DART_DEFINES=\"\${DART_DEFINES}\" bash scripts/deploy_web.sh
+          '"
+

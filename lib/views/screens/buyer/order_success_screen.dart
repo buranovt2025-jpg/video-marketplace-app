@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/views/screens/buyer/order_tracking_screen.dart';
 import 'package:tiktok_tutorial/views/screens/marketplace_home_screen.dart';
+import 'package:tiktok_tutorial/utils/formatters.dart';
+import 'package:tiktok_tutorial/utils/money.dart';
 
 class OrderSuccessScreen extends StatelessWidget {
   final Map<String, dynamic> order;
@@ -36,8 +38,8 @@ class OrderSuccessScreen extends StatelessWidget {
               const SizedBox(height: 32),
 
               // Success message
-              const Text(
-                'Заказ оформлен!',
+              Text(
+                'order_placed'.tr,
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 28,
@@ -46,7 +48,9 @@ class OrderSuccessScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'Номер заказа: ${order['id']?.substring(0, 8) ?? 'N/A'}',
+                'order_created_named'.trParams({
+                  'id': (order['id']?.toString() ?? 'N/A').substring(0, 8),
+                }),
                 style: TextStyle(
                   color: Colors.grey[400],
                   fontSize: 16,
@@ -65,25 +69,25 @@ class OrderSuccessScreen extends StatelessWidget {
                   children: [
                     _buildInfoRow(
                       Icons.attach_money,
-                      'Сумма',
-                      '${_formatPrice(order['total_amount'])} сум',
+                      'amount'.tr,
+                      _formatPrice(order['total_amount']),
                     ),
                     const SizedBox(height: 16),
                     _buildInfoRow(
                       Icons.location_on,
-                      'Адрес',
-                      order['delivery_address'] ?? 'Не указан',
+                      'address'.tr,
+                      (order['delivery_address'] ?? 'address_not_specified'.tr).toString(),
                     ),
                     const SizedBox(height: 16),
                     _buildInfoRow(
                       Icons.payment,
-                      'Оплата',
-                      'Наличными курьеру',
+                      'payment_method'.tr,
+                      'cash_on_delivery'.tr,
                     ),
                     const SizedBox(height: 16),
                     _buildInfoRow(
                       Icons.local_shipping,
-                      'Статус',
+                      'order_status_label'.tr,
                       _getStatusText(order['status']),
                       valueColor: _getStatusColor(order['status']),
                     ),
@@ -106,7 +110,7 @@ class OrderSuccessScreen extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Продавец получил ваш заказ. Курьер скоро заберёт его и доставит вам.',
+                        'order_next_steps'.tr,
                         style: TextStyle(
                           color: Colors.grey[300],
                           fontSize: 14,
@@ -128,8 +132,8 @@ class OrderSuccessScreen extends StatelessWidget {
                     backgroundColor: buttonColor,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: const Text(
-                    'Отследить заказ',
+                  child: Text(
+                    'track_order'.tr,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -147,8 +151,8 @@ class OrderSuccessScreen extends StatelessWidget {
                     side: BorderSide(color: Colors.grey[700]!),
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: const Text(
-                    'На главную',
+                  child: Text(
+                    'go_home'.tr,
                     style: TextStyle(fontSize: 16),
                   ),
                 ),
@@ -203,45 +207,48 @@ class OrderSuccessScreen extends StatelessWidget {
   }
 
   String _formatPrice(dynamic price) {
-    if (price == null) return '0';
-    final numPrice = (price as num).toDouble();
-    if (numPrice >= 1000000) {
-      return '${(numPrice / 1000000).toStringAsFixed(1)}M';
-    } else if (numPrice >= 1000) {
-      return '${(numPrice / 1000).toStringAsFixed(0)}K';
-    }
-    return numPrice.toStringAsFixed(0);
+    final numPrice = asDouble(price, fallback: 0);
+    return formatShortMoneyWithCurrency(numPrice);
   }
 
   String _getStatusText(String? status) {
-    final statuses = {
-      'created': 'Создан',
-      'accepted': 'Принят продавцом',
-      'ready': 'Готов к отправке',
-      'picked_up': 'Забран курьером',
-      'in_transit': 'В пути',
-      'delivered': 'Доставлен',
-      'completed': 'Завершён',
-      'cancelled': 'Отменён',
-    };
-    return statuses[status] ?? status ?? 'Неизвестно';
+    switch (status) {
+      case 'created':
+        return 'status_created'.tr;
+      case 'accepted':
+        return 'status_accepted_by_seller'.tr;
+      case 'ready':
+        return 'status_ready_for_shipping'.tr;
+      case 'picked_up':
+        return 'status_picked_up_by_courier'.tr;
+      case 'in_transit':
+        return 'status_in_transit'.tr;
+      case 'delivered':
+        return 'status_delivered'.tr;
+      case 'completed':
+        return 'status_completed'.tr;
+      case 'cancelled':
+        return 'status_cancelled'.tr;
+      default:
+        return status ?? 'unknown_status'.tr;
+    }
   }
 
   Color _getStatusColor(String? status) {
     switch (status) {
       case 'created':
-        return Colors.blue;
+        return accentColor;
       case 'accepted':
       case 'ready':
-        return Colors.orange;
+        return primaryColor;
       case 'picked_up':
       case 'in_transit':
-        return Colors.purple;
+        return accentColor;
       case 'delivered':
       case 'completed':
         return Colors.green;
       case 'cancelled':
-        return Colors.red;
+        return primaryColor;
       default:
         return Colors.grey;
     }

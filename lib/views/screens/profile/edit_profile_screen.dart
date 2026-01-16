@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
 import 'package:tiktok_tutorial/constants.dart';
 import 'package:tiktok_tutorial/controllers/marketplace_controller.dart';
 import 'package:tiktok_tutorial/services/api_service.dart';
+import 'package:tiktok_tutorial/utils/web_image_policy.dart';
+import 'package:tiktok_tutorial/utils/xfile_image_provider_stub.dart'
+    if (dart.library.io) 'package:tiktok_tutorial/utils/xfile_image_provider_io.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({Key? key}) : super(key: key);
@@ -20,7 +22,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final TextEditingController _addressController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
   
-  File? _selectedImage;
+  XFile? _selectedImage;
   String? _avatarUrl;
   bool _isLoading = false;
 
@@ -63,7 +65,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             children: [
               ListTile(
                 leading: const Icon(Icons.camera_alt, color: Colors.white),
-                title: const Text('Камера', style: TextStyle(color: Colors.white)),
+                title: Text('camera'.tr, style: const TextStyle(color: Colors.white)),
                 onTap: () async {
                   Navigator.pop(context);
                   final XFile? image = await _picker.pickImage(
@@ -74,14 +76,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   );
                   if (image != null) {
                     setState(() {
-                      _selectedImage = File(image.path);
+                      _selectedImage = image;
                     });
                   }
                 },
               ),
               ListTile(
                 leading: const Icon(Icons.photo_library, color: Colors.white),
-                title: const Text('Галерея', style: TextStyle(color: Colors.white)),
+                title: Text('gallery'.tr, style: const TextStyle(color: Colors.white)),
                 onTap: () async {
                   Navigator.pop(context);
                   final XFile? image = await _picker.pickImage(
@@ -92,15 +94,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   );
                   if (image != null) {
                     setState(() {
-                      _selectedImage = File(image.path);
+                      _selectedImage = image;
                     });
                   }
                 },
               ),
               if (_avatarUrl != null || _selectedImage != null)
                 ListTile(
-                  leading: const Icon(Icons.delete, color: Colors.red),
-                  title: const Text('Удалить фото', style: TextStyle(color: Colors.red)),
+                  leading: const Icon(Icons.delete, color: primaryColor),
+                  title: Text('remove_photo'.tr, style: const TextStyle(color: primaryColor)),
                   onTap: () {
                     Navigator.pop(context);
                     setState(() {
@@ -119,10 +121,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Future<void> _saveProfile() async {
     if (_nameController.text.trim().isEmpty) {
       Get.snackbar(
-        'Ошибка',
-        'Имя не может быть пустым',
+        'error'.tr,
+        'name_cannot_be_empty'.tr,
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
       return;
@@ -155,18 +157,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       Get.back();
       Get.snackbar(
-        'Успешно',
-        'Профиль обновлён',
+        'success'.tr,
+        'profile_updated'.tr,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
     } catch (e) {
       Get.snackbar(
-        'Ошибка',
-        'Не удалось обновить профиль: $e',
+        'error'.tr,
+        '${'profile_update_failed'.tr}: $e',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.black87,
         colorText: Colors.white,
       );
     } finally {
@@ -182,10 +184,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       backgroundColor: backgroundColor,
       appBar: AppBar(
         backgroundColor: backgroundColor,
-        title: const Text(
-          'Редактировать профиль',
-          style: TextStyle(color: Colors.white),
-        ),
+        title: Text('edit_profile'.tr, style: const TextStyle(color: Colors.white)),
         leading: IconButton(
           icon: const Icon(Icons.close, color: Colors.white),
           onPressed: () => Get.back(),
@@ -203,7 +202,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                   )
                 : Text(
-                    'Сохранить',
+                    'save'.tr,
                     style: TextStyle(
                       color: buttonColor,
                       fontWeight: FontWeight.bold,
@@ -225,8 +224,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     radius: 60,
                     backgroundColor: Colors.grey[800],
                     backgroundImage: _selectedImage != null
-                        ? FileImage(_selectedImage!)
-                        : (_avatarUrl != null ? NetworkImage(_avatarUrl!) : null) as ImageProvider?,
+                        ? xFileImageProvider(_selectedImage!)
+                        : networkImageProviderOrNull(_avatarUrl),
                     child: (_selectedImage == null && _avatarUrl == null)
                         ? const Icon(Icons.person, size: 60, color: Colors.white)
                         : null,
@@ -253,7 +252,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Изменить фото',
+              'change_photo'.tr,
               style: TextStyle(color: buttonColor, fontSize: 14),
             ),
             
@@ -262,7 +261,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             // Name field
             _buildTextField(
               controller: _nameController,
-              label: 'Имя',
+              label: 'name'.tr,
               icon: Icons.person,
               required: true,
             ),
@@ -271,7 +270,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             // Phone field
             _buildTextField(
               controller: _phoneController,
-              label: 'Телефон',
+              label: 'phone_number'.tr,
               icon: Icons.phone,
               keyboardType: TextInputType.phone,
             ),
@@ -280,7 +279,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             // Address field
             _buildTextField(
               controller: _addressController,
-              label: 'Адрес',
+              label: 'delivery_address'.tr,
               icon: Icons.location_on,
               maxLines: 2,
             ),
@@ -301,7 +300,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Email и роль нельзя изменить. Обратитесь в поддержку если нужна помощь.',
+                      'email_role_readonly'.tr,
                       style: TextStyle(color: Colors.grey[500], fontSize: 13),
                     ),
                   ),
@@ -327,7 +326,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Email',
+                          'email'.tr,
                           style: TextStyle(color: Colors.grey[500], fontSize: 12),
                         ),
                         const SizedBox(height: 4),
@@ -361,7 +360,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Роль',
+                          'role'.tr,
                           style: TextStyle(color: Colors.grey[500], fontSize: 12),
                         ),
                         const SizedBox(height: 4),
@@ -416,13 +415,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   String _getRoleLabel(String role) {
     switch (role) {
       case 'seller':
-        return 'Продавец';
+        return 'seller'.tr;
       case 'buyer':
-        return 'Покупатель';
+        return 'buyer'.tr;
       case 'courier':
-        return 'Курьер';
+        return 'courier'.tr;
       case 'admin':
-        return 'Администратор';
+        return 'admin'.tr;
       default:
         return role;
     }
